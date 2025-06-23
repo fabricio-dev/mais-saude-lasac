@@ -115,12 +115,16 @@ export const clinicsTableRelation = relations(clinicsTable, ({ many }) => ({
   usersToClinics: many(usersToClinicsTable),
 }));
 
-export const sellersTableRelation = relations(sellersTable, ({ one }) => ({
-  clinic: one(clinicsTable, {
-    fields: [sellersTable.clinicId],
-    references: [clinicsTable.id],
+export const sellersTableRelation = relations(
+  sellersTable,
+  ({ one, many }) => ({
+    clinic: one(clinicsTable, {
+      fields: [sellersTable.clinicId],
+      references: [clinicsTable.id],
+    }),
+    patients: many(patientsTable),
   }),
-}));
+);
 
 export const patientsTableRelation = relations(patientsTable, ({ one }) => ({
   clinic: one(clinicsTable, {
