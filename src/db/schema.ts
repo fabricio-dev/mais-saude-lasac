@@ -62,6 +62,7 @@ export const verificationsTable = pgTable("verifications", {
 });
 // schema para o sistema
 export const clinicsTable = pgTable("clinics", {
+  //ao excluir usuario a clinica permanesce
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -184,10 +185,10 @@ export const patientsTableRelation = relations(patientsTable, ({ one }) => ({
 
 export const usersToClinicsTable = pgTable("users_to_clinics", {
   userId: text("user_id")
-    .references(() => usersTable.id)
+    .references(() => usersTable.id, { onDelete: "cascade" })
     .notNull(),
   clinicId: uuid("clinic_id")
-    .references(() => clinicsTable.id)
+    .references(() => clinicsTable.id, { onDelete: "cascade" })
     .notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at")
