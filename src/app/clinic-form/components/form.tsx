@@ -9,7 +9,7 @@ import z from "zod";
 
 import { createClinic } from "@/actions/create-clinic";
 import { Button } from "@/components/ui/button";
-import { DialogClose, DialogFooter } from "@/components/ui/dialog";
+import { DialogFooter } from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
