@@ -116,7 +116,8 @@ export function AppSidebar() {
                     <AvatarFallback>f</AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="tsm">{session.data?.user.clinic.name}</p>
+                    <p className="tsm">{session.data?.user?.clinic?.name}</p>
+
                     <p className="tsm text-muted-foreground">
                       {session.data?.user.email}
                     </p>
