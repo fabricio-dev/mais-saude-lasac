@@ -8,7 +8,6 @@ import {
   text,
   timestamp,
   uuid,
-  varchar,
 } from "drizzle-orm/pg-core";
 // schema para autenticação
 
@@ -76,15 +75,11 @@ export const sellersTable = pgTable("sellers", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),
   avatarImageUrl: text("avatar_image_url"),
-  cpfNumber: varchar("cpf_number", { length: 11 }).notNull(),
+  cpfNumber: text("cpf_number").notNull(),
   phoneNumber: text("phone_number").notNull(),
   email: text("email").notNull(),
-  password: varchar("password", { length: 255 }).notNull(),
-  address: text("address").notNull(),
-  homeNumber: text("home_number").notNull(),
-  city: text("city").notNull(),
-  state: text("state").notNull(),
-  zipCode: text("zip_code").notNull(),
+  password: text("password").notNull(),
+  unity: text("unity").notNull(),
   clinicId: uuid("clinic_id").references(() => clinicsTable.id, {
     onDelete: "cascade",
   }),
@@ -103,8 +98,8 @@ export const patientsTable = pgTable("patients", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),
   birthDate: date("birth_date").notNull(),
-  rgNumber: varchar("rg_number", { length: 11 }).notNull(),
-  cpfNumber: varchar("cpf_number", { length: 11 }).notNull(),
+  rgNumber: text("rg_number").notNull(),
+  cpfNumber: text("cpf_number").notNull(),
   email: text("email").notNull(),
   phoneNumber: text("phone_number").notNull(),
   address: text("address").notNull(),

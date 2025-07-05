@@ -1,8 +1,6 @@
-import { Plus } from "lucide-react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { Button } from "@/components/ui/button";
 import {
   PageActions,
   PageContainer,
@@ -13,6 +11,8 @@ import {
   PageTitle,
 } from "@/components/ui/page-container";
 import { auth } from "@/lib/auth";
+
+import AddSellerButton from "./_components/add-seller-button";
 
 const SellersPage = async () => {
   const session = await auth.api.getSession({
@@ -40,10 +40,7 @@ const SellersPage = async () => {
           </PageDescription>
         </PageHeaderContent>
         <PageActions>
-          <Button>
-            <Plus />
-            Novo Vendedor
-          </Button>
+          <AddSellerButton />
         </PageActions>
       </PageHeader>
       <PageContent>
