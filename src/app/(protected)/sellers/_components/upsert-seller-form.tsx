@@ -77,8 +77,8 @@ const UpsertSellerForm = ({ onSuccess }: UpsertSellerFormProps) => {
   return (
     <DialogContent>
       <DialogHeader>
-        <DialogTitle>Adicionar Vendedor</DialogTitle>
-        <DialogDescription>
+        <DialogTitle className="text-amber-950">Adicionar Vendedor</DialogTitle>
+        <DialogDescription className="text-amber-800">
           Adicione um novo vendedor para gerenciar as vendas dos convenios.
         </DialogDescription>
       </DialogHeader>
@@ -89,7 +89,7 @@ const UpsertSellerForm = ({ onSuccess }: UpsertSellerFormProps) => {
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nome</FormLabel>
+                <FormLabel className="text-amber-950">Nome</FormLabel>
                 <FormControl>
                   <Input {...field} />
                 </FormControl>
@@ -102,7 +102,7 @@ const UpsertSellerForm = ({ onSuccess }: UpsertSellerFormProps) => {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel className="text-amber-950">Email</FormLabel>
                 <FormControl>
                   <Input {...field} />
                 </FormControl>
@@ -115,7 +115,7 @@ const UpsertSellerForm = ({ onSuccess }: UpsertSellerFormProps) => {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Senha</FormLabel>
+                <FormLabel className="text-amber-950">Senha</FormLabel>
                 <FormControl>
                   <Input {...field} />
                 </FormControl>
@@ -128,7 +128,7 @@ const UpsertSellerForm = ({ onSuccess }: UpsertSellerFormProps) => {
             name="cpfNumber"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>CPF</FormLabel>
+                <FormLabel className="text-amber-950">CPF</FormLabel>
                 <FormControl>
                   <Input {...field} />
                 </FormControl>
@@ -141,7 +141,7 @@ const UpsertSellerForm = ({ onSuccess }: UpsertSellerFormProps) => {
             name="phoneNumber"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Telefone</FormLabel>
+                <FormLabel className="text-amber-950">Telefone</FormLabel>
                 <FormControl>
                   <Input {...field} />
                 </FormControl>
@@ -154,7 +154,9 @@ const UpsertSellerForm = ({ onSuccess }: UpsertSellerFormProps) => {
             name="unity"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Unidade do Vendedor</FormLabel>
+                <FormLabel className="text-amber-950">
+                  Unidade do Vendedor
+                </FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
@@ -181,7 +183,7 @@ const UpsertSellerForm = ({ onSuccess }: UpsertSellerFormProps) => {
           <DialogFooter>
             <Button
               type="submit"
-              className="w-full"
+              className="w-full bg-emerald-600 hover:bg-emerald-900"
               disabled={upsertSellerAction.isPending}
             >
               {upsertSellerAction.isPending ? "Adicionando..." : "Adicionar"}

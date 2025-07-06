@@ -9,7 +9,7 @@ import z from "zod";
 
 import { createClinic } from "@/actions/create-clinic";
 import { Button } from "@/components/ui/button";
-import { DialogClose, DialogFooter } from "@/components/ui/dialog";
+import { DialogFooter } from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -63,7 +63,7 @@ const ClinicForm = () => {
           <DialogFooter>
             <Button
               type="submit"
-              className="bg-emerald-600"
+              className="bg-emerald-600 hover:bg-emerald-900"
               disabled={form.formState.isSubmitting}
             >
               {form.formState.isSubmitting && (

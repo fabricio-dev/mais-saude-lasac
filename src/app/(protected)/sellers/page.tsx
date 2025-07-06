@@ -1,3 +1,4 @@
+//import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -10,6 +11,8 @@ import {
   PageHeaderContent,
   PageTitle,
 } from "@/components/ui/page-container";
+//import { db } from "@/db";
+//import { sellersTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 
 import AddSellerButton from "./_components/add-seller-button";
@@ -18,6 +21,9 @@ const SellersPage = async () => {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
+  // const sellers = await db.query.sellersTable.findMany({
+  //   where: eq(sellersTable.clinicId, session.user.clinic.id),
+  // });
   //user.admim para usuarios administradores ou nao para vendedores
   //const isAdmin = session?.user.admin;\
   //if (!isAdmin) {

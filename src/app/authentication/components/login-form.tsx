@@ -120,7 +120,7 @@ const LoginForm = () => {
             <div className="w-full space-y-2">
               <Button
                 type="submit"
-                className="w-full bg-emerald-600"
+                className="w-full bg-emerald-600 hover:bg-emerald-900"
                 disabled={form.formState.isSubmitting}
               >
                 {form.formState.isSubmitting ? (
