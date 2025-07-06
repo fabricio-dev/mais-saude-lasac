@@ -1,6 +1,7 @@
 "use client";
 
 import { CalendarIcon, ClockIcon, PencilIcon } from "lucide-react";
+import { useState } from "react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +23,7 @@ interface SellerCardProps {
   seller: typeof sellersTable.$inferSelect;
 }
 const SellerCard = ({ seller }: SellerCardProps) => {
+  const [isUpsertSellerFormOpen, setIsUpsertSellerFormOpen] = useState(false);
   const sellerInitials = seller.name
     .split(" ")
     .map((name) => name[0])
@@ -53,14 +55,20 @@ const SellerCard = ({ seller }: SellerCardProps) => {
       </CardContent>
       <Separator />
       <CardFooter>
-        <Dialog>
+        <Dialog
+          open={isUpsertSellerFormOpen}
+          onOpenChange={setIsUpsertSellerFormOpen}
+        >
           <DialogTrigger asChild>
             <Button className="w-full bg-red-800 hover:bg-red-900">
               <PencilIcon className="mr-1" />
               Ver mais
             </Button>
           </DialogTrigger>
-          <UpsertSellerForm />
+          <UpsertSellerForm
+            seller={seller}
+            onSuccess={() => setIsUpsertSellerFormOpen(false)}
+          />
         </Dialog>
       </CardFooter>
     </Card>

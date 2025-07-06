@@ -46,7 +46,7 @@ const SellersPage = async () => {
         <PageHeaderContent>
           <PageTitle>Vendedores</PageTitle>
           <PageDescription>
-            Gerencie os vendedores da sua clínica
+            Gerencie os vendedores de suas clínicas
           </PageDescription>
         </PageHeaderContent>
         <PageActions>

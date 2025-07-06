@@ -30,6 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { sellersTable } from "@/db/schema";
 
 import { unityCity } from "../_constants";
 
@@ -46,25 +47,30 @@ const formSchema = z.object({
 });
 
 interface UpsertSellerFormProps {
+  seller?: typeof sellersTable.$inferSelect;
   onSuccess?: () => void;
 }
 
-const UpsertSellerForm = ({ onSuccess }: UpsertSellerFormProps) => {
+const UpsertSellerForm = ({ seller, onSuccess }: UpsertSellerFormProps) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      email: "",
-      password: "",
-      cpfNumber: "",
-      phoneNumber: "",
-      unity: "",
+      name: seller?.name ?? "",
+      email: seller?.email ?? "",
+      password: seller?.password ?? "",
+      cpfNumber: seller?.cpfNumber ?? "",
+      phoneNumber: seller?.phoneNumber ?? "",
+      unity: seller?.unity ?? "",
     },
   });
 
   const upsertSellerAction = useAction(upsertSeller, {
     onSuccess: () => {
-      toast.success("Vendedor adicionado com sucesso");
+      toast.success(
+        seller
+          ? "Vendedor atualizado com sucesso"
+          : "Vendedor adicionado com sucesso",
+      );
       onSuccess?.();
     },
     onError: () => {
@@ -72,14 +78,21 @@ const UpsertSellerForm = ({ onSuccess }: UpsertSellerFormProps) => {
     },
   });
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    upsertSellerAction.execute(values);
+    upsertSellerAction.execute({
+      ...values,
+      id: seller?.id,
+    });
   };
   return (
     <DialogContent>
       <DialogHeader>
-        <DialogTitle className="text-amber-950">Adicionar Vendedor</DialogTitle>
+        <DialogTitle className="text-amber-950">
+          {seller ? seller.name : "Adicionar Vendedor"}
+        </DialogTitle>
         <DialogDescription className="text-amber-800">
-          Adicione um novo vendedor para gerenciar as vendas dos convenios.
+          {seller
+            ? "Edite as informacoes do vendedor"
+            : "Adicione um novo vendedor para gerenciar as vendas dos convenios."}
         </DialogDescription>
       </DialogHeader>
       <Form {...form}>
@@ -186,7 +199,11 @@ const UpsertSellerForm = ({ onSuccess }: UpsertSellerFormProps) => {
               className="w-full bg-emerald-600 hover:bg-emerald-900"
               disabled={upsertSellerAction.isPending}
             >
-              {upsertSellerAction.isPending ? "Adicionando..." : "Adicionar"}
+              {upsertSellerAction.isPending
+                ? "Salvando..."
+                : seller
+                  ? "Atualizar"
+                  : "Salvar"}
             </Button>
           </DialogFooter>
         </form>
