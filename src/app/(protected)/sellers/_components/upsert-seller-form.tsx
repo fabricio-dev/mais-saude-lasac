@@ -1,7 +1,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useAction } from "next-safe-action/hooks";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 
+import { upsertSeller } from "@/actions/upsert-seller";
 import { Button } from "@/components/ui/button";
 import {
   DialogContent,
@@ -28,6 +31,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { unityCity } from "../_constants";
+
 const formSchema = z.object({
   name: z.string().trim().min(1, { message: "Nome é obrigatório" }),
   email: z.string().trim().email({ message: "Email inválido" }),
@@ -40,7 +45,11 @@ const formSchema = z.object({
   unity: z.string().trim().min(1, { message: "Unidade é obrigatória" }),
 });
 
-const UpsertSellerForm = () => {
+interface UpsertSellerFormProps {
+  onSuccess?: () => void;
+}
+
+const UpsertSellerForm = ({ onSuccess }: UpsertSellerFormProps) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -52,8 +61,18 @@ const UpsertSellerForm = () => {
       unity: "",
     },
   });
-  const onSubmit = (data: z.infer<typeof formSchema>) => {
-    console.log(data);
+
+  const upsertSellerAction = useAction(upsertSeller, {
+    onSuccess: () => {
+      toast.success("Vendedor adicionado com sucesso");
+      onSuccess?.();
+    },
+    onError: () => {
+      toast.error("Erro ao adicionar vendedor");
+    },
+  });
+  const onSubmit = (values: z.infer<typeof formSchema>) => {
+    upsertSellerAction.execute(values);
   };
   return (
     <DialogContent>
@@ -146,9 +165,12 @@ const UpsertSellerForm = () => {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="Salgueiro">Salgueiro</SelectItem>
-                    <SelectItem value="Parnamirim">Parnamirim</SelectItem>
-                    <SelectItem value="Terra Nova">Terra Nova</SelectItem>
+                    {/* TODO: fazer consulta no banco de dados para pegar as unidades */}
+                    {unityCity.map((unity) => (
+                      <SelectItem key={unity.value} value={unity.value}>
+                        {unity.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <FormDescription></FormDescription>
@@ -157,8 +179,12 @@ const UpsertSellerForm = () => {
             )}
           />
           <DialogFooter>
-            <Button type="submit" className="w-full">
-              Adicionar
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={upsertSellerAction.isPending}
+            >
+              {upsertSellerAction.isPending ? "Adicionando..." : "Adicionar"}
             </Button>
           </DialogFooter>
         </form>
