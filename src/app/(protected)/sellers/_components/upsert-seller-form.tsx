@@ -53,6 +53,7 @@ interface UpsertSellerFormProps {
 
 const UpsertSellerForm = ({ seller, onSuccess }: UpsertSellerFormProps) => {
   const form = useForm<z.infer<typeof formSchema>>({
+    shouldUnregister: true,
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: seller?.name ?? "",
