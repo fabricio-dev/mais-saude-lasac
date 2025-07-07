@@ -1,10 +1,23 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { TrashIcon } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { deleteSeller } from "@/actions/delete-seller";
 import { upsertSeller } from "@/actions/upsert-seller";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   DialogContent,
@@ -76,6 +89,15 @@ const UpsertSellerForm = ({ seller, onSuccess }: UpsertSellerFormProps) => {
     },
     onError: () => {
       toast.error("Erro ao adicionar vendedor");
+    },
+  });
+  const deleteSellerAction = useAction(deleteSeller, {
+    onSuccess: () => {
+      toast.success("Vendedor deletado com sucesso");
+      onSuccess?.();
+    },
+    onError: () => {
+      toast.error("Erro ao deletar vendedor");
     },
   });
   const onSubmit = (values: z.infer<typeof formSchema>) => {
@@ -195,9 +217,41 @@ const UpsertSellerForm = ({ seller, onSuccess }: UpsertSellerFormProps) => {
             )}
           />
           <DialogFooter>
+            {seller && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline">
+                    <TrashIcon />
+                    Deletar Vendedor
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      Tem certeza que deseja deletar esse vendedor?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Essa ação não pode ser desfeita. Isso irá deletar o
+                      vendedor permanentemente.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() =>
+                        deleteSellerAction.execute({ id: seller.id })
+                      }
+                      className="bg-red-600 hover:bg-red-900"
+                    >
+                      Deletar
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
             <Button
               type="submit"
-              className="w-full bg-emerald-600 hover:bg-emerald-900"
+              className="bg-emerald-600 hover:bg-emerald-900"
               disabled={upsertSellerAction.isPending}
             >
               {upsertSellerAction.isPending
