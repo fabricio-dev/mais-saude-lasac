@@ -1,10 +1,8 @@
-import { eq } from "drizzle-orm";
-import { SearchIcon } from "lucide-react";
+import { and, eq, ilike, or } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   PageActions,
   PageContainer,
@@ -19,9 +17,16 @@ import { sellersTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 
 import AddSellerButton from "./_components/add-seller-button";
+import SearchSellers from "./_components/search-sellers";
 import SellerCard from "./_components/seller-card";
 
-const SellersPage = async () => {
+interface SellersPageProps {
+  searchParams: {
+    search?: string;
+  };
+}
+
+const SellersPage = async ({ searchParams }: SellersPageProps) => {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -35,10 +40,30 @@ const SellersPage = async () => {
     redirect("/authentication");
   }
   if (!session?.user.clinic) {
-    redirect("/clinic-form");
+    redirect("/clinics");
   }
+
+  // Construir as condições de busca
+  const searchTerm = searchParams.search?.trim();
+
+  let whereCondition = eq(sellersTable.clinicId, session.user.clinic.id);
+
+  if (searchTerm) {
+    const searchConditions = or(
+      ilike(sellersTable.name, `%${searchTerm}%`),
+      ilike(sellersTable.cpfNumber, `%${searchTerm}%`),
+      ilike(sellersTable.email, `%${searchTerm}%`),
+      ilike(sellersTable.phoneNumber, `%${searchTerm}%`),
+    );
+
+    whereCondition = and(
+      eq(sellersTable.clinicId, session.user.clinic.id),
+      searchConditions,
+    ) as typeof whereCondition;
+  }
+
   const sellers = await db.query.sellersTable.findMany({
-    where: eq(sellersTable.clinicId, session.user.clinic.id),
+    where: whereCondition,
   });
   return (
     <PageContainer>
@@ -55,21 +80,37 @@ const SellersPage = async () => {
       </PageHeader>
       <PageContent>
         <div className="grid gap-6 md:grid-cols-2">
-          <div className="flex gap-2">
-            <Input type="text" placeholder="Pesquisar" />
-            <Button variant="outline">
-              <SearchIcon className="h-4 w-4" />
-            </Button>
-          </div>
+          <Suspense fallback={<div>Carre...</div>}>
+            <SearchSellers />
+          </Suspense>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {sellers.map((seller) => (
-            <SellerCard key={seller.id} seller={seller} />
-          ))}
+          {sellers.length > 0 ? (
+            sellers.map((seller) => (
+              <SellerCard key={seller.id} seller={seller} />
+            ))
+          ) : (
+            <div className="col-span-full py-8 text-center">
+              <p className="text-gray-500">
+                {searchTerm
+                  ? `Nenhum vendedor encontrado para "${searchTerm}"`
+                  : "Nenhum vendedor cadastrado"}
+              </p>
+            </div>
+          )}
         </div>
       </PageContent>
     </PageContainer>
   );
 };
-export default SellersPage;
+// Wrapper para suporte ao Suspense com searchParams
+const SellersPageWrapper = (props: SellersPageProps) => {
+  return (
+    <Suspense fallback={<div>Carregando vendedores...</div>}>
+      <SellersPage {...props} />
+    </Suspense>
+  );
+};
+
+export default SellersPageWrapper;

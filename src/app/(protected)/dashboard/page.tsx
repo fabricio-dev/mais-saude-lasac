@@ -15,7 +15,7 @@ const DashboardPage = async () => {
   }
 
   if (!session?.user.clinic) {
-    redirect("/clinic-form");
+    redirect("/clinics");
   }
 
   return (
@@ -24,6 +24,7 @@ const DashboardPage = async () => {
 
       <h1>{session?.user?.name}</h1>
       <h1>{session?.user?.email}</h1>
+
       <SignOutButton />
     </div>
   );

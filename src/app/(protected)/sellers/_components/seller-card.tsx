@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarIcon, ClockIcon, PencilIcon } from "lucide-react";
+import { DollarSign, PencilIcon } from "lucide-react";
 import { useState } from "react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -45,12 +45,13 @@ const SellerCard = ({ seller }: SellerCardProps) => {
       <Separator />
       <CardContent className="flex flex-col gap-2">
         <Badge variant="outline">
-          <CalendarIcon className="mr-1" />
-          seguda a Sexta
+          Convenios vendidos
+          <DollarSign className="mr-1" />
+          1000,00
         </Badge>
         <Badge variant="outline">
-          <ClockIcon className="mr-1" />
-          das 08:00 as 18:00
+          <DollarSign className="mr-1" />
+          Total vendido
         </Badge>
       </CardContent>
       <Separator />
@@ -66,6 +67,7 @@ const SellerCard = ({ seller }: SellerCardProps) => {
             </Button>
           </DialogTrigger>
           <UpsertSellerForm
+            isOpen={isUpsertSellerFormOpen}
             seller={seller}
             onSuccess={() => setIsUpsertSellerFormOpen(false)}
           />

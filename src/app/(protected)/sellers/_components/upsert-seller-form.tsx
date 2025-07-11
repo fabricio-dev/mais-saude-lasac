@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { TrashIcon } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -45,8 +46,6 @@ import {
 } from "@/components/ui/select";
 import { sellersTable } from "@/db/schema";
 
-import { unityCity } from "../_constants";
-
 const formSchema = z.object({
   name: z.string().trim().min(1, { message: "Nome é obrigatório" }),
   email: z.string().trim().email({ message: "Email inválido" }),
@@ -56,15 +55,27 @@ const formSchema = z.object({
     .min(8, { message: "Senha deve ter no mínimo 8 caracteres" }),
   cpfNumber: z.string().trim().min(11, { message: "CPF inválido" }),
   phoneNumber: z.string().trim().min(11, { message: "Telefone é obrigatório" }),
-  unity: z.string().trim().min(1, { message: "Unidade é obrigatória" }),
+  unity: z.string().trim().min(1, { message: "Clínica é obrigatória" }),
 });
 
 interface UpsertSellerFormProps {
+  isOpen: boolean;
   seller?: typeof sellersTable.$inferSelect;
   onSuccess?: () => void;
 }
 
-const UpsertSellerForm = ({ seller, onSuccess }: UpsertSellerFormProps) => {
+interface Clinic {
+  id: string;
+  name: string;
+}
+
+const UpsertSellerForm = ({
+  isOpen,
+  seller,
+  onSuccess,
+}: UpsertSellerFormProps) => {
+  const [clinics, setClinics] = useState<Clinic[]>([]);
+
   const form = useForm<z.infer<typeof formSchema>>({
     shouldUnregister: true,
     resolver: zodResolver(formSchema),
@@ -77,6 +88,33 @@ const UpsertSellerForm = ({ seller, onSuccess }: UpsertSellerFormProps) => {
       unity: seller?.unity ?? "",
     },
   });
+
+  // Carregar clínicas
+  useEffect(() => {
+    if (!isOpen) {
+      form.reset({
+        name: seller?.name ?? "",
+        email: seller?.email ?? "",
+        password: seller?.password ?? "",
+        cpfNumber: seller?.cpfNumber ?? "",
+        phoneNumber: seller?.phoneNumber ?? "",
+        unity: seller?.unity ?? "",
+      });
+    }
+    const loadClinics = async () => {
+      try {
+        const response = await fetch("/api/clinics");
+        if (response.ok) {
+          const clinicsData = await response.json();
+          setClinics(clinicsData);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar clínicas:", error);
+      }
+    };
+
+    loadClinics();
+  }, [isOpen, seller, form]);
 
   const upsertSellerAction = useAction(upsertSeller, {
     onSuccess: () => {
@@ -127,7 +165,7 @@ const UpsertSellerForm = ({ seller, onSuccess }: UpsertSellerFormProps) => {
               <FormItem>
                 <FormLabel className="text-amber-950">Nome</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input placeholder="Digite o nome completo" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -140,7 +178,11 @@ const UpsertSellerForm = ({ seller, onSuccess }: UpsertSellerFormProps) => {
               <FormItem>
                 <FormLabel className="text-amber-950">Email</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input
+                    type="email"
+                    placeholder="exemplo@email.com"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -153,7 +195,11 @@ const UpsertSellerForm = ({ seller, onSuccess }: UpsertSellerFormProps) => {
               <FormItem>
                 <FormLabel className="text-amber-950">Senha</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input
+                    type="password"
+                    placeholder="Mínimo 8 caracteres"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -166,7 +212,7 @@ const UpsertSellerForm = ({ seller, onSuccess }: UpsertSellerFormProps) => {
               <FormItem>
                 <FormLabel className="text-amber-950">CPF</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input placeholder="Digite o CPF" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -179,7 +225,7 @@ const UpsertSellerForm = ({ seller, onSuccess }: UpsertSellerFormProps) => {
               <FormItem>
                 <FormLabel className="text-amber-950">Telefone</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input placeholder="Digite o telefone" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -191,7 +237,7 @@ const UpsertSellerForm = ({ seller, onSuccess }: UpsertSellerFormProps) => {
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-amber-950">
-                  Unidade do Vendedor
+                  Clínica do Vendedor
                 </FormLabel>
                 <Select
                   onValueChange={field.onChange}
@@ -199,14 +245,13 @@ const UpsertSellerForm = ({ seller, onSuccess }: UpsertSellerFormProps) => {
                 >
                   <FormControl>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecione a unidade" />
+                      <SelectValue placeholder="Selecione a clínica" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {/* TODO: fazer consulta no banco de dados para pegar as unidades */}
-                    {unityCity.map((unity) => (
-                      <SelectItem key={unity.value} value={unity.value}>
-                        {unity.label}
+                    {clinics.map((clinic) => (
+                      <SelectItem key={clinic.id} value={clinic.name}>
+                        {clinic.name}
                       </SelectItem>
                     ))}
                   </SelectContent>

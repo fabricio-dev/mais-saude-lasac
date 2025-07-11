@@ -41,7 +41,7 @@ const items = [
   },
   {
     title: "Convênios",
-    url: "/conventions",
+    url: "/patients",
     icon: IdCard,
   },
   {
@@ -51,7 +51,7 @@ const items = [
   },
   {
     title: "Unidades",
-    url: "/units",
+    url: "/clinics",
     icon: Building2,
   },
   {

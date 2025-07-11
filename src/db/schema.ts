@@ -100,23 +100,19 @@ export const patientsTable = pgTable("patients", {
   birthDate: date("birth_date").notNull(),
   rgNumber: text("rg_number").notNull(),
   cpfNumber: text("cpf_number").notNull(),
-  email: text("email").notNull(),
+
   phoneNumber: text("phone_number").notNull(),
   address: text("address").notNull(),
   homeNumber: text("home_number").notNull(),
   city: text("city").notNull(),
   state: text("state").notNull(),
-  zipCode: text("zip_code").notNull(),
-  sex: patientsSexEnum("sex").notNull(), //limitar a 2 valores aplicar en demais tabelas o enum
+
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
     .$onUpdate(() => new Date()),
 
-  clinicId: uuid("clinic_id").references(() => clinicsTable.id, {
-    onDelete: "cascade",
-  }),
-  // fazer enum para clinicas listando as clinicas
+  cityContract: text("city_contract").notNull(),
   cardType: typeCardEnum("card_type").notNull(),
   numberCards: integer("number_cards").notNull(),
   sellerId: uuid("seller_id").references(() => sellersTable.id),
@@ -125,10 +121,12 @@ export const patientsTable = pgTable("patients", {
   dependents3: text("dependents3"),
   dependents4: text("dependents4"),
   dependents5: text("dependents5"),
-  expirationDate: timestamp("expiration_date").notNull(), // estudar como fazer o campo ser automaticamente atualizado para um ano a mais
-  statusAgreement: statusAgreementEnum("status_agreement").notNull(),
+  expirationDate: timestamp("expiration_date"), // estudar como fazer o campo ser automaticamente atualizado para um ano a mais
+  statusAgreement: statusAgreementEnum("status_agreement"),
 });
+
 /* 
+
 
 export const agreementTable = pgTable("agreements", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -152,7 +150,7 @@ export const agreementTable = pgTable("agreements", {
 
 export const clinicsTableRelation = relations(clinicsTable, ({ many }) => ({
   sellers: many(sellersTable),
-  patients: many(patientsTable),
+
   usersToClinics: many(usersToClinicsTable),
 }));
 
@@ -168,10 +166,6 @@ export const sellersTableRelation = relations(
 );
 
 export const patientsTableRelation = relations(patientsTable, ({ one }) => ({
-  clinic: one(clinicsTable, {
-    fields: [patientsTable.clinicId],
-    references: [clinicsTable.id],
-  }),
   seller: one(sellersTable, {
     fields: [patientsTable.sellerId],
     references: [sellersTable.id],

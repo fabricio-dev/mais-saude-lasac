@@ -1,0 +1,187 @@
+import { and, eq, ilike, inArray, isNotNull, lte, or } from "drizzle-orm";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { Suspense } from "react";
+
+import { Button } from "@/components/ui/button";
+import {
+  PageActions,
+  PageContainer,
+  PageContent,
+  PageDescription,
+  PageHeader,
+  PageHeaderContent,
+  PageTitle,
+} from "@/components/ui/page-container";
+import { db } from "@/db";
+import { patientsTable, sellersTable, usersToClinicsTable } from "@/db/schema";
+import { auth } from "@/lib/auth";
+
+import AddPatientButton from "./_components/add-patient-button";
+import ListExpiredButton from "./_components/list-expired-button";
+import PatientCard from "./_components/patient-card";
+import SearchPatients from "./_components/search-patients";
+
+interface PatientsPageProps {
+  searchParams: {
+    search?: string;
+    filter?: string;
+  };
+}
+
+const PatientsPage = async ({ searchParams }: PatientsPageProps) => {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session?.user) {
+    redirect("/authentication");
+  }
+
+  const isShowingExpired = searchParams.filter === "expired";
+
+  // Primeiro, buscar todas as clínicas do usuário
+  const userClinics = await db
+    .select({ clinicId: usersToClinicsTable.clinicId })
+    .from(usersToClinicsTable)
+    .where(eq(usersToClinicsTable.userId, session.user.id));
+
+  const clinicIds = userClinics.map((uc) => uc.clinicId);
+
+  // Se o usuário não tem clínicas, redirecionar para criar uma
+  if (clinicIds.length === 0) {
+    redirect("/clinics");
+  }
+
+  // Buscar vendedores das clínicas do usuário
+  const sellers = await db
+    .select({ id: sellersTable.id })
+    .from(sellersTable)
+    .where(inArray(sellersTable.clinicId, clinicIds));
+
+  const sellerIds = sellers.map((s) => s.id);
+
+  // Construir as condições de busca
+  const searchTerm = searchParams.search?.trim();
+
+  let whereCondition =
+    sellerIds.length > 0
+      ? inArray(patientsTable.sellerId, sellerIds)
+      : undefined;
+
+  // Aplicar filtro de vencidos se necessário
+  if (isShowingExpired && sellerIds.length > 0) {
+    const expiredCondition = and(
+      inArray(patientsTable.sellerId, sellerIds),
+      isNotNull(patientsTable.expirationDate),
+      lte(patientsTable.expirationDate, new Date()),
+    );
+
+    whereCondition = expiredCondition;
+  }
+
+  // Aplicar filtro de busca por texto
+  if (searchTerm && whereCondition) {
+    const searchConditions = or(
+      ilike(patientsTable.name, `%${searchTerm}%`),
+      ilike(patientsTable.cpfNumber, `%${searchTerm}%`),
+      ilike(patientsTable.rgNumber, `%${searchTerm}%`),
+      ilike(patientsTable.phoneNumber, `%${searchTerm}%`),
+      ilike(patientsTable.city, `%${searchTerm}%`),
+      ilike(patientsTable.cityContract, `%${searchTerm}%`),
+    );
+
+    whereCondition = and(whereCondition, searchConditions);
+  }
+
+  // Buscar pacientes dos vendedores das clínicas do usuário
+  const patients = await db.query.patientsTable.findMany({
+    where: whereCondition,
+    with: {
+      seller: true,
+    },
+    orderBy: (patients, { desc, asc }) => [
+      isShowingExpired
+        ? asc(patients.expirationDate)
+        : desc(patients.createdAt),
+    ],
+  });
+
+  return (
+    <PageContainer>
+      <PageHeader>
+        <PageHeaderContent>
+          <PageTitle>
+            {isShowingExpired ? "Pacientes Vencidos" : "Pacientes"}
+          </PageTitle>
+          <PageDescription>
+            {isShowingExpired
+              ? "Pacientes com data de expiração vencida"
+              : "Gerencie todos os pacientes"}
+          </PageDescription>
+        </PageHeaderContent>
+        <PageActions>
+          {sellerIds.length > 0 && (
+            <div className="flex gap-2">
+              <ListExpiredButton />
+              <AddPatientButton />
+            </div>
+          )}
+        </PageActions>
+      </PageHeader>
+      <PageContent>
+        {sellerIds.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Nenhum vendedor cadastrado
+            </h3>
+            <p className="mt-2 text-sm text-gray-600">
+              Você precisa cadastrar pelo menos um vendedor antes de adicionar
+              pacientes.
+            </p>
+            <Button className="mt-4" asChild>
+              <a href="/sellers">Cadastrar Vendedor</a>
+            </Button>
+          </div>
+        ) : (
+          <>
+            <div className="grid gap-6 md:grid-cols-2">
+              <Suspense fallback={<div>Carregando...</div>}>
+                <SearchPatients />
+              </Suspense>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {patients.length > 0 ? (
+                patients.map((patient) => (
+                  <PatientCard key={patient.id} patient={patient} />
+                ))
+              ) : (
+                <div className="col-span-full py-8 text-center">
+                  <p className="text-gray-500">
+                    {isShowingExpired
+                      ? "Nenhum paciente vencido encontrado"
+                      : searchTerm
+                        ? `Nenhum paciente encontrado para "${searchTerm}"`
+                        : "Nenhum paciente cadastrado"}
+                  </p>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </PageContent>
+    </PageContainer>
+  );
+};
+
+// Wrapper para suporte ao Suspense com searchParams
+const PatientsPageWrapper = (props: PatientsPageProps) => {
+  return (
+    <Suspense fallback={<div>Carregando pacientes...</div>}>
+      <PatientsPage {...props} />
+    </Suspense>
+  );
+};
+
+export default PatientsPageWrapper;
