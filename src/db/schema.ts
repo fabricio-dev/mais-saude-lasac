@@ -85,7 +85,6 @@ export const sellersTable = pgTable("sellers", {
   }),
 });
 
-export const patientsSexEnum = pgEnum("patients_sex", ["male", "female"]);
 export const typeCardEnum = pgEnum("type_card", ["enterprise", "personal"]);
 
 export const statusAgreementEnum = pgEnum("status_agreement", [
@@ -114,6 +113,7 @@ export const patientsTable = pgTable("patients", {
 
   cityContract: text("city_contract").notNull(),
   cardType: typeCardEnum("card_type").notNull(),
+  Enterprise: text("enterprise"),
   numberCards: integer("number_cards").notNull(),
   sellerId: uuid("seller_id").references(() => sellersTable.id),
   dependents1: text("dependents1"),
@@ -123,6 +123,7 @@ export const patientsTable = pgTable("patients", {
   dependents5: text("dependents5"),
   expirationDate: timestamp("expiration_date"), // estudar como fazer o campo ser automaticamente atualizado para um ano a mais
   statusAgreement: statusAgreementEnum("status_agreement"),
+  observation: text("observation"),
 });
 
 /* 
