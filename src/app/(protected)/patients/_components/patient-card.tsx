@@ -189,10 +189,7 @@ const PatientCard = ({ patient }: PatientCardProps) => {
               <span class="label">Número de Cartões:</span>
               <span class="value">${patient.numberCards}</span>
             </div>
-            <div class="data-row">
-              <span class="label">Cidade do Contrato:</span>
-              <span class="value">${patient.cityContract}</span>
-            </div>
+           
             ${
               patient.seller
                 ? `
@@ -301,9 +298,7 @@ const PatientCard = ({ patient }: PatientCardProps) => {
               <strong>Vendedor:</strong> {patient.seller.name}
             </p>
           )}
-          <p>
-            <strong>Cidade do Contrato:</strong> {patient.cityContract}
-          </p>
+
           {patient.expirationDate && (
             <p
               className={`font-medium ${isPatientExpired() ? "text-red-600" : "text-gray-600"}`}

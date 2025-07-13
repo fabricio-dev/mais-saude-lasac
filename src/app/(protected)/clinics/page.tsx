@@ -21,9 +21,9 @@ import ClinicCard from "./_components/clinic-card";
 import SearchClinics from "./_components/search-clinics";
 
 interface ClinicsPageProps {
-  searchParams: {
+  searchParams: Promise<{
     search?: string;
-  };
+  }>;
 }
 
 const ClinicsPage = async ({ searchParams }: ClinicsPageProps) => {
@@ -35,8 +35,9 @@ const ClinicsPage = async ({ searchParams }: ClinicsPageProps) => {
     redirect("/authentication");
   }
 
-  // Construir as condições de busca
-  const searchTerm = searchParams.search?.trim();
+  // Aguardar searchParams antes de usar
+  const { search } = await searchParams;
+  const searchTerm = search?.trim();
 
   let whereCondition = eq(usersToClinicsTable.userId, session.user.id);
 

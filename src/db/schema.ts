@@ -111,11 +111,11 @@ export const patientsTable = pgTable("patients", {
     .defaultNow()
     .$onUpdate(() => new Date()),
 
-  cityContract: text("city_contract").notNull(),
   cardType: typeCardEnum("card_type").notNull(),
   Enterprise: text("enterprise"),
   numberCards: integer("number_cards").notNull(),
   sellerId: uuid("seller_id").references(() => sellersTable.id),
+  clinicId: uuid("clinic_id").references(() => clinicsTable.id),
   dependents1: text("dependents1"),
   dependents2: text("dependents2"),
   dependents3: text("dependents3"),
@@ -151,7 +151,7 @@ export const agreementTable = pgTable("agreements", {
 
 export const clinicsTableRelation = relations(clinicsTable, ({ many }) => ({
   sellers: many(sellersTable),
-
+  patients: many(patientsTable),
   usersToClinics: many(usersToClinicsTable),
 }));
 
@@ -170,6 +170,10 @@ export const patientsTableRelation = relations(patientsTable, ({ one }) => ({
   seller: one(sellersTable, {
     fields: [patientsTable.sellerId],
     references: [sellersTable.id],
+  }),
+  clinic: one(clinicsTable, {
+    fields: [patientsTable.clinicId],
+    references: [clinicsTable.id],
   }),
 }));
 

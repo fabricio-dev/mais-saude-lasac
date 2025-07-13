@@ -46,10 +46,6 @@ const formSchema = z.object({
   city: z.string().trim().min(1, { message: "Cidade é obrigatória" }),
   state: z.string().trim().min(2, { message: "UF é obrigatória" }),
 
-  cityContract: z
-    .string()
-    .trim()
-    .min(1, { message: "Cidade do contrato é obrigatória" }),
   cardType: z.enum(["enterprise", "personal"], {
     message: "Tipo de cartão é obrigatório",
   }),
@@ -57,6 +53,7 @@ const formSchema = z.object({
     .string()
     .min(1, { message: "Quantidade de cartões é obrigatória" }),
   sellerId: z.string().uuid({ message: "Vendedor é obrigatório" }),
+  clinicId: z.string().uuid({ message: "Clínica é obrigatória" }),
   dependents1: z.string().optional(),
   dependents2: z.string().optional(),
   dependents3: z.string().optional(),
@@ -70,16 +67,15 @@ interface UpsertPatientFormProps {
   onSuccess?: () => void;
 }
 
+interface Seller {
+  id: string;
+  name: string;
+  // mudei para o id para testar
+}
 interface Clinic {
   id: string;
   name: string;
 }
-
-interface Seller {
-  id: string;
-  name: string;
-}
-
 const ufs = [
   "AC",
   "AL",
@@ -115,9 +111,8 @@ const UpsertPatientForm = ({
   patient,
   onSuccess,
 }: UpsertPatientFormProps) => {
-  const [clinics, setClinics] = useState<Clinic[]>([]);
   const [sellers, setSellers] = useState<Seller[]>([]);
-
+  const [clinics, setClinics] = useState<Clinic[]>([]);
   const form = useForm<z.infer<typeof formSchema>>({
     shouldUnregister: true,
     resolver: zodResolver(formSchema),
@@ -134,10 +129,10 @@ const UpsertPatientForm = ({
       city: patient?.city ?? "",
       state: patient?.state ?? "",
 
-      cityContract: patient?.cityContract ?? "",
       cardType: patient?.cardType ?? "personal",
       numberCards: patient?.numberCards?.toString() ?? "",
       sellerId: patient?.sellerId ?? "",
+      clinicId: patient?.clinicId ?? "", // mudei para o id para testar
       dependents1: patient?.dependents1 ?? "",
       dependents2: patient?.dependents2 ?? "",
       dependents3: patient?.dependents3 ?? "",
@@ -162,10 +157,10 @@ const UpsertPatientForm = ({
         city: patient?.city ?? "",
         state: patient?.state ?? "",
 
-        cityContract: patient?.cityContract ?? "",
         cardType: patient?.cardType ?? "personal",
         numberCards: patient?.numberCards?.toString() ?? "",
         sellerId: patient?.sellerId ?? "",
+        clinicId: patient?.clinicId ?? "",
         dependents1: patient?.dependents1 ?? "",
         dependents2: patient?.dependents2 ?? "",
         dependents3: patient?.dependents3 ?? "",
@@ -175,18 +170,17 @@ const UpsertPatientForm = ({
     }
     const loadData = async () => {
       try {
-        // Carregar clínicas
-        const clinicsResponse = await fetch("/api/clinics");
-        if (clinicsResponse.ok) {
-          const clinicsData = await clinicsResponse.json();
-          setClinics(clinicsData);
-        }
-
         // Carregar vendedores
         const sellersResponse = await fetch("/api/sellers");
         if (sellersResponse.ok) {
           const sellersData = await sellersResponse.json();
           setSellers(sellersData);
+        }
+        // Carregar clínicas
+        const clinicsResponse = await fetch("/api/clinics");
+        if (clinicsResponse.ok) {
+          const clinicsData = await clinicsResponse.json();
+          setClinics(clinicsData);
         }
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
@@ -215,6 +209,7 @@ const UpsertPatientForm = ({
       ...values,
       numberCards: parseInt(values.numberCards),
       id: patient?.id,
+      clinicId: values.clinicId, // mudei para o id para testar
     });
   };
 
@@ -395,36 +390,6 @@ const UpsertPatientForm = ({
 
             <FormField
               control={form.control}
-              name="cityContract"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-amber-950">
-                    Cidade do Contrato
-                  </FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione a clínica" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {clinics.map((clinic) => (
-                        <SelectItem key={clinic.id} value={clinic.name}>
-                          {clinic.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
               name="cardType"
               render={({ field }) => (
                 <FormItem>
@@ -485,6 +450,33 @@ const UpsertPatientForm = ({
                       {sellers.map((seller) => (
                         <SelectItem key={seller.id} value={seller.id}>
                           {seller.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="clinicId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-amber-950">Clínica</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione a clínica" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {clinics.map((clinic) => (
+                        <SelectItem key={clinic.id} value={clinic.id}>
+                          {clinic.name}
                         </SelectItem>
                       ))}
                     </SelectContent>

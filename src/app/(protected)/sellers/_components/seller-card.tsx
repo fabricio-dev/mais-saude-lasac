@@ -1,6 +1,6 @@
 "use client";
 
-import { DollarSign, PencilIcon } from "lucide-react";
+import { Building2, DollarSign, PencilIcon, Users } from "lucide-react";
 import { useState } from "react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -18,9 +18,11 @@ import { sellersTable } from "@/db/schema";
 
 import UpsertSellerForm from "./upsert-seller-form";
 
-//tentar usar interface para pegar as clinicas do banco
 interface SellerCardProps {
-  seller: typeof sellersTable.$inferSelect;
+  seller: typeof sellersTable.$inferSelect & {
+    patientsCount: number;
+    clinicName: string | null;
+  };
 }
 const SellerCard = ({ seller }: SellerCardProps) => {
   const [isUpsertSellerFormOpen, setIsUpsertSellerFormOpen] = useState(false);
@@ -28,6 +30,19 @@ const SellerCard = ({ seller }: SellerCardProps) => {
     .split(" ")
     .map((name) => name[0])
     .join("");
+
+  // Calcular valor dos convênios vendidos (pacientes * R$ 100,00)
+  const conveniosValue = seller.patientsCount * 100;
+
+  // Formatar valor como moeda brasileira
+  const formatCurrency = (value: number): string => {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value);
+  };
 
   return (
     <Card>
@@ -44,14 +59,30 @@ const SellerCard = ({ seller }: SellerCardProps) => {
       </CardHeader>
       <Separator />
       <CardContent className="flex flex-col gap-2">
-        <Badge variant="outline">
-          Convenios vendidos
-          <DollarSign className="mr-1" />
-          1000,00
+        <Badge variant="outline" className="justify-between">
+          <div className="flex items-center">
+            <Users className="mr-2 h-4 w-4" />
+            Pacientes Cadastrados
+          </div>
+          <span className="font-semibold">{seller.patientsCount}</span>
         </Badge>
-        <Badge variant="outline">
-          <DollarSign className="mr-1" />
-          Total vendido
+        <Badge variant="outline" className="justify-between">
+          <div className="flex items-center">
+            <DollarSign className="mr-2 h-4 w-4" />
+            Convênios Vendidos
+          </div>
+          <span className="font-semibold">
+            {formatCurrency(conveniosValue)}
+          </span>
+        </Badge>
+        <Badge variant="outline" className="justify-between">
+          <div className="flex items-center">
+            <Building2 className="mr-2 h-4 w-4" />
+            Clínica
+          </div>
+          <span className="font-semibold">
+            {seller.clinicName || "Sem clínica"}
+          </span>
         </Badge>
       </CardContent>
       <Separator />
@@ -63,7 +94,7 @@ const SellerCard = ({ seller }: SellerCardProps) => {
           <DialogTrigger asChild>
             <Button className="w-full bg-red-800 hover:bg-red-900">
               <PencilIcon className="mr-1" />
-              Ver mais
+              Editar
             </Button>
           </DialogTrigger>
           <UpsertSellerForm

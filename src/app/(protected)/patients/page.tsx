@@ -19,14 +19,14 @@ import { auth } from "@/lib/auth";
 
 import AddPatientButton from "./_components/add-patient-button";
 import ListExpiredButton from "./_components/list-expired-button";
-import PatientCard from "./_components/patient-card";
+import PatientsTable from "./_components/patients-table";
 import SearchPatients from "./_components/search-patients";
 
 interface PatientsPageProps {
-  searchParams: {
+  searchParams: Promise<{
     search?: string;
     filter?: string;
-  };
+  }>;
 }
 
 const PatientsPage = async ({ searchParams }: PatientsPageProps) => {
@@ -38,7 +38,9 @@ const PatientsPage = async ({ searchParams }: PatientsPageProps) => {
     redirect("/authentication");
   }
 
-  const isShowingExpired = searchParams.filter === "expired";
+  // Aguardar searchParams antes de usar
+  const { search, filter } = await searchParams;
+  const isShowingExpired = filter === "expired";
 
   // Primeiro, buscar todas as clínicas do usuário
   const userClinics = await db
@@ -62,7 +64,7 @@ const PatientsPage = async ({ searchParams }: PatientsPageProps) => {
   const sellerIds = sellers.map((s) => s.id);
 
   // Construir as condições de busca
-  const searchTerm = searchParams.search?.trim();
+  const searchTerm = search?.trim();
 
   let whereCondition =
     sellerIds.length > 0
@@ -88,7 +90,6 @@ const PatientsPage = async ({ searchParams }: PatientsPageProps) => {
       ilike(patientsTable.rgNumber, `%${searchTerm}%`),
       ilike(patientsTable.phoneNumber, `%${searchTerm}%`),
       ilike(patientsTable.city, `%${searchTerm}%`),
-      ilike(patientsTable.cityContract, `%${searchTerm}%`),
     );
 
     whereCondition = and(whereCondition, searchConditions);
@@ -144,31 +145,22 @@ const PatientsPage = async ({ searchParams }: PatientsPageProps) => {
             </Button>
           </div>
         ) : (
-          <>
+          <div className="space-y-6">
             <div className="grid gap-6 md:grid-cols-2">
               <Suspense fallback={<div>Carregando...</div>}>
                 <SearchPatients />
               </Suspense>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {patients.length > 0 ? (
-                patients.map((patient) => (
-                  <PatientCard key={patient.id} patient={patient} />
-                ))
-              ) : (
-                <div className="col-span-full py-8 text-center">
-                  <p className="text-gray-500">
-                    {isShowingExpired
-                      ? "Nenhum paciente vencido encontrado"
-                      : searchTerm
-                        ? `Nenhum paciente encontrado para "${searchTerm}"`
-                        : "Nenhum paciente cadastrado"}
-                  </p>
-                </div>
-              )}
+            <div className="w-full">
+              <PatientsTable
+                patients={patients.map((patient) => ({
+                  ...patient,
+                  birthDate: new Date(patient.birthDate),
+                }))}
+              />
             </div>
-          </>
+          </div>
         )}
       </PageContent>
     </PageContainer>

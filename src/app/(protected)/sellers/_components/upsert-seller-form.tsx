@@ -250,7 +250,8 @@ const UpsertSellerForm = ({
                   </FormControl>
                   <SelectContent>
                     {clinics.map((clinic) => (
-                      <SelectItem key={clinic.id} value={clinic.name}>
+                      <SelectItem key={clinic.id} value={clinic.id}>
+                        {/* mudei para o id para testar */}
                         {clinic.name}
                       </SelectItem>
                     ))}

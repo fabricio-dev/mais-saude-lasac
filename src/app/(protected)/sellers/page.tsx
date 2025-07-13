@@ -1,4 +1,4 @@
-import { and, eq, ilike, or } from "drizzle-orm";
+import { and, count, eq, ilike, inArray, or } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -13,7 +13,12 @@ import {
   PageTitle,
 } from "@/components/ui/page-container";
 import { db } from "@/db";
-import { sellersTable } from "@/db/schema";
+import {
+  clinicsTable,
+  patientsTable,
+  sellersTable,
+  usersToClinicsTable,
+} from "@/db/schema";
 import { auth } from "@/lib/auth";
 
 import AddSellerButton from "./_components/add-seller-button";
@@ -21,9 +26,9 @@ import SearchSellers from "./_components/search-sellers";
 import SellerCard from "./_components/seller-card";
 
 interface SellersPageProps {
-  searchParams: {
+  searchParams: Promise<{
     search?: string;
-  };
+  }>;
 }
 
 const SellersPage = async ({ searchParams }: SellersPageProps) => {
@@ -31,22 +36,29 @@ const SellersPage = async ({ searchParams }: SellersPageProps) => {
     headers: await headers(),
   });
 
-  //user.admim para usuarios administradores ou nao para vendedores
-  //const isAdmin = session?.user.admin;\
-  //if (!isAdmin) {
-  //  redirect("/authentication");
-  //}
   if (!session?.user) {
     redirect("/authentication");
   }
-  if (!session?.user.clinic) {
+
+  // Buscar todas as clínicas do usuário
+  const userClinics = await db
+    .select({ clinicId: usersToClinicsTable.clinicId })
+    .from(usersToClinicsTable)
+    .where(eq(usersToClinicsTable.userId, session.user.id));
+
+  const clinicIds = userClinics.map((uc) => uc.clinicId);
+
+  // Se o usuário não tem clínicas, redirecionar para criar uma
+  if (clinicIds.length === 0) {
     redirect("/clinics");
   }
 
-  // Construir as condições de busca
-  const searchTerm = searchParams.search?.trim();
+  // Aguardar searchParams antes de usar
+  const { search } = await searchParams;
+  const searchTerm = search?.trim();
 
-  let whereCondition = eq(sellersTable.clinicId, session.user.clinic.id);
+  // Construir as condições de busca
+  let whereCondition = inArray(sellersTable.clinicId, clinicIds);
 
   if (searchTerm) {
     const searchConditions = or(
@@ -57,14 +69,32 @@ const SellersPage = async ({ searchParams }: SellersPageProps) => {
     );
 
     whereCondition = and(
-      eq(sellersTable.clinicId, session.user.clinic.id),
+      inArray(sellersTable.clinicId, clinicIds),
       searchConditions,
     ) as typeof whereCondition;
   }
 
-  const sellers = await db.query.sellersTable.findMany({
-    where: whereCondition,
-  });
+  // Buscar vendedores com contagem de pacientes
+  const sellersWithPatientsCount = await db
+    .select({
+      id: sellersTable.id,
+      name: sellersTable.name,
+      avatarImageUrl: sellersTable.avatarImageUrl,
+      cpfNumber: sellersTable.cpfNumber,
+      phoneNumber: sellersTable.phoneNumber,
+      email: sellersTable.email,
+      password: sellersTable.password,
+      unity: sellersTable.unity,
+      clinicId: sellersTable.clinicId,
+      clinicName: clinicsTable.name,
+      patientsCount: count(patientsTable.id),
+    })
+    .from(sellersTable)
+    .innerJoin(clinicsTable, eq(sellersTable.clinicId, clinicsTable.id))
+    .leftJoin(patientsTable, eq(sellersTable.id, patientsTable.sellerId))
+    .where(whereCondition)
+    .groupBy(sellersTable.id, clinicsTable.name);
+
   return (
     <PageContainer>
       <PageHeader>
@@ -80,14 +110,14 @@ const SellersPage = async ({ searchParams }: SellersPageProps) => {
       </PageHeader>
       <PageContent>
         <div className="grid gap-6 md:grid-cols-2">
-          <Suspense fallback={<div>Carre...</div>}>
+          <Suspense fallback={<div>Carregando...</div>}>
             <SearchSellers />
           </Suspense>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {sellers.length > 0 ? (
-            sellers.map((seller) => (
+          {sellersWithPatientsCount.length > 0 ? (
+            sellersWithPatientsCount.map((seller) => (
               <SellerCard key={seller.id} seller={seller} />
             ))
           ) : (

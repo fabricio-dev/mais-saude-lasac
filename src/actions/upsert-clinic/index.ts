@@ -1,15 +1,10 @@
 "use server";
-import { and, eq, inArray } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
 import { db } from "@/db";
-import {
-  clinicsTable,
-  patientsTable,
-  sellersTable,
-  usersToClinicsTable,
-} from "@/db/schema";
+import { clinicsTable, sellersTable, usersToClinicsTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
 
@@ -50,30 +45,6 @@ export const upsertClinic = actionClient
             unity: parsedInput.name,
           })
           .where(eq(sellersTable.unity, oldClinicName));
-
-        // Buscar todos os vendedores da clínica atualizada
-        const clinicSellers = await db
-          .select({ id: sellersTable.id })
-          .from(sellersTable)
-          .where(eq(sellersTable.clinicId, parsedInput.id));
-
-        const sellerIds = clinicSellers.map((seller) => seller.id);
-
-        // Atualizar o campo cityContract dos pacientes que pertencem aos vendedores desta clínica
-        // e que têm o nome antigo da clínica no campo cityContract
-        if (sellerIds.length > 0) {
-          await db
-            .update(patientsTable)
-            .set({
-              cityContract: parsedInput.name,
-            })
-            .where(
-              and(
-                eq(patientsTable.cityContract, oldClinicName),
-                inArray(patientsTable.sellerId, sellerIds),
-              ),
-            );
-        }
       }
     } else {
       // Criar nova clínica

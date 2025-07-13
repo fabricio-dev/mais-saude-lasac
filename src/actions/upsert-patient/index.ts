@@ -28,6 +28,7 @@ export const upsertPatient = actionClient
         .values({
           ...parsedInput,
           birthDate: new Date(parsedInput.birthDate).toISOString(),
+          clinicId: parsedInput.clinicId,
         })
         .onConflictDoUpdate({
           target: [patientsTable.id],

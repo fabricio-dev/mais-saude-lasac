@@ -12,10 +12,6 @@ export const upsertPatientSchema = z.object({
   city: z.string().trim().min(1, { message: "Cidade é obrigatória" }),
   state: z.string().trim().min(2, { message: "UF é obrigatória" }),
 
-  cityContract: z
-    .string()
-    .trim()
-    .min(1, { message: "Cidade do contrato é obrigatória" }),
   cardType: z.enum(["enterprise", "personal"], {
     message: "Tipo de cartão é obrigatório",
   }),
@@ -23,6 +19,7 @@ export const upsertPatientSchema = z.object({
     .number()
     .min(1, { message: "Quantidade de cartões é obrigatória" }),
   sellerId: z.string().uuid({ message: "Vendedor é obrigatório" }),
+  clinicId: z.string().uuid({ message: "Clínica é obrigatória" }),
   dependents1: z.string().optional(),
   dependents2: z.string().optional(),
   dependents3: z.string().optional(),
