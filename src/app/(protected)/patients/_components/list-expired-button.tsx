@@ -33,7 +33,7 @@ const ListExpiredButton = () => {
       }
     >
       <CalendarX className="h-4 w-4" />
-      {isShowingExpired ? "Mostrar Todos" : "Listar Vencidos"}
+      {isShowingExpired ? "Todos" : "Vencidos"}
     </Button>
   );
 };
