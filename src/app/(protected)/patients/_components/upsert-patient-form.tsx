@@ -214,7 +214,7 @@ const UpsertPatientForm = ({
   };
 
   return (
-    <DialogContent className="max-h-[98vh] max-w-4xl overflow-x-hidden overflow-y-auto">
+    <DialogContent className="max-h-[95vh] max-w-4xl overflow-x-hidden overflow-y-auto">
       <DialogHeader>
         <DialogTitle className="text-amber-950">
           {patient ? patient.name : "Adicionar Paciente"}
