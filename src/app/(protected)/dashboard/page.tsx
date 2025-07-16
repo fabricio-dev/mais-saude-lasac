@@ -17,6 +17,7 @@ import { clinicsTable, patientsTable, sellersTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 
 import { DatePicker } from "./_components/date-picker";
+import { RevenueChart } from "./_components/revenue-chart";
 import StatsCards from "./_components/stats-cards";
 
 interface DashboardPageProps {
@@ -85,6 +86,9 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
         .where(eq(clinicsTable.id, session.user.clinic.id)),
     ]);
 
+  //const chartSatartDate = dayjs().subtract(1, "month").startOf("day").toDate();
+  //const chartEndDate = dayjs().add(1, "day").endOf("day").toDate();
+
   return (
     <PageContainer>
       <PageHeader>
@@ -105,6 +109,9 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
           totalSellers={totalSellers.total}
           totalClinics={totalClinics.total}
         />
+        <div className="grid grid-cols-[2.2fr_1fr] gap-4">
+          <RevenueChart />
+        </div>
       </PageContent>
     </PageContainer>
   );
