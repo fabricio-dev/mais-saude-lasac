@@ -1,110 +1,145 @@
 "use client";
+import "dayjs/locale/pt-br";
 
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
+import dayjs from "dayjs";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+dayjs.locale("pt-br");
+
+import { DollarSign } from "lucide-react";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-
-export const description = "An area chart with gradient fill";
-
-const chartData = [
-  { month: "January", desktop: 186, mobile: 80 },
-  { month: "February", desktop: 305, mobile: 200 },
-  { month: "March", desktop: 237, mobile: 120 },
-  { month: "April", desktop: 73, mobile: 190 },
-  { month: "May", desktop: 209, mobile: 130 },
-  { month: "June", desktop: 214, mobile: 140 },
-];
+import { formatCurrencyInCents } from "@/helpers/currency";
 
 const chartConfig = {
-  desktop: {
-    label: "Desktop",
-    color: "var(--chart-1)",
+  convenios: {
+    label: "Convenios",
+    color: "#EE7177",
   },
-  mobile: {
-    label: "Mobile",
-    color: "var(--chart-2)",
+  faturamento: {
+    label: "Faturamento",
+    color: "#10B981",
   },
 } satisfies ChartConfig;
 
-export function RevenueChart() {
+interface RevenueChartProps {
+  dailyConveniosData: {
+    date: string;
+    convenios: number;
+    faturamento: number;
+  }[];
+}
+export function RevenueChart({ dailyConveniosData }: RevenueChartProps) {
+  const chartDays = Array.from({ length: 21 }).map((_, i) =>
+    dayjs()
+      .subtract(10 - i, "days")
+      .format("YYYY-MM-DD"),
+  );
+
+  const chartData = chartDays.map((date) => {
+    const dataForDay = dailyConveniosData.find((item) => item.date === date);
+    return {
+      date: dayjs(date).format("DD/MM"),
+      fullDate: date,
+      convenios: dataForDay?.convenios || 0,
+      faturamento: Number(dataForDay?.faturamento || 0),
+    };
+  });
+
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Faturamento</CardTitle>
-        <CardDescription>Faturamento total do mês</CardDescription>
+      <CardHeader className="flex flex-row items-center gap-2">
+        <DollarSign />
+        <CardTitle>Faturamento e Convenios</CardTitle>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig}>
+        <ChartContainer config={chartConfig} className="min-h-[200px]">
           <AreaChart
-            accessibilityLayer
             data={chartData}
-            margin={{
-              left: 12,
-              right: 12,
-            }}
+            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
           >
-            <CartesianGrid vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" />
             <XAxis
-              dataKey="month"
+              dataKey="date"
+              tickLine={false}
+              tickMargin={10}
+              axisLine={false}
+            />
+            <YAxis
+              yAxisId="left"
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              tickFormatter={(value) => value.slice(0, 3)}
             />
-            <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-            <defs>
-              <linearGradient id="fillDesktop" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor="var(--color-desktop)"
-                  stopOpacity={0.8}
+            <YAxis
+              yAxisId="right"
+              orientation="right"
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              tickFormatter={(value) => formatCurrencyInCents(value)}
+            />
+            <ChartTooltip
+              content={
+                <ChartTooltipContent
+                  formatter={(value, name) => {
+                    if (name === "faturamento") {
+                      return (
+                        <>
+                          <div className="h-3 w-3 rounded bg-[#10B981]" />
+                          <span className="text-muted-foreground">
+                            Faturamento:
+                          </span>
+                          <span className="font-semibold">
+                            {formatCurrencyInCents(Number(value))}
+                          </span>
+                        </>
+                      );
+                    }
+                    return (
+                      <>
+                        <div className="h-3 w-3 rounded bg-[#EE7177]" />
+                        <span className="text-muted-foreground">
+                          Convenios:
+                        </span>
+                        <span className="font-semibold">{value}</span>
+                      </>
+                    );
+                  }}
+                  labelFormatter={(label, payload) => {
+                    if (payload && payload[0]) {
+                      return dayjs(payload[0].payload?.fullDate).format(
+                        "DD/MM/YYYY (dddd)",
+                      );
+                    }
+                    return label;
+                  }}
                 />
-                <stop
-                  offset="95%"
-                  stopColor="var(--color-desktop)"
-                  stopOpacity={0.1}
-                />
-              </linearGradient>
-              <linearGradient id="fillMobile" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor="var(--color-mobile)"
-                  stopOpacity={0.8}
-                />
-                <stop
-                  offset="95%"
-                  stopColor="var(--color-mobile)"
-                  stopOpacity={0.1}
-                />
-              </linearGradient>
-            </defs>
-            <Area
-              dataKey="mobile"
-              type="natural"
-              fill="url(#fillMobile)"
-              fillOpacity={0.4}
-              stroke="var(--color-mobile)"
-              stackId="a"
+              }
             />
             <Area
-              dataKey="desktop"
-              type="natural"
-              fill="url(#fillDesktop)"
-              fillOpacity={0.4}
-              stroke="var(--color-desktop)"
-              stackId="a"
+              yAxisId="left"
+              type="monotone"
+              dataKey="convenios"
+              stroke="var(--color-convenios)"
+              fill="var(--color-convenios)"
+              fillOpacity={0.2}
+              strokeWidth={2}
+            />
+            <Area
+              yAxisId="right"
+              type="monotone"
+              dataKey="faturamento"
+              stroke="var(--color-faturamento)"
+              fill="var(--color-faturamento)"
+              fillOpacity={0.2}
+              strokeWidth={2}
             />
           </AreaChart>
         </ChartContainer>

@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import { and, count, eq, gte, lte, sum } from "drizzle-orm";
+import { and, count, eq, gte, lte, sql, sum } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -86,8 +86,28 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
         .where(eq(clinicsTable.id, session.user.clinic.id)),
     ]);
 
-  //const chartSatartDate = dayjs().subtract(1, "month").startOf("day").toDate();
-  //const chartEndDate = dayjs().add(1, "day").endOf("day").toDate();
+  const chartSatartDate = dayjs().subtract(10, "days").startOf("day").toDate();
+  const chartEndDate = dayjs().add(10, "days").endOf("day").toDate();
+
+  const dailyConveniosData = await db
+    .select({
+      date: sql<string>`DATE(${patientsTable.createdAt})`.as("date"),
+      convenios: count(patientsTable.id),
+      faturamento:
+        sql<number>`COALESCE(SUM(${patientsTable.numberCards}), 0)`.as(
+          "faturamento",
+        ),
+    })
+    .from(patientsTable)
+    .where(
+      and(
+        eq(patientsTable.clinicId, session.user.clinic.id),
+        gte(patientsTable.createdAt, chartSatartDate),
+        lte(patientsTable.createdAt, chartEndDate),
+      ),
+    )
+    .groupBy(sql<string>`DATE(${patientsTable.createdAt})`)
+    .orderBy(sql<string>`DATE(${patientsTable.createdAt})`);
 
   return (
     <PageContainer>
@@ -110,7 +130,7 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
           totalClinics={totalClinics.total}
         />
         <div className="grid grid-cols-[2.2fr_1fr] gap-4">
-          <RevenueChart />
+          <RevenueChart dailyConveniosData={dailyConveniosData} />
         </div>
       </PageContent>
     </PageContainer>
