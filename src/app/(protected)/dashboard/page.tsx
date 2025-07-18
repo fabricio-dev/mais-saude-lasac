@@ -19,6 +19,7 @@ import { auth } from "@/lib/auth";
 import { ConveniosChart } from "./_components/convenios-chart";
 import { DatePicker } from "./_components/date-picker";
 import StatsCards from "./_components/stats-cards";
+import TopClinics from "./_components/top-clinics";
 import TopSellers from "./_components/top-sellers";
 
 interface DashboardPageProps {
@@ -47,54 +48,76 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
     );
   }
 
-  const [[totalPatients], [totalSellers], [totalClinics], topSellers] =
-    await Promise.all([
-      db
-        .select({
-          total: count(),
-        })
-        .from(patientsTable)
-        .where(
-          and(
-            eq(patientsTable.clinicId, session.user.clinic.id),
-            gte(patientsTable.createdAt, new Date(from)),
-            lte(patientsTable.createdAt, new Date(to)),
-          ),
+  const [
+    [totalPatients],
+    [totalSellers],
+    [totalClinics],
+    topSellers,
+    topClinics,
+  ] = await Promise.all([
+    db
+      .select({
+        total: count(),
+      })
+      .from(patientsTable)
+      .where(
+        and(
+          eq(patientsTable.clinicId, session.user.clinic.id),
+          gte(patientsTable.createdAt, new Date(from)),
+          lte(patientsTable.createdAt, new Date(to)),
         ),
-      db
-        .select({
-          total: count(),
-        })
-        .from(sellersTable)
-        .where(eq(sellersTable.clinicId, session.user.clinic.id)),
-      db
-        .select({
-          total: count(),
-        })
-        .from(clinicsTable)
-        .where(eq(clinicsTable.id, session.user.clinic.id)),
-      db
-        .select({
-          id: sellersTable.id,
-          name: sellersTable.name,
-          avatarImageUrl: sellersTable.avatarImageUrl,
-          clinic: sql<string>`${sellersTable.clinicId}`.as("clinic"),
-          convenios: count(patientsTable.id),
-        })
-        .from(sellersTable)
-        .leftJoin(
-          patientsTable,
-          and(
-            eq(sellersTable.id, patientsTable.sellerId),
-            gte(patientsTable.createdAt, new Date(from)),
-            lte(patientsTable.createdAt, new Date(to)),
-          ),
-        )
-        .where(eq(sellersTable.clinicId, session.user.clinic.id))
-        .groupBy(sellersTable.id)
-        .orderBy(desc(count(patientsTable.id)))
-        .limit(5),
-    ]);
+      ),
+    db
+      .select({
+        total: count(),
+      })
+      .from(sellersTable)
+      .where(eq(sellersTable.clinicId, session.user.clinic.id)),
+    db
+      .select({
+        total: count(),
+      })
+      .from(clinicsTable)
+      .where(eq(clinicsTable.id, session.user.clinic.id)),
+    db
+      .select({
+        id: sellersTable.id,
+        name: sellersTable.name,
+        avatarImageUrl: sellersTable.avatarImageUrl,
+        clinic: sql<string>`${sellersTable.clinicId}`.as("clinic"),
+        convenios: count(patientsTable.id),
+      })
+      .from(sellersTable)
+      .leftJoin(
+        patientsTable,
+        and(
+          eq(sellersTable.id, patientsTable.sellerId),
+          gte(patientsTable.createdAt, new Date(from)),
+          lte(patientsTable.createdAt, new Date(to)),
+        ),
+      )
+      .where(eq(sellersTable.clinicId, session.user.clinic.id))
+      .groupBy(sellersTable.id)
+      .orderBy(desc(count(patientsTable.id)))
+      .limit(5),
+    db
+      .select({
+        clinic: clinicsTable.name,
+        patients: count(patientsTable.id),
+      })
+      .from(patientsTable)
+      .innerJoin(clinicsTable, eq(patientsTable.clinicId, clinicsTable.id))
+      .where(
+        and(
+          eq(patientsTable.clinicId, session.user.clinic.id),
+          gte(patientsTable.createdAt, new Date(from)),
+          lte(patientsTable.createdAt, new Date(to)),
+        ),
+      )
+      .groupBy(clinicsTable.id)
+      .orderBy(desc(count(patientsTable.id)))
+      .limit(5),
+  ]);
 
   const chartSatartDate = dayjs().subtract(10, "days").startOf("day").toDate();
   const chartEndDate = dayjs().add(10, "days").endOf("day").toDate();
@@ -140,9 +163,13 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
           totalSellers={totalSellers.total}
           totalClinics={totalClinics.total}
         />
-        <div className="grid grid-cols-[2.2fr_1fr] gap-4">
+        <div className="grid grid-cols-[2.25fr_1fr] gap-4">
           <ConveniosChart dailyConveniosData={dailyConveniosData} />
           <TopSellers sellers={topSellers} />
+        </div>
+        <div className="grid grid-cols-[2.25fr_1fr] gap-4">
+          {/* tabela de convenios por clínica */}
+          <TopClinics topClinics={topClinics} />
         </div>
       </PageContent>
     </PageContainer>
