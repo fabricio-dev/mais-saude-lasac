@@ -28,14 +28,14 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-interface RevenueChartProps {
+interface ConveniosChartProps {
   dailyConveniosData: {
     date: string;
     convenios: number;
     faturamento: number;
   }[];
 }
-export function RevenueChart({ dailyConveniosData }: RevenueChartProps) {
+export function ConveniosChart({ dailyConveniosData }: ConveniosChartProps) {
   const chartDays = Array.from({ length: 21 }).map((_, i) =>
     dayjs()
       .subtract(10 - i, "days")

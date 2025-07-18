@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import { and, count, eq, gte, lte, sql, sum } from "drizzle-orm";
+import { and, count, desc, eq, gte, lte, sql } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -16,9 +16,10 @@ import { db } from "@/db";
 import { clinicsTable, patientsTable, sellersTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 
+import { ConveniosChart } from "./_components/convenios-chart";
 import { DatePicker } from "./_components/date-picker";
-import { RevenueChart } from "./_components/revenue-chart";
 import StatsCards from "./_components/stats-cards";
+import TopSellers from "./_components/top-sellers";
 
 interface DashboardPageProps {
   searchParams: Promise<{
@@ -46,20 +47,8 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
     );
   }
 
-  const [[totalRevenue], [totalPatients], [totalSellers], [totalClinics]] =
+  const [[totalPatients], [totalSellers], [totalClinics], topSellers] =
     await Promise.all([
-      db
-        .select({
-          total: sum(patientsTable.numberCards),
-        })
-        .from(patientsTable)
-        .where(
-          and(
-            eq(patientsTable.clinicId, session.user.clinic.id),
-            gte(patientsTable.createdAt, new Date(from)),
-            lte(patientsTable.createdAt, new Date(to)),
-          ),
-        ),
       db
         .select({
           total: count(),
@@ -84,6 +73,27 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
         })
         .from(clinicsTable)
         .where(eq(clinicsTable.id, session.user.clinic.id)),
+      db
+        .select({
+          id: sellersTable.id,
+          name: sellersTable.name,
+          avatarImageUrl: sellersTable.avatarImageUrl,
+          clinic: sql<string>`${sellersTable.clinicId}`.as("clinic"),
+          convenios: count(patientsTable.id),
+        })
+        .from(sellersTable)
+        .leftJoin(
+          patientsTable,
+          and(
+            eq(sellersTable.id, patientsTable.sellerId),
+            gte(patientsTable.createdAt, new Date(from)),
+            lte(patientsTable.createdAt, new Date(to)),
+          ),
+        )
+        .where(eq(sellersTable.clinicId, session.user.clinic.id))
+        .groupBy(sellersTable.id)
+        .orderBy(desc(count(patientsTable.id)))
+        .limit(5),
     ]);
 
   const chartSatartDate = dayjs().subtract(10, "days").startOf("day").toDate();
@@ -93,10 +103,9 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
     .select({
       date: sql<string>`DATE(${patientsTable.createdAt})`.as("date"),
       convenios: count(patientsTable.id),
-      faturamento:
-        sql<number>`COALESCE(SUM(${patientsTable.numberCards}), 0)`.as(
-          "faturamento",
-        ),
+      faturamento: sql<number>`COALESCE(COUNT(${patientsTable.id}), 0)`.as(
+        "faturamento",
+      ),
     })
     .from(patientsTable)
     .where(
@@ -124,13 +133,16 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
       </PageHeader>
       <PageContent>
         <StatsCards
-          totalRevenue={totalRevenue.total ? Number(totalRevenue.total) : null}
+          totalRevenue={
+            totalPatients.total ? Number(totalPatients.total) * 100 : null
+          }
           totalPatients={totalPatients.total}
           totalSellers={totalSellers.total}
           totalClinics={totalClinics.total}
         />
         <div className="grid grid-cols-[2.2fr_1fr] gap-4">
-          <RevenueChart dailyConveniosData={dailyConveniosData} />
+          <ConveniosChart dailyConveniosData={dailyConveniosData} />
+          <TopSellers sellers={topSellers} />
         </div>
       </PageContent>
     </PageContainer>
