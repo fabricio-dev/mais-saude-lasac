@@ -1,14 +1,20 @@
 import dayjs from "dayjs";
-import { and, asc, count, desc, eq, gte, lte, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 
 import { db } from "@/db";
-import { clinicsTable, patientsTable, sellersTable } from "@/db/schema";
+import {
+  clinicsTable,
+  patientsTable,
+  sellersTable,
+  usersToClinicsTable,
+} from "@/db/schema";
 
 interface Params {
   from: string;
   to: string;
   session: {
     user: {
+      id: string;
       clinic: {
         id: string;
       };
@@ -33,6 +39,7 @@ export const getDashboard = async ({ from, to, session }: Params) => {
     patientsToExpire,
     dailyConveniosData,
   ] = await Promise.all([
+    // TODO: Implementa a query para o total de pacientes
     db
       .select({
         total: count(),
@@ -40,32 +47,58 @@ export const getDashboard = async ({ from, to, session }: Params) => {
       .from(patientsTable)
       .where(
         and(
-          eq(patientsTable.clinicId, session.user.clinic.id),
+          inArray(
+            patientsTable.clinicId,
+            db
+              .select({ clinicId: usersToClinicsTable.clinicId })
+              .from(usersToClinicsTable)
+              .where(eq(usersToClinicsTable.userId, session.user.id)),
+          ),
           gte(patientsTable.createdAt, new Date(from)),
           lte(patientsTable.createdAt, new Date(to)),
         ),
       ),
+    // TODO: Implementa a query para o total de vendedores
     db
       .select({
         total: count(),
       })
       .from(sellersTable)
-      .where(eq(sellersTable.clinicId, session.user.clinic.id)),
+      .where(
+        inArray(
+          sellersTable.clinicId,
+          db
+            .select({ clinicId: usersToClinicsTable.clinicId })
+            .from(usersToClinicsTable)
+            .where(eq(usersToClinicsTable.userId, session.user.id)),
+        ),
+      ),
+    // TODO: Implementa a query para o total de clinicas
     db
       .select({
         total: count(),
       })
       .from(clinicsTable)
-      .where(eq(clinicsTable.id, session.user.clinic.id)),
+      .where(
+        inArray(
+          clinicsTable.id,
+          db
+            .select({ clinicId: usersToClinicsTable.clinicId })
+            .from(usersToClinicsTable)
+            .where(eq(usersToClinicsTable.userId, session.user.id)),
+        ),
+      ),
+    // TODO: Implementa a query para os top vendedores
     db
       .select({
         id: sellersTable.id,
         name: sellersTable.name,
         avatarImageUrl: sellersTable.avatarImageUrl,
-        clinic: sql<string>`${sellersTable.clinicId}`.as("clinic"),
+        clinic: clinicsTable.name,
         convenios: count(patientsTable.id),
       })
       .from(sellersTable)
+      .innerJoin(clinicsTable, eq(sellersTable.clinicId, clinicsTable.id))
       .leftJoin(
         patientsTable,
         and(
@@ -74,10 +107,19 @@ export const getDashboard = async ({ from, to, session }: Params) => {
           lte(patientsTable.createdAt, new Date(to)),
         ),
       )
-      .where(eq(sellersTable.clinicId, session.user.clinic.id))
-      .groupBy(sellersTable.id)
+      .where(
+        inArray(
+          sellersTable.clinicId,
+          db
+            .select({ clinicId: usersToClinicsTable.clinicId })
+            .from(usersToClinicsTable)
+            .where(eq(usersToClinicsTable.userId, session.user.id)),
+        ),
+      )
+      .groupBy(sellersTable.id, clinicsTable.name)
       .orderBy(desc(count(patientsTable.id)))
-      .limit(5),
+      .limit(10),
+    // TODO: Implementa a query para os top 12 clinicas
     db
       .select({
         clinic: clinicsTable.name,
@@ -87,17 +129,30 @@ export const getDashboard = async ({ from, to, session }: Params) => {
       .innerJoin(clinicsTable, eq(patientsTable.clinicId, clinicsTable.id))
       .where(
         and(
-          eq(patientsTable.clinicId, session.user.clinic.id),
+          inArray(
+            patientsTable.clinicId,
+            db
+              .select({ clinicId: usersToClinicsTable.clinicId })
+              .from(usersToClinicsTable)
+              .where(eq(usersToClinicsTable.userId, session.user.id)),
+          ),
           gte(patientsTable.createdAt, new Date(from)),
           lte(patientsTable.createdAt, new Date(to)),
         ),
       )
       .groupBy(clinicsTable.id)
       .orderBy(desc(count(patientsTable.id)))
-      .limit(5),
+      .limit(12),
+    // TODO: Implementa a query para os pacientes que estão para expirar ou exprirados
     db.query.patientsTable.findMany({
       where: and(
-        eq(patientsTable.clinicId, session.user.clinic.id),
+        inArray(
+          patientsTable.clinicId,
+          db
+            .select({ clinicId: usersToClinicsTable.clinicId })
+            .from(usersToClinicsTable)
+            .where(eq(usersToClinicsTable.userId, session.user.id)),
+        ),
         gte(patientsTable.expirationDate, regeExpiratedDate),
         lte(patientsTable.expirationDate, regeExpiratedEndDate),
       ),
@@ -106,8 +161,9 @@ export const getDashboard = async ({ from, to, session }: Params) => {
         clinic: true,
       },
       orderBy: asc(patientsTable.expirationDate),
-      limit: 30,
+      limit: 15,
     }),
+    // TODO: Implementa a query para os convenios diários dentre um intervalo de 21 dias
     db
       .select({
         date: sql<string>`DATE(${patientsTable.createdAt})`.as("date"),
@@ -119,7 +175,13 @@ export const getDashboard = async ({ from, to, session }: Params) => {
       .from(patientsTable)
       .where(
         and(
-          eq(patientsTable.clinicId, session.user.clinic.id),
+          inArray(
+            patientsTable.clinicId,
+            db
+              .select({ clinicId: usersToClinicsTable.clinicId })
+              .from(usersToClinicsTable)
+              .where(eq(usersToClinicsTable.userId, session.user.id)),
+          ),
           gte(patientsTable.createdAt, chartSatartDate),
           lte(patientsTable.createdAt, chartEndDate),
         ),

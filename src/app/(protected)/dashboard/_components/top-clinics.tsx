@@ -12,7 +12,8 @@ interface TopClinicsProps {
 }
 
 export default function TopClinics({ topClinics }: TopClinicsProps) {
-  const maxAppointments = Math.max(...topClinics.map((i) => i.patients));
+  const maxPatients = topClinics.reduce((acc, curr) => acc + curr.patients, 0);
+
   return (
     <Card className="mx-auto w-full">
       <CardContent>
@@ -26,8 +27,8 @@ export default function TopClinics({ topClinics }: TopClinicsProps) {
         {/* units List */}
         <div className="space-y-6">
           {topClinics.map((clinic) => {
-            // Porcentagem de ocupação da especialidade baseando-se no maior número de agendamentos
-            const progressValue = (clinic.patients / maxAppointments) * 100;
+            // Porcentagem de ocupação da especialidade baseando-se no maior número de pacientes
+            const progressValue = (clinic.patients / maxPatients) * 100;
 
             return (
               <div key={clinic.clinic} className="flex items-center gap-2">
@@ -54,7 +55,7 @@ export default function TopClinics({ topClinics }: TopClinicsProps) {
                   <Progress value={progressValue} className="w-full" />
                   <div className="flex w-full justify-between">
                     <span className="text-muted-foreground text-sm font-medium">
-                      {progressValue}%
+                      {progressValue.toFixed(1)}%
                     </span>
                   </div>
                 </div>
