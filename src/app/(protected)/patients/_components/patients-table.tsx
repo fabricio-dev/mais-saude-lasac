@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  ColumnDef,
   ColumnFiltersState,
   flexRender,
   getCoreRowModel,
@@ -12,47 +11,13 @@ import {
   useReactTable,
   VisibilityState,
 } from "@tanstack/react-table";
-import {
-  CheckCircle,
-  Edit2,
-  MoreHorizontal,
-  PrinterIcon,
-  Trash2,
-} from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { activatePatient } from "@/actions/activate-patient";
 import { deletePatient } from "@/actions/delete-patient";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -62,7 +27,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import UpsertPatientForm from "./upsert-patient-form";
+import { patientsTableColumns } from "./table-columns";
 
 interface Patient {
   id: string;
@@ -129,11 +94,7 @@ export default function PatientsTable({ patients }: PatientsTableProps) {
     deletePatientAction.execute({ id: patientId });
   };
 
-  const isPatientExpired = (expirationDate: Date | null) => {
-    if (!expirationDate) return false;
-    return new Date(expirationDate) <= new Date();
-  };
-
+  // Funções de formatação (apenas para impressão)
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString("pt-BR");
   };
@@ -522,213 +483,12 @@ export default function PatientsTable({ patients }: PatientsTableProps) {
     printWindow.document.close();
   };
 
-  const columns: ColumnDef<Patient>[] = [
-    {
-      accessorKey: "name",
-      header: "Nome",
-      cell: ({ row }) => (
-        <div className="font-medium">{row.getValue("name")}</div>
-      ),
-    },
-    {
-      accessorKey: "phoneNumber",
-      header: "Telefone",
-      cell: ({ row }) => (
-        <div className="text-sm">
-          {formatPhone(row.getValue("phoneNumber"))}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "seller",
-      header: "Vendedor",
-      cell: ({ row }) => {
-        const seller = row.original.seller;
-        return <div className="text-sm">{seller?.name || "Não atribuído"}</div>;
-      },
-    },
-    {
-      accessorKey: "cardType",
-      header: "Tipo de Cartão",
-      cell: ({ row }) => {
-        const cardType = row.getValue("cardType") as string;
-        return (
-          <Badge variant={cardType === "enterprise" ? "default" : "secondary"}>
-            {cardType === "enterprise" ? "EMPRESA" : "INDIVIDUAL"}
-          </Badge>
-        );
-      },
-    },
-    {
-      accessorKey: "expirationDate",
-      header: "Data de Expiração",
-      cell: ({ row }) => {
-        const expirationDate = row.getValue("expirationDate") as Date | null;
-        if (!expirationDate)
-          return <div className="text-muted-foreground">-</div>;
-
-        const isExpired = isPatientExpired(expirationDate);
-        return (
-          <div
-            className={`text-sm ${isExpired ? "font-medium text-red-600" : "text-muted-foreground"}`}
-          >
-            {formatDate(expirationDate)}
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: "status",
-      header: "Status",
-      cell: ({ row }) => {
-        const expirationDate = row.getValue("expirationDate") as Date | null;
-        const isExpired = isPatientExpired(expirationDate);
-
-        return (
-          <Badge
-            variant={isExpired ? "destructive" : "default"}
-            className={
-              isExpired
-                ? "bg-red-100 text-red-800"
-                : "bg-green-100 text-green-800"
-            }
-          >
-            {isExpired ? "Vencido" : "Ativo"}
-          </Badge>
-        );
-      },
-    },
-    {
-      id: "actions",
-      header: "Ações",
-      cell: ({ row }) => {
-        const patient = row.original;
-        const isExpired = isPatientExpired(patient.expirationDate);
-
-        return (
-          <div className="flex items-center">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <Dialog>
-                  <DialogTitle hidden>Editar Paciente</DialogTitle>
-                  <DialogTrigger asChild>
-                    <DropdownMenuItem
-                      onSelect={(e) => e.preventDefault()}
-                      className="cursor-pointer"
-                    >
-                      <Edit2 className="mr-2 h-4 w-4" />
-                      Editar
-                    </DropdownMenuItem>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-4xl">
-                    <UpsertPatientForm
-                      patient={{
-                        ...patient,
-                        birthDate: patient.birthDate
-                          .toISOString()
-                          .split("T")[0],
-                        clinicId: patient.clinicId,
-                      }}
-                      isOpen={true}
-                    />
-                  </DialogContent>
-                </Dialog>
-
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger className="cursor-pointer">
-                    <PrinterIcon className="mr-2 h-4 w-4" />
-                    Imprimir
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent>
-                    <DropdownMenuItem
-                      onClick={() => handlePrintCard(patient)}
-                      className="cursor-pointer"
-                    >
-                      <PrinterIcon className="mr-2 h-4 w-4" />
-                      Imprimir Cartão
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => handlePrintContract(patient)}
-                      className="cursor-pointer"
-                    >
-                      <PrinterIcon className="mr-2 h-4 w-4" />
-                      Imprimir Contrato
-                    </DropdownMenuItem>
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
-
-                {isExpired && (
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <DropdownMenuItem
-                        onSelect={(e) => e.preventDefault()}
-                        className="cursor-pointer text-green-600"
-                      >
-                        <CheckCircle className="mr-2 h-4 w-4" />
-                        Ativar
-                      </DropdownMenuItem>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Ativar Paciente</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Tem certeza que deseja ativar este paciente? Isso irá
-                          renovar a data de expiração por mais 1 ano.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => handleActivatePatient(patient.id)}
-                        >
-                          Ativar
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                )}
-
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <DropdownMenuItem
-                      onSelect={(e) => e.preventDefault()}
-                      className="cursor-pointer text-red-600"
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Excluir
-                    </DropdownMenuItem>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Excluir Paciente</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Tem certeza que deseja excluir este paciente? Esta ação
-                        não pode ser desfeita.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => handleDeletePatient(patient.id)}
-                        className="bg-red-600 hover:bg-red-700"
-                      >
-                        Excluir
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        );
-      },
-    },
-  ];
+  const columns = patientsTableColumns({
+    onActivate: handleActivatePatient,
+    onDelete: handleDeletePatient,
+    onPrintCard: handlePrintCard,
+    onPrintContract: handlePrintContract,
+  });
 
   const table = useReactTable({
     data: patients,

@@ -1,8 +1,11 @@
 import dayjs from "dayjs";
-import { and, count, desc, eq, gte, lte, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, lte, sql } from "drizzle-orm";
+import { Calendar } from "lucide-react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DataTable } from "@/components/ui/data-table";
 import {
   PageActions,
   PageContainer,
@@ -16,6 +19,7 @@ import { db } from "@/db";
 import { clinicsTable, patientsTable, sellersTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 
+import { patientsTableColumnsSimple } from "../patients/_components/table-columns";
 import { ConveniosChart } from "./_components/convenios-chart";
 import { DatePicker } from "./_components/date-picker";
 import StatsCards from "./_components/stats-cards";
@@ -42,6 +46,13 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
     redirect("/clinics");
   }
   const { from, to } = await searchParams;
+
+  const regeExpiratedDate = dayjs()
+    .subtract(90, "days")
+    .startOf("day")
+    .toDate();
+  const regeExpiratedEndDate = dayjs().add(7, "days").endOf("day").toDate();
+
   if (!from || !to) {
     redirect(
       `/dashboard?from=${dayjs().subtract(1, "month").add(1, "day").format("YYYY-MM-DD")}&to=${dayjs().add(1, "day").format("YYYY-MM-DD")}`,
@@ -54,6 +65,7 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
     [totalClinics],
     topSellers,
     topClinics,
+    patientsToExpire,
   ] = await Promise.all([
     db
       .select({
@@ -117,6 +129,19 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
       .groupBy(clinicsTable.id)
       .orderBy(desc(count(patientsTable.id)))
       .limit(5),
+    db.query.patientsTable.findMany({
+      where: and(
+        eq(patientsTable.clinicId, session.user.clinic.id),
+        gte(patientsTable.expirationDate, regeExpiratedDate),
+        lte(patientsTable.expirationDate, regeExpiratedEndDate),
+      ),
+      with: {
+        seller: true,
+        clinic: true,
+      },
+      orderBy: asc(patientsTable.expirationDate),
+      limit: 30,
+    }),
   ]);
 
   const chartSatartDate = dayjs().subtract(10, "days").startOf("day").toDate();
@@ -163,12 +188,30 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
           totalSellers={totalSellers.total}
           totalClinics={totalClinics.total}
         />
-        <div className="grid grid-cols-[2.25fr_1fr] gap-4">
+        <div className="grid grid-cols-[2.0fr_1fr] gap-4">
           <ConveniosChart dailyConveniosData={dailyConveniosData} />
           <TopSellers sellers={topSellers} />
         </div>
-        <div className="grid grid-cols-[2.25fr_1fr] gap-4">
-          {/* tabela de convenios por clínica */}
+        <div className="grid grid-cols-[2.0fr_1fr] gap-4">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <Calendar className="text-muted-foreground" />
+                <CardTitle className="text-base">Convenios a vencer</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <DataTable
+                columns={patientsTableColumnsSimple}
+                data={patientsToExpire.map(
+                  (patient: (typeof patientsToExpire)[0]) => ({
+                    ...patient,
+                    birthDate: new Date(patient.birthDate),
+                  }),
+                )}
+              />
+            </CardContent>
+          </Card>
           <TopClinics topClinics={topClinics} />
         </div>
       </PageContent>
