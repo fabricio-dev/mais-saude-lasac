@@ -63,6 +63,12 @@ export const patientsTableColumns = ({
   onPrintContract,
 }: TableColumnsProps): ColumnDef<Patient>[] => [
   {
+    id: "spacer",
+    header: "",
+    cell: () => <div className="w-0" />,
+    size: 0,
+  },
+  {
     accessorKey: "name",
     header: "Nome",
     cell: ({ row }) => (
@@ -159,6 +165,12 @@ export const patientsTableColumns = ({
 
 // Versão simplificada sem ações para o dashboard
 export const patientsTableColumnsSimple: ColumnDef<Patient>[] = [
+  {
+    id: "spacer",
+    header: "",
+    cell: () => <div className="w-0" />,
+    size: 0,
+  },
   {
     accessorKey: "name",
     header: "Nome",
