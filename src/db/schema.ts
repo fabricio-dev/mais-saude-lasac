@@ -124,6 +124,8 @@ export const patientsTable = pgTable("patients", {
   expirationDate: timestamp("expiration_date"), // estudar como fazer o campo ser automaticamente atualizado para um ano a mais
   statusAgreement: statusAgreementEnum("status_agreement"),
   observation: text("observation"),
+  isActive: boolean("is_active").notNull().default(true),
+  reactivatedAt: timestamp("reactivated_at"),
 });
 
 /* 

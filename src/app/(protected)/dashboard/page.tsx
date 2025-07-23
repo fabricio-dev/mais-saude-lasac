@@ -97,7 +97,7 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
           <Card>
             <CardHeader>
               <div className="flex items-center gap-3">
-                <Calendar className="text-muted-foreground" />
+                <Calendar className="text-sm" />
                 <CardTitle className="text-base">Convenios a vencer</CardTitle>
               </div>
             </CardHeader>

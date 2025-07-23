@@ -38,6 +38,7 @@ export const getDashboard = async ({ from, to, session }: Params) => {
     topClinics,
     patientsToExpire,
     dailyConveniosData,
+    deactivatePatients,
   ] = await Promise.all([
     // TODO: Implementa a query para o total de pacientes
     db
@@ -188,6 +189,26 @@ export const getDashboard = async ({ from, to, session }: Params) => {
       )
       .groupBy(sql<string>`DATE(${patientsTable.createdAt})`)
       .orderBy(sql<string>`DATE(${patientsTable.createdAt})`),
+    // TODO: Implementa a query para desativar os pacientes que estão para expirar ou exprirados
+    db
+      .update(patientsTable)
+      .set({
+        isActive: false,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          lte(patientsTable.expirationDate, new Date()),
+          eq(patientsTable.isActive, true),
+          inArray(
+            patientsTable.clinicId,
+            db
+              .select({ clinicId: usersToClinicsTable.clinicId })
+              .from(usersToClinicsTable)
+              .where(eq(usersToClinicsTable.userId, session.user.id)),
+          ),
+        ),
+      ),
   ]);
 
   return {
@@ -198,5 +219,6 @@ export const getDashboard = async ({ from, to, session }: Params) => {
     topClinics,
     patientsToExpire,
     dailyConveniosData,
+    deactivatePatients,
   };
 };

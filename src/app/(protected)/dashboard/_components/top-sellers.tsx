@@ -19,7 +19,7 @@ export default function TopSellers({ sellers }: TopSellersProps) {
       <CardContent>
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <UsersIcon className="text-red-800" />
+            <UsersIcon className="text-muted-foreground" />
             <CardTitle className="text-base">Vendedores</CardTitle>
           </div>
         </div>
@@ -30,7 +30,7 @@ export default function TopSellers({ sellers }: TopSellersProps) {
             <div key={seller.id} className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <Avatar className="h-10 w-10">
-                  <AvatarFallback className="bg-gray-100 text-lg font-medium text-gray-600">
+                  <AvatarFallback className="bg-gray-100 text-sm font-medium text-gray-600">
                     {seller.name
                       .split(" ")
                       .map((n) => n[0])

@@ -65,6 +65,8 @@ interface Patient {
   sellerId: string | null;
   clinicId: string | null;
   seller?: { name: string } | null;
+  isActive: boolean;
+  reactivatedAt: Date | null;
 }
 
 interface TableActionsProps {
@@ -110,6 +112,8 @@ export default function TableActions({
                   ...patient,
                   birthDate: patient.birthDate.toISOString().split("T")[0],
                   clinicId: patient.clinicId,
+                  isActive: patient.isActive,
+                  reactivatedAt: patient.reactivatedAt,
                 }}
                 isOpen={true}
               />

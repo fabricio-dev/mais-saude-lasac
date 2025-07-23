@@ -20,7 +20,7 @@ export default function TopClinics({ topClinics }: TopClinicsProps) {
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Hospital className="text-gray-500" />
-            <CardTitle className="text-base">Unidades</CardTitle>
+            <CardTitle className="text-sm">Unidades</CardTitle>
           </div>
         </div>
 
@@ -34,7 +34,7 @@ export default function TopClinics({ topClinics }: TopClinicsProps) {
               <div key={clinic.clinic} className="flex items-center gap-2">
                 <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-full">
                   <Avatar className="h-10 w-10">
-                    <AvatarFallback className="text-lg font-medium text-gray-500">
+                    <AvatarFallback className="text-sm font-medium text-red-800">
                       {clinic.clinic
                         .split(" ")
                         .map((n) => n[0])

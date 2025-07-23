@@ -511,9 +511,9 @@ export default function PatientsTable({ patients }: PatientsTableProps) {
 
   return (
     <div className="w-full space-y-4">
-      <div className="rounded-md border">
+      <div className="rounded-md">
         <Table>
-          <TableHeader>
+          <TableHeader className="rounded-md bg-blue-50/70">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {

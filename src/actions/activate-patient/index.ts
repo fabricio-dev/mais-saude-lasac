@@ -28,7 +28,8 @@ export const activatePatient = actionClient
       .update(patientsTable)
       .set({
         expirationDate: newExpirationDate,
-        // reactivationDate: new Date(), // TODO: Adicionar data de reativação para cadastro vencidos
+        reactivatedAt: new Date(),
+        isActive: true,
         updatedAt: new Date(),
       })
       .where(eq(patientsTable.id, parsedInput.patientId));
