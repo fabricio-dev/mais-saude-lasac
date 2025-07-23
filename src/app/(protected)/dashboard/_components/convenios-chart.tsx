@@ -18,12 +18,12 @@ import {
 import { formatCurrencyInCents } from "@/helpers/currency";
 
 const chartConfig = {
-  convenios: {
-    label: "Convenios",
+  novos: {
+    label: "Novos",
     color: "#EE7177",
   },
-  faturamento: {
-    label: "Faturamento",
+  renovados: {
+    label: "Renovados",
     color: "#10B981",
   },
 } satisfies ChartConfig;
@@ -31,14 +31,14 @@ const chartConfig = {
 interface ConveniosChartProps {
   dailyConveniosData: {
     date: string;
-    convenios: number;
-    faturamento: number;
+    novos: number;
+    renovados: number;
   }[];
 }
 export function ConveniosChart({ dailyConveniosData }: ConveniosChartProps) {
-  const chartDays = Array.from({ length: 21 }).map((_, i) =>
+  const chartDays = Array.from({ length: 15 }).map((_, i) =>
     dayjs()
-      .subtract(10 - i, "days")
+      .subtract(12 - i, "days")
       .format("YYYY-MM-DD"),
   );
 
@@ -47,19 +47,19 @@ export function ConveniosChart({ dailyConveniosData }: ConveniosChartProps) {
     return {
       date: dayjs(date).format("DD/MM"),
       fullDate: date,
-      convenios: dataForDay?.convenios || 0,
-      faturamento: Number(dataForDay?.faturamento || 0),
+      novos: Number(dataForDay?.novos || 0),
+      renovados: Number(dataForDay?.renovados || 0),
     };
   });
 
   return (
     <Card>
       <CardHeader className="flex flex-row items-center gap-2">
-        <DollarSign />
-        <CardTitle>Faturamento e Convenios</CardTitle>
+        <DollarSign className="h-4 w-4" />
+        <CardTitle>Convenios Novos / Renovados</CardTitle>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="min-h-[200px]">
+        <ChartContainer config={chartConfig} className="min-h-[195px]">
           <AreaChart
             data={chartData}
             margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
@@ -72,43 +72,29 @@ export function ConveniosChart({ dailyConveniosData }: ConveniosChartProps) {
               axisLine={false}
             />
             <YAxis
-              yAxisId="left"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-            />
-            <YAxis
-              yAxisId="right"
-              orientation="right"
               tickLine={false}
               axisLine={false}
               tickMargin={8}
               tickFormatter={(value) => formatCurrencyInCents(value)}
+              allowDecimals={false}
             />
             <ChartTooltip
               content={
                 <ChartTooltipContent
                   formatter={(value, name) => {
-                    if (name === "faturamento") {
-                      return (
-                        <>
-                          <div className="h-3 w-3 rounded bg-[#10B981]" />
-                          <span className="text-muted-foreground">
-                            Faturamento:
-                          </span>
-                          <span className="font-semibold">
-                            {formatCurrencyInCents(Number(value))}
-                          </span>
-                        </>
-                      );
-                    }
+                    const color = name === "renovados" ? "#10B981" : "#EE7177";
+                    const label = name === "renovados" ? "Renovados" : "Novos";
                     return (
                       <>
-                        <div className="h-3 w-3 rounded bg-[#EE7177]" />
-                        <span className="text-muted-foreground">
-                          Convenios:
+                        <div
+                          className="h-3 w-3 rounded"
+                          style={{ backgroundColor: color }}
+                        />
+                        <span className="text-muted-foreground">{label}:</span>
+                        <span className="font-semibold">
+                          {value}{" "}
+                          {Number(value) === 1 ? "convenio" : "convenios"}
                         </span>
-                        <span className="font-semibold">{value}</span>
                       </>
                     );
                   }}
@@ -124,20 +110,18 @@ export function ConveniosChart({ dailyConveniosData }: ConveniosChartProps) {
               }
             />
             <Area
-              yAxisId="left"
               type="monotone"
-              dataKey="convenios"
-              stroke="var(--color-convenios)"
-              fill="var(--color-convenios)"
+              dataKey="novos"
+              stroke="var(--color-novos)"
+              fill="var(--color-novos)"
               fillOpacity={0.2}
               strokeWidth={2}
             />
             <Area
-              yAxisId="right"
               type="monotone"
-              dataKey="faturamento"
-              stroke="var(--color-faturamento)"
-              fill="var(--color-faturamento)"
+              dataKey="renovados"
+              stroke="var(--color-renovados)"
+              fill="var(--color-renovados)"
               fillOpacity={0.2}
               strokeWidth={2}
             />

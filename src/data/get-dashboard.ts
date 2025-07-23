@@ -165,30 +165,89 @@ export const getDashboard = async ({ from, to, session }: Params) => {
       limit: 15,
     }),
     // TODO: Implementa a query para os convenios diários dentre um intervalo de 21 dias
-    db
-      .select({
-        date: sql<string>`DATE(${patientsTable.createdAt})`.as("date"),
-        convenios: count(patientsTable.id),
-        faturamento: sql<number>`COALESCE(COUNT(${patientsTable.id}), 0)`.as(
-          "faturamento",
-        ),
-      })
-      .from(patientsTable)
-      .where(
-        and(
-          inArray(
-            patientsTable.clinicId,
-            db
-              .select({ clinicId: usersToClinicsTable.clinicId })
-              .from(usersToClinicsTable)
-              .where(eq(usersToClinicsTable.userId, session.user.id)),
+    Promise.all([
+      // Consulta para pacientes novos (baseado na data de criação)
+      db
+        .select({
+          date: sql<string>`DATE(${patientsTable.createdAt})`.as("date"),
+          count: count(patientsTable.id),
+        })
+        .from(patientsTable)
+        .where(
+          and(
+            inArray(
+              patientsTable.clinicId,
+              db
+                .select({ clinicId: usersToClinicsTable.clinicId })
+                .from(usersToClinicsTable)
+                .where(eq(usersToClinicsTable.userId, session.user.id)),
+            ),
+            gte(patientsTable.createdAt, chartSatartDate),
+            lte(patientsTable.createdAt, chartEndDate),
+            sql`${patientsTable.reactivatedAt} IS NULL`,
           ),
-          gte(patientsTable.createdAt, chartSatartDate),
-          lte(patientsTable.createdAt, chartEndDate),
-        ),
-      )
-      .groupBy(sql<string>`DATE(${patientsTable.createdAt})`)
-      .orderBy(sql<string>`DATE(${patientsTable.createdAt})`),
+        )
+        .groupBy(sql<string>`DATE(${patientsTable.createdAt})`)
+        .orderBy(sql<string>`DATE(${patientsTable.createdAt})`),
+
+      // Consulta para pacientes reativados (baseado na data de reativação)
+      db
+        .select({
+          date: sql<string>`DATE(${patientsTable.reactivatedAt})`.as("date"),
+          count: count(patientsTable.id),
+        })
+        .from(patientsTable)
+        .where(
+          and(
+            inArray(
+              patientsTable.clinicId,
+              db
+                .select({ clinicId: usersToClinicsTable.clinicId })
+                .from(usersToClinicsTable)
+                .where(eq(usersToClinicsTable.userId, session.user.id)),
+            ),
+            gte(patientsTable.reactivatedAt, chartSatartDate),
+            lte(patientsTable.reactivatedAt, chartEndDate),
+            sql`${patientsTable.reactivatedAt} IS NOT NULL`,
+          ),
+        )
+        .groupBy(sql<string>`DATE(${patientsTable.reactivatedAt})`)
+        .orderBy(sql<string>`DATE(${patientsTable.reactivatedAt})`),
+    ]).then(([novosData, renovadosData]) => {
+      // Criar mapa de todas as datas no período
+      const currentDate = dayjs(chartSatartDate);
+      const endDate = dayjs(chartEndDate);
+      const allDates: { date: string; novos: number; renovados: number }[] = [];
+
+      // Gerar todas as datas do período
+      let date = currentDate;
+      while (date.isBefore(endDate) || date.isSame(endDate, "day")) {
+        allDates.push({
+          date: date.format("YYYY-MM-DD"),
+          novos: 0,
+          renovados: 0,
+        });
+        date = date.add(1, "day");
+      }
+
+      // Mapear dados de novos pacientes
+      novosData.forEach((item) => {
+        const foundDate = allDates.find((d) => d.date === item.date);
+        if (foundDate) {
+          foundDate.novos = item.count;
+        }
+      });
+
+      // Mapear dados de pacientes renovados
+      renovadosData.forEach((item) => {
+        const foundDate = allDates.find((d) => d.date === item.date);
+        if (foundDate) {
+          foundDate.renovados = item.count;
+        }
+      });
+
+      return allDates;
+    }),
     // TODO: Implementa a query para desativar os pacientes que estão para expirar ou exprirados
     db
       .update(patientsTable)

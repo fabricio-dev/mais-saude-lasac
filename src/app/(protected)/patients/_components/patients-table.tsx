@@ -56,6 +56,8 @@ interface Patient {
   sellerId: string | null;
   clinicId: string | null;
   seller?: { name: string } | null;
+  isActive: boolean;
+  reactivatedAt: Date | null;
 }
 
 interface PatientsTableProps {
