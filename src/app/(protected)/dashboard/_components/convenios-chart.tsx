@@ -20,11 +20,11 @@ import { formatCurrencyInCents } from "@/helpers/currency";
 const chartConfig = {
   novos: {
     label: "Novos",
-    color: "#EE7177",
+    color: "#10B981",
   },
   renovados: {
     label: "Renovados",
-    color: "#10B981",
+    color: "#EE7177",
   },
 } satisfies ChartConfig;
 
@@ -82,7 +82,7 @@ export function ConveniosChart({ dailyConveniosData }: ConveniosChartProps) {
               content={
                 <ChartTooltipContent
                   formatter={(value, name) => {
-                    const color = name === "renovados" ? "#10B981" : "#EE7177";
+                    const color = name === "renovados" ? "#EE7177" : "#10B981";
                     const label = name === "renovados" ? "Renovados" : "Novos";
                     return (
                       <>
