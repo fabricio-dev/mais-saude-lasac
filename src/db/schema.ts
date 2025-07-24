@@ -125,6 +125,7 @@ export const patientsTable = pgTable("patients", {
   statusAgreement: statusAgreementEnum("status_agreement"),
   observation: text("observation"),
   isActive: boolean("is_active").notNull().default(true),
+  activeAt: timestamp("active_at"),
   reactivatedAt: timestamp("reactivated_at"),
 });
 

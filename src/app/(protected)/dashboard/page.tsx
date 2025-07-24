@@ -15,6 +15,7 @@ import {
   PageTitle,
 } from "@/components/ui/page-container";
 import { getDashboard } from "@/data/get-dashboard";
+import { formatCurrencyInCents } from "@/helpers/currency";
 import { auth } from "@/lib/auth";
 
 import { patientsTableColumnsSimple } from "../patients/_components/table-columns";
@@ -82,9 +83,7 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
       </PageHeader>
       <PageContent>
         <StatsCards
-          totalRevenue={
-            totalPatients.total ? Number(totalPatients.total) * 100 : null
-          }
+          totalRevenue={formatCurrencyInCents(totalPatients.total)}
           totalPatients={totalPatients.total}
           totalSellers={totalSellers.total}
           totalClinics={totalClinics.total}

@@ -43,6 +43,7 @@ export const upsertPatient = actionClient
         ...parsedInput,
         birthDate: new Date(parsedInput.birthDate).toISOString(),
         expirationDate: expirationDate,
+        activeAt: new Date(),
       });
     }
 

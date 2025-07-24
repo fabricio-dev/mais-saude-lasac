@@ -1,5 +1,16 @@
 import dayjs from "dayjs";
-import { and, asc, count, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  gte,
+  inArray,
+  lte,
+  or,
+  sql,
+} from "drizzle-orm";
 
 import { db } from "@/db";
 import {
@@ -23,13 +34,13 @@ interface Params {
 }
 
 export const getDashboard = async ({ from, to, session }: Params) => {
-  const chartSatartDate = dayjs().subtract(10, "days").startOf("day").toDate();
+  const chartSatartDate = dayjs().subtract(14, "days").startOf("day").toDate();
   const chartEndDate = dayjs().add(10, "days").endOf("day").toDate();
   const regeExpiratedDate = dayjs()
     .subtract(90, "days")
     .startOf("day")
     .toDate();
-  const regeExpiratedEndDate = dayjs().add(7, "days").endOf("day").toDate();
+  const regeExpiratedEndDate = dayjs().add(14, "days").endOf("day").toDate();
   const [
     [totalPatients],
     [totalSellers],
@@ -55,8 +66,21 @@ export const getDashboard = async ({ from, to, session }: Params) => {
               .from(usersToClinicsTable)
               .where(eq(usersToClinicsTable.userId, session.user.id)),
           ),
-          gte(patientsTable.createdAt, new Date(from)),
-          lte(patientsTable.createdAt, new Date(to)),
+          eq(patientsTable.isActive, true),
+          or(
+            // Pacientes ativados pela primeira vez no período
+            and(
+              gte(patientsTable.activeAt, new Date(from)),
+              lte(patientsTable.activeAt, new Date(to)),
+              sql`${patientsTable.reactivatedAt} IS NULL`,
+            ),
+            // Pacientes reativados no período
+            and(
+              gte(patientsTable.reactivatedAt, new Date(from)),
+              lte(patientsTable.reactivatedAt, new Date(to)),
+              sql`${patientsTable.reactivatedAt} IS NOT NULL`,
+            ),
+          ),
         ),
       ),
     // TODO: Implementa a query para o total de vendedores
@@ -104,8 +128,21 @@ export const getDashboard = async ({ from, to, session }: Params) => {
         patientsTable,
         and(
           eq(sellersTable.id, patientsTable.sellerId),
-          gte(patientsTable.createdAt, new Date(from)),
-          lte(patientsTable.createdAt, new Date(to)),
+          eq(patientsTable.isActive, true),
+          or(
+            // Pacientes ativados pela primeira vez no período
+            and(
+              gte(patientsTable.activeAt, new Date(from)),
+              lte(patientsTable.activeAt, new Date(to)),
+              sql`${patientsTable.reactivatedAt} IS NULL`,
+            ),
+            // Pacientes reativados no período
+            and(
+              gte(patientsTable.reactivatedAt, new Date(from)),
+              lte(patientsTable.reactivatedAt, new Date(to)),
+              sql`${patientsTable.reactivatedAt} IS NOT NULL`,
+            ),
+          ),
         ),
       )
       .where(
@@ -137,8 +174,21 @@ export const getDashboard = async ({ from, to, session }: Params) => {
               .from(usersToClinicsTable)
               .where(eq(usersToClinicsTable.userId, session.user.id)),
           ),
-          gte(patientsTable.createdAt, new Date(from)),
-          lte(patientsTable.createdAt, new Date(to)),
+          eq(patientsTable.isActive, true),
+          or(
+            // Pacientes ativados pela primeira vez no período
+            and(
+              gte(patientsTable.activeAt, new Date(from)),
+              lte(patientsTable.activeAt, new Date(to)),
+              sql`${patientsTable.reactivatedAt} IS NULL`,
+            ),
+            // Pacientes reativados no período
+            and(
+              gte(patientsTable.reactivatedAt, new Date(from)),
+              lte(patientsTable.reactivatedAt, new Date(to)),
+              sql`${patientsTable.reactivatedAt} IS NOT NULL`,
+            ),
+          ),
         ),
       )
       .groupBy(clinicsTable.id)
@@ -166,10 +216,10 @@ export const getDashboard = async ({ from, to, session }: Params) => {
     }),
     // TODO: Implementa a query para os convenios diários dentre um intervalo de 21 dias
     Promise.all([
-      // Consulta para pacientes novos (baseado na data de criação)
+      // Consulta para pacientes novos (baseado na data de ativacao) ok
       db
         .select({
-          date: sql<string>`DATE(${patientsTable.createdAt})`.as("date"),
+          date: sql<string>`DATE(${patientsTable.activeAt})`.as("date"),
           count: count(patientsTable.id),
         })
         .from(patientsTable)
@@ -182,13 +232,14 @@ export const getDashboard = async ({ from, to, session }: Params) => {
                 .from(usersToClinicsTable)
                 .where(eq(usersToClinicsTable.userId, session.user.id)),
             ),
-            gte(patientsTable.createdAt, chartSatartDate),
-            lte(patientsTable.createdAt, chartEndDate),
+            gte(patientsTable.activeAt, chartSatartDate),
+            lte(patientsTable.activeAt, chartEndDate),
+            eq(patientsTable.isActive, true),
             sql`${patientsTable.reactivatedAt} IS NULL`,
           ),
         )
-        .groupBy(sql<string>`DATE(${patientsTable.createdAt})`)
-        .orderBy(sql<string>`DATE(${patientsTable.createdAt})`),
+        .groupBy(sql<string>`DATE(${patientsTable.activeAt})`)
+        .orderBy(sql<string>`DATE(${patientsTable.activeAt})`),
 
       // Consulta para pacientes reativados (baseado na data de reativação)
       db
@@ -209,6 +260,7 @@ export const getDashboard = async ({ from, to, session }: Params) => {
             gte(patientsTable.reactivatedAt, chartSatartDate),
             lte(patientsTable.reactivatedAt, chartEndDate),
             sql`${patientsTable.reactivatedAt} IS NOT NULL`,
+            sql`${patientsTable.isActive} IS TRUE`,
           ),
         )
         .groupBy(sql<string>`DATE(${patientsTable.reactivatedAt})`)

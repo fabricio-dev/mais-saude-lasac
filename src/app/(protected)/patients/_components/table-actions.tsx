@@ -67,6 +67,7 @@ interface Patient {
   seller?: { name: string } | null;
   isActive: boolean;
   reactivatedAt: Date | null;
+  activeAt: Date | null; // mudie aqui para o campo de ativação
 }
 
 interface TableActionsProps {
@@ -114,6 +115,7 @@ export default function TableActions({
                   clinicId: patient.clinicId,
                   isActive: patient.isActive,
                   reactivatedAt: patient.reactivatedAt,
+                  activeAt: patient.activeAt, // mudie aqui para o campo de ativação
                 }}
                 isOpen={true}
               />
