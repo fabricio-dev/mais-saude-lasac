@@ -36,6 +36,7 @@ export const activatePatient = actionClient
       .where(eq(patientsTable.id, parsedInput.patientId));
 
     revalidatePath("/patients");
+    revalidatePath("/vendedor/patients-seller");
 
     return { success: true };
   });

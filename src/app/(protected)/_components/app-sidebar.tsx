@@ -165,9 +165,13 @@ export function AppSidebar() {
                   <div className="flex flex-col">
                     <div className="flex items-center gap-2">
                       <p className="tsm">{session.data?.user.name}</p>
-                      {isAdmin && (
+                      {isAdmin ? (
                         <Badge variant="secondary" className="text-xs">
                           Admin
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary" className="text-xs">
+                          Vendedor
                         </Badge>
                       )}
                     </div>

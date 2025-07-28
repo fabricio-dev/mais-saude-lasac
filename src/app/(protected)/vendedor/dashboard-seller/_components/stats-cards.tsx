@@ -1,19 +1,24 @@
-import { CalendarIcon, DollarSignIcon, UserIcon } from "lucide-react";
+import { Building2, CalendarIcon, DollarSignIcon } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface StatsCardsProps {
   totalRevenue: string | null;
   totalPatients: number;
-  totalRenovados: number;
+  sellerClinic: string | null;
 }
 
 const StatsCards = ({
   totalRevenue,
   totalPatients,
-  totalRenovados,
+  sellerClinic,
 }: StatsCardsProps) => {
   const stats = [
+    {
+      title: "Unidade",
+      value: sellerClinic,
+      icon: Building2,
+    },
     {
       title: "Faturamento",
       value: totalRevenue || "R$ 0,00",
@@ -23,11 +28,6 @@ const StatsCards = ({
       title: "Convênios",
       value: totalPatients.toString(),
       icon: CalendarIcon,
-    },
-    {
-      title: "Total Renovados",
-      value: totalRenovados.toString(),
-      icon: UserIcon,
     },
   ];
 

@@ -53,7 +53,7 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
 
   const {
     totalPatients,
-    totalRenovados,
+    sellerClinic,
     topSellers,
     patientsToExpire,
     dailyConveniosData,
@@ -82,7 +82,7 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
         <StatsCards
           totalRevenue={formatCurrencyInCents(totalPatients.total)}
           totalPatients={totalPatients.total}
-          totalRenovados={totalRenovados.total}
+          sellerClinic={sellerClinic}
         />
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2.25fr_1fr]">
           <ConveniosChart dailyConveniosData={dailyConveniosData} />

@@ -63,6 +63,7 @@ export const getDashboardSellers = async ({ from, to, session }: Params) => {
     patientsToExpire,
     dailyConveniosData,
     deactivatePatients,
+    [sellerClinic],
   ] = await Promise.all([
     // TODO: Implementa a query para o total de pacientes
     db
@@ -117,9 +118,6 @@ export const getDashboardSellers = async ({ from, to, session }: Params) => {
           sql`${patientsTable.reactivatedAt} IS NOT NULL`,
         ),
       ),
-    // TODO: Implementa a query para o total de vendedores
-
-    // TODO: Implementa a query para o total de clinicas
 
     // Query para top 7 vendedores das clínicas do mesmo usuário
     db
@@ -305,6 +303,15 @@ export const getDashboardSellers = async ({ from, to, session }: Params) => {
           ),
         ),
       ),
+    // Buscar nome da clínica do vendedor
+    db
+      .select({
+        clinicName: clinicsTable.name,
+      })
+      .from(sellersTable)
+      .innerJoin(clinicsTable, eq(sellersTable.clinicId, clinicsTable.id))
+      .where(eq(sellersTable.email, session.user.email))
+      .limit(1),
   ]);
 
   return {
@@ -314,5 +321,6 @@ export const getDashboardSellers = async ({ from, to, session }: Params) => {
     patientsToExpire,
     dailyConveniosData,
     deactivatePatients,
+    sellerClinic: sellerClinic?.clinicName || null,
   };
 };

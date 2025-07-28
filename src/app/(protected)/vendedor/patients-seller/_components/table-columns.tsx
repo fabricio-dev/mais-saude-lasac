@@ -1,0 +1,179 @@
+"use client";
+
+import { ColumnDef } from "@tanstack/react-table";
+
+import { Badge } from "@/components/ui/badge";
+
+import TableActions from "./table-actions";
+
+interface Patient {
+  id: string;
+  name: string;
+  cpfNumber: string;
+  phoneNumber: string;
+  city: string;
+  cardType: "enterprise" | "personal";
+  numberCards: number;
+  expirationDate: Date | null;
+  birthDate: Date;
+  rgNumber: string;
+  address: string;
+  homeNumber: string;
+  state: string;
+  Enterprise: string | null;
+  dependents1: string | null;
+  dependents2: string | null;
+  dependents3: string | null;
+  dependents4: string | null;
+  dependents5: string | null;
+  observation: string | null;
+  statusAgreement: "expired" | "active" | "pending" | null;
+  createdAt: Date;
+  updatedAt: Date | null;
+  sellerId: string | null;
+  clinicId: string | null;
+  seller?: { name: string } | null;
+  isActive: boolean;
+  reactivatedAt: Date | null;
+  activeAt: Date | null;
+}
+
+interface TableColumnsProps {
+  onActivate: (patientId: string) => void;
+  onDelete: (patientId: string) => void;
+  onPrintCard: (patient: Patient) => void;
+  onPrintContract: (patient: Patient) => void;
+  sellerId: string;
+  clinicId: string;
+}
+
+// Funções de formatação
+const formatDate = (date: Date) => {
+  return new Date(date).toLocaleDateString("pt-BR");
+};
+
+const formatPhone = (phone: string) => {
+  return phone.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
+};
+
+const isPatientExpired = (expirationDate: Date | null) => {
+  if (!expirationDate) return false;
+  return new Date(expirationDate) <= new Date();
+};
+
+export const patientsTableColumns = ({
+  onActivate,
+  onDelete,
+  onPrintCard,
+  onPrintContract,
+  sellerId,
+  clinicId,
+}: TableColumnsProps): ColumnDef<Patient>[] => [
+  {
+    id: "spacer",
+    header: "",
+    cell: () => <div className="w-0" />,
+    size: 0,
+  },
+  {
+    accessorKey: "name",
+    header: "Nome",
+    cell: ({ row }) => (
+      <div className="font-medium">{row.getValue("name")}</div>
+    ),
+  },
+  {
+    accessorKey: "phoneNumber",
+    header: "Telefone",
+    cell: ({ row }) => {
+      const phone = row.getValue("phoneNumber") as string;
+      return <div className="text-sm">{formatPhone(phone)}</div>;
+    },
+  },
+  {
+    accessorKey: "city",
+    header: "Cidade",
+    cell: ({ row }) => {
+      return <div className="text-sm">{row.getValue("city")}</div>;
+    },
+  },
+  {
+    accessorKey: "cardType",
+    header: "Tipo de Cartão",
+    cell: ({ row }) => {
+      const cardType = row.getValue("cardType") as string;
+      return (
+        <Badge variant={cardType === "enterprise" ? "default" : "secondary"}>
+          {cardType === "enterprise" ? "EMPRESA" : "INDIVIDUAL"}
+        </Badge>
+      );
+    },
+  },
+  {
+    accessorKey: "numberCards",
+    header: "Qtd. Cartões",
+    cell: ({ row }) => {
+      return <div className="text-sm">{row.getValue("numberCards")}</div>;
+    },
+  },
+  {
+    accessorKey: "expirationDate",
+    header: "Data de Expiração",
+    cell: ({ row }) => {
+      const expirationDate = row.getValue("expirationDate") as Date | null;
+      if (!expirationDate)
+        return <div className="text-muted-foreground">-</div>;
+
+      const isExpired = isPatientExpired(expirationDate);
+      return (
+        <div
+          className={`text-sm ${isExpired ? "font-medium text-red-600" : "text-muted-foreground"}`}
+        >
+          {formatDate(expirationDate)}
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "status",
+    header: "Status",
+    cell: ({ row }) => {
+      const expirationDate = row.getValue("expirationDate") as Date | null;
+      const isExpired = isPatientExpired(expirationDate);
+
+      return (
+        <Badge
+          variant={isExpired ? "destructive" : "default"}
+          className={
+            isExpired
+              ? "bg-red-100 text-red-800"
+              : "bg-green-100 text-green-800"
+          }
+        >
+          {isExpired ? "Vencido" : "Ativo"}
+        </Badge>
+      );
+    },
+  },
+  {
+    id: "actions",
+    header: "Ações",
+    cell: ({ row }) => {
+      const patient = row.original;
+      const isExpired = isPatientExpired(patient.expirationDate);
+
+      return (
+        <TableActions
+          patient={patient}
+          isExpired={isExpired}
+          onActivate={onActivate}
+          onDelete={onDelete}
+          onPrintCard={onPrintCard}
+          onPrintContract={onPrintContract}
+          sellerId={sellerId}
+          clinicId={clinicId}
+        />
+      );
+    },
+  },
+];

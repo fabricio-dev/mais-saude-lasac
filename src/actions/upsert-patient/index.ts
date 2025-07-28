@@ -48,5 +48,5 @@ export const upsertPatient = actionClient
     }
 
     revalidatePath("/patients");
-    revalidatePath("/patients-seller");
+    revalidatePath("/vendedor/patients-seller");
   });
