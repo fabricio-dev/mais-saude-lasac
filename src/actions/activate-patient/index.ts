@@ -19,6 +19,7 @@ export const activatePatient = actionClient
     if (!session?.user) {
       throw new Error("Usuário não encontrado");
     }
+    // Verificar se o usuário é admin ou vendedor caso o usuário não seja admin, verificar se o paciente pertence ao vendedor ver se vendedor pode ativar pacientes
 
     // Calcular nova data de expiração (data atual + 1 ano)
     const newExpirationDate = dayjs().add(1, "year").toDate();

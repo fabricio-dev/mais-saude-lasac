@@ -16,6 +16,9 @@ export const upsertSeller = actionClient
     if (!session?.user.clinic?.id) {
       throw new Error("Clínica não encontrada");
     }
+    if (session.user.role !== "admin") {
+      throw new Error("Unauthorized");
+    }
 
     await db
       .insert(sellersTable)

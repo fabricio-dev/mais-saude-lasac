@@ -37,6 +37,9 @@ const PatientsPage = async ({ searchParams }: PatientsPageProps) => {
   if (!session?.user) {
     redirect("/authentication");
   }
+  if (session.user.role !== "admin") {
+    redirect("/vendedor/dashboard-seller");
+  }
 
   // Aguardar searchParams antes de usar
   const { search, filter } = await searchParams;

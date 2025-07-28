@@ -14,15 +14,14 @@ import {
   PageHeaderContent,
   PageTitle,
 } from "@/components/ui/page-container";
-import { getDashboard } from "@/data/get-dashboard";
+import { getDashboardSellers } from "@/data/get-dashboard-sellers";
 import { formatCurrencyInCents } from "@/helpers/currency";
 import { auth } from "@/lib/auth";
 
-import { patientsTableColumnsSimple } from "../patients/_components/table-columns";
+import { patientsTableColumnsSimple } from "../../patients/_components/table-columns";
 import { ConveniosChart } from "./_components/convenios-chart";
 import { DatePicker } from "./_components/date-picker";
 import StatsCards from "./_components/stats-cards";
-import TopClinics from "./_components/top-clinics";
 import TopSellers from "./_components/top-sellers";
 
 interface DashboardPageProps {
@@ -40,34 +39,29 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
   if (!session?.user) {
     redirect("/authentication");
   }
-  if (session.user.role !== "admin") {
-    redirect("/vendedor/dashboard-seller");
+  if (session.user.role !== "user") {
+    redirect("/dashboard");
   }
 
-  if (!session?.user.clinic) {
-    redirect("/clinics");
-  }
   const { from, to } = await searchParams;
 
   if (!from || !to) {
     redirect(
-      `/dashboard?from=${dayjs().subtract(1, "month").add(1, "day").format("YYYY-MM-DD")}&to=${dayjs().add(1, "day").format("YYYY-MM-DD")}`,
+      `/vendedor/dashboard-seller?from=${dayjs().subtract(1, "month").add(1, "day").format("YYYY-MM-DD")}&to=${dayjs().add(1, "day").format("YYYY-MM-DD")}`,
     );
   }
 
   const {
     totalPatients,
-    totalSellers,
-    totalClinics,
+    totalRenovados,
     topSellers,
-    topClinics,
     patientsToExpire,
     dailyConveniosData,
-  } = await getDashboard({
+  } = await getDashboardSellers({
     from,
     to,
     session: {
-      user: { id: session.user.id, clinic: { id: session.user.clinic.id } },
+      user: { id: session.user.id, email: session.user.email },
     },
   });
 
@@ -88,14 +82,16 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
         <StatsCards
           totalRevenue={formatCurrencyInCents(totalPatients.total)}
           totalPatients={totalPatients.total}
-          totalSellers={totalSellers.total}
-          totalClinics={totalClinics.total}
+          totalRenovados={totalRenovados.total}
         />
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2.25fr_1fr]">
           <ConveniosChart dailyConveniosData={dailyConveniosData} />
-          <TopSellers sellers={topSellers} />
+          <TopSellers
+            sellers={topSellers}
+            currentSellerEmail={session.user.email}
+          />
         </div>
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2.25fr_1fr]">
+        <div className="grid grid-cols-1 gap-4">
           <Card>
             <CardHeader>
               <div className="flex items-center gap-3">
@@ -115,7 +111,6 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
               />
             </CardContent>
           </Card>
-          <TopClinics topClinics={topClinics} />
         </div>
       </PageContent>
     </PageContainer>

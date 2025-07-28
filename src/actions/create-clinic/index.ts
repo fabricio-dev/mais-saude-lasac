@@ -15,6 +15,9 @@ export const createClinic = async (name: string) => {
   if (!session?.user) {
     throw new Error("Unauthorized");
   }
+  if (session.user.role !== "admin") {
+    throw new Error("Unauthorized");
+  }
 
   const [clinic] = await db.insert(clinicsTable).values({ name }).returning();
   await db.insert(usersToClinicsTable).values({

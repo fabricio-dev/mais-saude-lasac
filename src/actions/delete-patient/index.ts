@@ -19,6 +19,9 @@ export const deletePatient = actionClient
     if (!session?.user) {
       throw new Error("Unauthorized");
     }
+    if (session.user.role !== "admin") {
+      throw new Error("Unauthorized");
+    }
 
     // Buscar as clínicas do usuário
     const userClinics = await db

@@ -39,6 +39,9 @@ const SellersPage = async ({ searchParams }: SellersPageProps) => {
   if (!session?.user) {
     redirect("/authentication");
   }
+  if (session.user.role !== "admin") {
+    redirect("/vendedor/dashboard-seller");
+  }
 
   // Buscar todas as clínicas do usuário
   const userClinics = await db

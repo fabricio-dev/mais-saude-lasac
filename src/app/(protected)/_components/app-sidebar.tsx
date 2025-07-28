@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   LogOut,
   Settings,
+  Shield,
   Users,
 } from "lucide-react";
 import Image from "next/image";
@@ -12,6 +13,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,34 +32,60 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { usePermissions } from "@/hooks/use-permissions";
 import { authClient } from "@/lib/auth-client";
 
 // Menu items.
-const items = [
+const baseItems = [
   {
     title: "Dashboard",
     url: "/dashboard",
     icon: LayoutDashboard,
+    requiresAdmin: true,
   },
+
   {
     title: "Convênios",
     url: "/patients",
     icon: IdCard,
+    requiresAdmin: true,
   },
   {
     title: "Vendedores",
     url: "/sellers",
     icon: Users,
+    requiresAdmin: true,
   },
   {
     title: "Unidades",
     url: "/clinics",
     icon: Building2,
+    requiresAdmin: true,
   },
   {
     title: "Gestão",
     url: "/management",
     icon: Settings,
+    requiresAdmin: true,
+  },
+  {
+    title: "Admin",
+    url: "/admin",
+    icon: Shield,
+    requiresAdmin: true,
+  },
+  //vendedor
+  {
+    title: "Dashboard",
+    url: "/vendedor/dashboard-seller",
+    icon: LayoutDashboard,
+    requiresUser: true,
+  },
+  {
+    title: "Convênios",
+    url: "/vendedor/patients-seller",
+    icon: IdCard,
+    requiresUser: true,
   },
 ];
 
@@ -65,6 +93,19 @@ export function AppSidebar() {
   const router = useRouter();
   const session = authClient.useSession();
   const pathname = usePathname();
+  // const { isAdmin, userRole } = usePermissions(); mudei par o de baixo
+  const { isAdmin } = usePermissions();
+
+  // Filtrar itens do menu baseado nas permissões do usuário
+  const items = baseItems.filter((item) => {
+    if (item.requiresAdmin) {
+      return isAdmin;
+    }
+    if (item.requiresUser) {
+      return session.data?.user.role === "user";
+    }
+    return true;
+  });
 
   const handleLogout = async () => {
     await authClient.signOut({
@@ -115,9 +156,15 @@ export function AppSidebar() {
                   <Avatar>
                     <AvatarFallback>f</AvatarFallback>
                   </Avatar>
-                  <div>
-                    <p className="tsm">{session.data?.user.name}</p>
-
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-2">
+                      <p className="tsm">{session.data?.user.name}</p>
+                      {isAdmin && (
+                        <Badge variant="secondary" className="text-xs">
+                          Admin
+                        </Badge>
+                      )}
+                    </div>
                     <p className="tsm text-muted-foreground">
                       {session.data?.user.email}
                     </p>

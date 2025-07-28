@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { customSession } from "better-auth/plugins";
+import { admin, customSession } from "better-auth/plugins";
 import { eq } from "drizzle-orm";
 
 import { db } from "@/db";
@@ -20,6 +20,10 @@ export const auth = betterAuth({
     },
   },
   plugins: [
+    admin({
+      defaultRole: "user",
+      adminRoles: ["admin"],
+    }),
     customSession(async ({ user, session }) => {
       const clinics = await db.query.usersToClinicsTable.findMany({
         where: eq(usersToClinicsTable.userId, user.id),
@@ -33,6 +37,7 @@ export const auth = betterAuth({
       return {
         user: {
           ...user,
+          role: (user as typeof user & { role?: string }).role || "user", // Garantir que role está disponível na sessão
           clinic: clinic?.clinicId
             ? {
                 id: clinic?.clinicId,

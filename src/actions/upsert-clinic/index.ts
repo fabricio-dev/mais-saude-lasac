@@ -14,8 +14,11 @@ export const upsertClinic = actionClient
   .schema(upsertClinicSchema)
   .action(async ({ parsedInput }) => {
     const session = await auth.api.getSession({ headers: await headers() });
-    if (!session?.user.id) {
+    if (!session?.user) {
       throw new Error("Usuário não encontrado");
+    }
+    if (session.user.role !== "admin") {
+      throw new Error("Unauthorized");
     }
 
     if (parsedInput.id) {

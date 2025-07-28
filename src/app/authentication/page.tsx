@@ -13,7 +13,11 @@ const AuthenticationPage = async () => {
   });
 
   if (session?.user) {
-    redirect("/dashboard");
+    if (session?.user.role === "admin") {
+      redirect("/dashboard");
+    } else {
+      redirect("/dashboard-seller");
+    }
   }
 
   return (
