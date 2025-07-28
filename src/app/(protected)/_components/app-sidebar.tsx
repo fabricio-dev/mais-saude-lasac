@@ -154,7 +154,13 @@ export function AppSidebar() {
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton size="lg">
                   <Avatar>
-                    <AvatarFallback>f</AvatarFallback>
+                    <AvatarFallback>
+                      {session.data?.user.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .slice(0, 2)}
+                    </AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col">
                     <div className="flex items-center gap-2">
