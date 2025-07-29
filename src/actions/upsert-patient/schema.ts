@@ -21,6 +21,7 @@ export const upsertPatientSchema = z.object({
     .min(1, { message: "Quantidade de cartões é obrigatória" }),
   sellerId: z.string().uuid({ message: "Vendedor é obrigatório" }),
   clinicId: z.string().uuid({ message: "Clínica é obrigatória" }),
+  observation: z.string().optional(),
   dependents1: z.string().optional(),
   dependents2: z.string().optional(),
   dependents3: z.string().optional(),

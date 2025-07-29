@@ -61,6 +61,7 @@ const formSchema = z
       .min(1, { message: "Quantidade de cartões é obrigatória" }),
     sellerId: z.string().uuid({ message: "Vendedor é obrigatório" }),
     clinicId: z.string().uuid({ message: "Clínica é obrigatória" }),
+    observation: z.string().optional(),
     dependents1: z.string().optional(),
     dependents2: z.string().optional(),
     dependents3: z.string().optional(),
@@ -153,6 +154,7 @@ const UpsertPatientForm = ({
       numberCards: patient?.numberCards?.toString() ?? "",
       sellerId: patient?.sellerId ?? "",
       clinicId: patient?.clinicId ?? "", // mudei para o id para testar
+      observation: patient?.observation ?? "",
       dependents1: patient?.dependents1 ?? "",
       dependents2: patient?.dependents2 ?? "",
       dependents3: patient?.dependents3 ?? "",
@@ -182,6 +184,7 @@ const UpsertPatientForm = ({
         numberCards: patient?.numberCards?.toString() ?? "",
         sellerId: patient?.sellerId ?? "",
         clinicId: patient?.clinicId ?? "",
+        observation: patient?.observation ?? "",
         dependents1: patient?.dependents1 ?? "",
         dependents2: patient?.dependents2 ?? "",
         dependents3: patient?.dependents3 ?? "",
@@ -232,11 +235,12 @@ const UpsertPatientForm = ({
       id: patient?.id,
       clinicId: values.clinicId, // mudei para o id para testar
       Enterprise: values.Enterprise,
+      observation: values.observation,
     });
   };
 
   return (
-    <DialogContent className="max-h-[95vh] max-w-4xl overflow-x-hidden overflow-y-auto">
+    <DialogContent className="max-h-[90vh] max-w-4xl overflow-x-hidden overflow-y-auto">
       <DialogHeader>
         <DialogTitle className="text-amber-950">
           {patient ? patient.name : "Adicionar Paciente"}
@@ -613,6 +617,24 @@ const UpsertPatientForm = ({
                   <FormControl>
                     <Input
                       placeholder="Nome do dependente (opcional)"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="observation"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="mt-1 text-amber-950">
+                    Observações
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Observações adicionais (opcional)"
                       {...field}
                     />
                   </FormControl>
