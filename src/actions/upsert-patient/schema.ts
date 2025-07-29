@@ -1,12 +1,48 @@
 import { z } from "zod";
 
+// Função para validar CPF
+const isValidCPF = (cpf: string): boolean => {
+  const cleanCPF = cpf.replace(/\D/g, "");
+
+  if (cleanCPF.length !== 11) return false;
+
+  // Verifica se todos os dígitos são iguais
+  if (/^(\d)\1{10}$/.test(cleanCPF)) return false;
+
+  // Validação do primeiro dígito verificador
+  let sum = 0;
+  for (let i = 0; i < 9; i++) {
+    sum += parseInt(cleanCPF.charAt(i)) * (10 - i);
+  }
+  let remainder = 11 - (sum % 11);
+  const digit1 = remainder >= 10 ? 0 : remainder;
+
+  if (digit1 !== parseInt(cleanCPF.charAt(9))) return false;
+
+  // Validação do segundo dígito verificador
+  sum = 0;
+  for (let i = 0; i < 10; i++) {
+    sum += parseInt(cleanCPF.charAt(i)) * (11 - i);
+  }
+  remainder = 11 - (sum % 11);
+  const digit2 = remainder >= 10 ? 0 : remainder;
+
+  return digit2 === parseInt(cleanCPF.charAt(10));
+};
+
 export const upsertPatientSchema = z.object({
   id: z.string().uuid().optional(),
   name: z.string().trim().min(1, { message: "Nome titular é obrigatório" }),
   birthDate: z.string().min(1, { message: "Data de nascimento é obrigatória" }),
   phoneNumber: z.string().trim().min(10, { message: "Telefone é obrigatório" }),
   rgNumber: z.string().trim().min(1, { message: "RG é obrigatório" }),
-  cpfNumber: z.string().trim().min(11, { message: "CPF é obrigatório" }),
+  cpfNumber: z
+    .string()
+    .trim()
+    .min(11, { message: "CPF é obrigatório" })
+    .refine((cpf) => isValidCPF(cpf), {
+      message: "CPF inválido",
+    }),
   address: z.string().trim().min(1, { message: "Endereço é obrigatório" }),
   homeNumber: z.string().trim().min(1, { message: "Bairro é obrigatório" }),
   city: z.string().trim().min(1, { message: "Cidade é obrigatória" }),
