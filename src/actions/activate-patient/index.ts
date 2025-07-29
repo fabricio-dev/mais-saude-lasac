@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
 import { db } from "@/db";
-import { patientsTable } from "@/db/schema";
+import { patientsTable, sellersTable, usersToClinicsTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
 
@@ -19,20 +19,82 @@ export const activatePatient = actionClient
     if (!session?.user) {
       throw new Error("Usuário não encontrado");
     }
-    // Verificar se o usuário é admin ou vendedor caso o usuário não seja admin, verificar se o paciente pertence ao vendedor ver se vendedor pode ativar pacientes
+
+    // Buscar o paciente primeiro
+    const patientResult = await db
+      .select()
+      .from(patientsTable)
+      .where(eq(patientsTable.id, parsedInput.patientId));
+
+    const patient = patientResult[0];
+
+    if (!patient) {
+      throw new Error("Paciente não encontrado");
+    }
+
+    // Verificar permissões baseado no role do usuário
+    if (session.user.role === "admin") {
+      // Para admins: verificar se o paciente pertence a alguma clínica do admin
+      const userClinics = await db
+        .select({ clinicId: usersToClinicsTable.clinicId })
+        .from(usersToClinicsTable)
+        .where(eq(usersToClinicsTable.userId, session.user.id));
+
+      const clinicIds = userClinics.map((uc) => uc.clinicId);
+
+      if (clinicIds.length === 0) {
+        throw new Error("Você não está associado a nenhuma clínica");
+      }
+
+      if (!patient.clinicId || !clinicIds.includes(patient.clinicId)) {
+        throw new Error("Você não tem permissão para ativar este paciente");
+      }
+    } else {
+      // Para vendedores (role "user"): verificar se o paciente pertence à clínica do vendedor
+      const seller = await db
+        .select()
+        .from(sellersTable)
+        .where(eq(sellersTable.email, session.user.email))
+        .limit(1);
+
+      if (!seller[0]) {
+        throw new Error("Vendedor não encontrado");
+      }
+
+      if (
+        !patient.clinicId ||
+        patient.clinicId !== seller[0].clinicId ||
+        patient.sellerId !== seller[0].id
+      ) {
+        throw new Error(
+          "Você não tem permissão para ativar este paciente ele pertence a outra unidade ou a outro vendedor",
+        );
+      }
+    }
 
     // Calcular nova data de expiração (data atual + 1 ano)
     const newExpirationDate = dayjs().add(1, "year").toDate();
 
-    // Atualizar a data de expiração do paciente
+    // Determinar se é primeira ativação ou reativação
+    const updateData =
+      patient.activeAt === null
+        ? {
+            activeAt: new Date(),
+            isActive: true,
+            expirationDate: newExpirationDate,
+            updatedAt: new Date(),
+          }
+        : {
+            expirationDate: newExpirationDate,
+            reactivatedAt: new Date(),
+            isActive: true,
+            updatedAt: new Date(),
+          };
+
+    // Atualizar o paciente
     await db
       .update(patientsTable)
-      .set({
-        expirationDate: newExpirationDate,
-        reactivatedAt: new Date(),
-        isActive: true,
-        updatedAt: new Date(),
-      })
+      .set(updateData)
       .where(eq(patientsTable.id, parsedInput.patientId));
 
     revalidatePath("/patients");
