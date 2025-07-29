@@ -138,6 +138,7 @@ const SellersPage = async ({ searchParams }: SellersPageProps) => {
   );
 };
 // Wrapper para suporte ao Suspense com searchParams
+
 const SellersPageWrapper = (props: SellersPageProps) => {
   return (
     <Suspense fallback={<div>Carregando vendedores...</div>}>
