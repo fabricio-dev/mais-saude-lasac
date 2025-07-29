@@ -15,6 +15,7 @@ export const upsertPatientSchema = z.object({
   cardType: z.enum(["enterprise", "personal"], {
     message: "Tipo de cartão é obrigatório",
   }),
+  Enterprise: z.string().optional(),
   numberCards: z
     .number()
     .min(1, { message: "Quantidade de cartões é obrigatória" }),

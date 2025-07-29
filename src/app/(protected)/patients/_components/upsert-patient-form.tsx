@@ -35,31 +35,50 @@ import {
 } from "@/components/ui/select";
 import { patientsTable } from "@/db/schema";
 
-const formSchema = z.object({
-  name: z.string().trim().min(1, { message: "Nome titular é obrigatório" }),
-  birthDate: z.string().min(1, { message: "Data de nascimento é obrigatória" }),
-  phoneNumber: z.string().trim().min(10, { message: "Telefone é obrigatório" }),
-  rgNumber: z.string().trim().min(1, { message: "RG é obrigatório" }),
-  cpfNumber: z.string().trim().min(11, { message: "CPF é obrigatório" }),
-  address: z.string().trim().min(1, { message: "Endereço é obrigatório" }),
-  homeNumber: z.string().trim().min(1, { message: "Bairro é obrigatório" }),
-  city: z.string().trim().min(1, { message: "Cidade é obrigatória" }),
-  state: z.string().trim().min(2, { message: "UF é obrigatória" }),
+const formSchema = z
+  .object({
+    name: z.string().trim().min(1, { message: "Nome titular é obrigatório" }),
+    birthDate: z
+      .string()
+      .min(1, { message: "Data de nascimento é obrigatória" }),
+    phoneNumber: z
+      .string()
+      .trim()
+      .min(10, { message: "Telefone é obrigatório" }),
+    rgNumber: z.string().trim().min(1, { message: "RG é obrigatório" }),
+    cpfNumber: z.string().trim().min(11, { message: "CPF é obrigatório" }),
+    address: z.string().trim().min(1, { message: "Endereço é obrigatório" }),
+    homeNumber: z.string().trim().min(1, { message: "Bairro é obrigatório" }),
+    city: z.string().trim().min(1, { message: "Cidade é obrigatória" }),
+    state: z.string().trim().min(2, { message: "UF é obrigatória" }),
 
-  cardType: z.enum(["enterprise", "personal"], {
-    message: "Tipo de cartão é obrigatório",
-  }),
-  numberCards: z
-    .string()
-    .min(1, { message: "Quantidade de cartões é obrigatória" }),
-  sellerId: z.string().uuid({ message: "Vendedor é obrigatório" }),
-  clinicId: z.string().uuid({ message: "Clínica é obrigatória" }),
-  dependents1: z.string().optional(),
-  dependents2: z.string().optional(),
-  dependents3: z.string().optional(),
-  dependents4: z.string().optional(),
-  dependents5: z.string().optional(),
-});
+    cardType: z.enum(["enterprise", "personal"], {
+      message: "Tipo de cartão é obrigatório",
+    }),
+    Enterprise: z.string().optional(),
+    numberCards: z
+      .string()
+      .min(1, { message: "Quantidade de cartões é obrigatória" }),
+    sellerId: z.string().uuid({ message: "Vendedor é obrigatório" }),
+    clinicId: z.string().uuid({ message: "Clínica é obrigatória" }),
+    dependents1: z.string().optional(),
+    dependents2: z.string().optional(),
+    dependents3: z.string().optional(),
+    dependents4: z.string().optional(),
+    dependents5: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (
+      data.cardType === "enterprise" &&
+      (!data.Enterprise || data.Enterprise.trim() === "")
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Nome da empresa é obrigatório para cartão empresarial",
+        path: ["Enterprise"],
+      });
+    }
+  });
 
 interface UpsertPatientFormProps {
   isOpen: boolean;
@@ -130,6 +149,7 @@ const UpsertPatientForm = ({
       state: patient?.state ?? "",
 
       cardType: patient?.cardType ?? "personal",
+      Enterprise: patient?.Enterprise ?? "",
       numberCards: patient?.numberCards?.toString() ?? "",
       sellerId: patient?.sellerId ?? "",
       clinicId: patient?.clinicId ?? "", // mudei para o id para testar
@@ -158,6 +178,7 @@ const UpsertPatientForm = ({
         state: patient?.state ?? "",
 
         cardType: patient?.cardType ?? "personal",
+        Enterprise: patient?.Enterprise ?? "",
         numberCards: patient?.numberCards?.toString() ?? "",
         sellerId: patient?.sellerId ?? "",
         clinicId: patient?.clinicId ?? "",
@@ -210,6 +231,7 @@ const UpsertPatientForm = ({
       numberCards: parseInt(values.numberCards),
       id: patient?.id,
       clinicId: values.clinicId, // mudei para o id para testar
+      Enterprise: values.Enterprise,
     });
   };
 
@@ -410,6 +432,24 @@ const UpsertPatientForm = ({
                       <SelectItem value="personal">INDIVIDUAL</SelectItem>
                     </SelectContent>
                   </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="Enterprise"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-amber-950">Empresa</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Nome da empresa"
+                      disabled={form.watch("cardType") !== "enterprise"}
+                      {...field}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
