@@ -1,4 +1,8 @@
+import { and, eq, ne } from "drizzle-orm";
 import { z } from "zod";
+
+import { db } from "@/db";
+import { patientsTable } from "@/db/schema";
 
 // Função para validar CPF
 const isValidCPF = (cpf: string): boolean => {
@@ -30,39 +34,73 @@ const isValidCPF = (cpf: string): boolean => {
   return digit2 === parseInt(cleanCPF.charAt(10));
 };
 
-export const upsertPatientSchema = z.object({
-  id: z.string().uuid().optional(),
-  name: z.string().trim().min(1, { message: "Nome titular é obrigatório" }),
-  birthDate: z.string().min(1, { message: "Data de nascimento é obrigatória" }),
-  phoneNumber: z.string().trim().min(10, { message: "Telefone é obrigatório" }),
-  rgNumber: z.string().trim().min(1, { message: "RG é obrigatório" }),
-  cpfNumber: z
-    .string()
-    .trim()
-    .min(11, { message: "CPF é obrigatório" })
-    .refine((cpf) => isValidCPF(cpf), {
-      message: "CPF inválido",
-    }),
-  address: z.string().trim().min(1, { message: "Endereço é obrigatório" }),
-  homeNumber: z.string().trim().min(1, { message: "Bairro é obrigatório" }),
-  city: z.string().trim().min(1, { message: "Cidade é obrigatória" }),
-  state: z.string().trim().min(2, { message: "UF é obrigatória" }),
+export const upsertPatientSchema = z
+  .object({
+    id: z.string().uuid().optional(),
+    name: z.string().trim().min(1, { message: "Nome titular é obrigatório" }),
+    birthDate: z
+      .string()
+      .min(1, { message: "Data de nascimento é obrigatória" }),
+    phoneNumber: z
+      .string()
+      .trim()
+      .min(10, { message: "Telefone é obrigatório" }),
+    rgNumber: z.string().trim().min(1, { message: "RG é obrigatório" }),
+    cpfNumber: z
+      .string()
+      .trim()
+      .min(11, { message: "CPF é obrigatório" })
+      .refine((cpf) => isValidCPF(cpf), {
+        message: "CPF inválido",
+      }),
+    address: z.string().trim().min(1, { message: "Endereço é obrigatório" }),
+    homeNumber: z.string().trim().min(1, { message: "Bairro é obrigatório" }),
+    city: z.string().trim().min(1, { message: "Cidade é obrigatória" }),
+    state: z.string().trim().min(2, { message: "UF é obrigatória" }),
 
-  cardType: z.enum(["enterprise", "personal"], {
-    message: "Tipo de cartão é obrigatório",
-  }),
-  Enterprise: z.string().optional(),
-  numberCards: z
-    .number()
-    .min(1, { message: "Quantidade de cartões é obrigatória" }),
-  sellerId: z.string().uuid({ message: "Vendedor é obrigatório" }),
-  clinicId: z.string().uuid({ message: "Clínica é obrigatória" }),
-  observation: z.string().optional(),
-  dependents1: z.string().optional(),
-  dependents2: z.string().optional(),
-  dependents3: z.string().optional(),
-  dependents4: z.string().optional(),
-  dependents5: z.string().optional(),
-});
+    cardType: z.enum(["enterprise", "personal"], {
+      message: "Tipo de cartão é obrigatório",
+    }),
+    Enterprise: z.string().optional(),
+    numberCards: z
+      .number()
+      .min(1, { message: "Quantidade de cartões é obrigatória" }),
+    sellerId: z.string().uuid({ message: "Vendedor é obrigatório" }),
+    clinicId: z.string().uuid({ message: "Clínica é obrigatória" }),
+    observation: z.string().optional(),
+    dependents1: z.string().optional(),
+    dependents2: z.string().optional(),
+    dependents3: z.string().optional(),
+    dependents4: z.string().optional(),
+    dependents5: z.string().optional(),
+  })
+  .superRefine(async (data, ctx) => {
+    // Verificar se CPF já existe no banco
+    const cleanCPF = data.cpfNumber.replace(/\D/g, "");
+
+    let whereCondition = eq(patientsTable.cpfNumber, cleanCPF);
+
+    // Se é uma edição, excluir o próprio registro da busca
+    if (data.id) {
+      whereCondition = and(
+        eq(patientsTable.cpfNumber, cleanCPF),
+        ne(patientsTable.id, data.id),
+      ) as typeof whereCondition;
+    }
+
+    const existingPatient = await db
+      .select()
+      .from(patientsTable)
+      .where(whereCondition)
+      .limit(1);
+
+    if (existingPatient.length > 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Este CPF já está cadastrado no sistema",
+        path: ["cpfNumber"],
+      });
+    }
+  });
 
 export type UpsertPatientSchema = z.infer<typeof upsertPatientSchema>;

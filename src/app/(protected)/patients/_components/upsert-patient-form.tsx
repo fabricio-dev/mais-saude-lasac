@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2 } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -34,6 +35,33 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { patientsTable } from "@/db/schema";
+
+// Função para verificar CPF duplicado
+const checkCPFExists = async (
+  cpf: string,
+  patientId?: string,
+): Promise<boolean> => {
+  try {
+    const cleanCPF = cpf.replace(/\D/g, "");
+    if (cleanCPF.length !== 11) return false;
+
+    const response = await fetch("/api/check-cpf", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ cpf: cleanCPF, patientId }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return data.exists;
+    }
+    return false;
+  } catch {
+    return false;
+  }
+};
 
 // Função para validar CPF
 const isValidCPF = (cpf: string): boolean => {
@@ -169,6 +197,7 @@ const UpsertPatientForm = ({
 }: UpsertPatientFormProps) => {
   const [sellers, setSellers] = useState<Seller[]>([]);
   const [clinics, setClinics] = useState<Clinic[]>([]);
+  const [checkingCPF, setCheckingCPF] = useState(false);
   const form = useForm<z.infer<typeof formSchema>>({
     shouldUnregister: true,
     resolver: zodResolver(formSchema),
@@ -362,7 +391,12 @@ const UpsertPatientForm = ({
               name="cpfNumber"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-amber-950">CPF</FormLabel>
+                  <FormLabel className="text-amber-950">
+                    CPF{" "}
+                    {checkingCPF && (
+                      <Loader2 className="ml-2 inline h-4 w-4 animate-spin" />
+                    )}
+                  </FormLabel>
                   <FormControl>
                     <PatternFormat
                       format="###.###.###-##"
@@ -372,6 +406,29 @@ const UpsertPatientForm = ({
                       value={field.value}
                       onValueChange={(values) => {
                         field.onChange(values.value);
+                      }}
+                      onBlur={async () => {
+                        const cpf = field.value;
+                        if (cpf && cpf.length >= 11 && isValidCPF(cpf)) {
+                          setCheckingCPF(true);
+                          try {
+                            const exists = await checkCPFExists(
+                              cpf,
+                              patient?.id,
+                            );
+                            if (exists) {
+                              form.setError("cpfNumber", {
+                                type: "manual",
+                                message:
+                                  "Este CPF já está cadastrado no sistema",
+                              });
+                            } else {
+                              form.clearErrors("cpfNumber");
+                            }
+                          } finally {
+                            setCheckingCPF(false);
+                          }
+                        }
                       }}
                     />
                   </FormControl>
