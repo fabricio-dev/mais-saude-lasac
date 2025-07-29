@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2 } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -35,31 +36,114 @@ import {
 } from "@/components/ui/select";
 import { patientsTable } from "@/db/schema";
 
-const formSchema = z.object({
-  name: z.string().trim().min(1, { message: "Nome titular é obrigatório" }),
-  birthDate: z.string().min(1, { message: "Data de nascimento é obrigatória" }),
-  phoneNumber: z.string().trim().min(10, { message: "Telefone é obrigatório" }),
-  rgNumber: z.string().trim().min(1, { message: "RG é obrigatório" }),
-  cpfNumber: z.string().trim().min(11, { message: "CPF é obrigatório" }),
-  address: z.string().trim().min(1, { message: "Endereço é obrigatório" }),
-  homeNumber: z.string().trim().min(1, { message: "Bairro é obrigatório" }),
-  city: z.string().trim().min(1, { message: "Cidade é obrigatória" }),
-  state: z.string().trim().min(2, { message: "UF é obrigatória" }),
+// Função para verificar CPF duplicado
+const checkCPFExists = async (
+  cpf: string,
+  patientId?: string,
+): Promise<boolean> => {
+  try {
+    const cleanCPF = cpf.replace(/\D/g, "");
+    if (cleanCPF.length !== 11) return false;
 
-  cardType: z.enum(["enterprise", "personal"], {
-    message: "Tipo de cartão é obrigatório",
-  }),
-  numberCards: z
-    .string()
-    .min(1, { message: "Quantidade de cartões é obrigatória" }),
-  sellerId: z.string().uuid({ message: "Vendedor é obrigatório" }),
-  clinicId: z.string().uuid({ message: "Clínica é obrigatória" }),
-  dependents1: z.string().optional(),
-  dependents2: z.string().optional(),
-  dependents3: z.string().optional(),
-  dependents4: z.string().optional(),
-  dependents5: z.string().optional(),
-});
+    const response = await fetch("/api/check-cpf", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ cpf: cleanCPF, patientId }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return data.exists;
+    }
+    return false;
+  } catch {
+    return false;
+  }
+};
+
+// Função para validar CPF
+const isValidCPF = (cpf: string): boolean => {
+  const cleanCPF = cpf.replace(/\D/g, "");
+
+  if (cleanCPF.length !== 11) return false;
+
+  // Verifica se todos os dígitos são iguais
+  if (/^(\d)\1{10}$/.test(cleanCPF)) return false;
+
+  // Validação do primeiro dígito verificador
+  let sum = 0;
+  for (let i = 0; i < 9; i++) {
+    sum += parseInt(cleanCPF.charAt(i)) * (10 - i);
+  }
+  let remainder = 11 - (sum % 11);
+  const digit1 = remainder >= 10 ? 0 : remainder;
+
+  if (digit1 !== parseInt(cleanCPF.charAt(9))) return false;
+
+  // Validação do segundo dígito verificador
+  sum = 0;
+  for (let i = 0; i < 10; i++) {
+    sum += parseInt(cleanCPF.charAt(i)) * (11 - i);
+  }
+  remainder = 11 - (sum % 11);
+  const digit2 = remainder >= 10 ? 0 : remainder;
+
+  return digit2 === parseInt(cleanCPF.charAt(10));
+};
+
+const formSchema = z
+  .object({
+    name: z.string().trim().min(1, { message: "Nome titular é obrigatório" }),
+    birthDate: z
+      .string()
+      .min(1, { message: "Data de nascimento é obrigatória" }),
+    phoneNumber: z
+      .string()
+      .trim()
+      .min(10, { message: "Telefone é obrigatório" }),
+    rgNumber: z.string().trim().min(1, { message: "RG é obrigatório" }),
+    cpfNumber: z
+      .string()
+      .trim()
+      .min(11, { message: "CPF é obrigatório" })
+      .refine((cpf) => isValidCPF(cpf), {
+        message: "CPF inválido",
+      }),
+    address: z.string().trim().min(1, { message: "Endereço é obrigatório" }),
+    homeNumber: z.string().trim().min(1, { message: "Bairro é obrigatório" }),
+    city: z.string().trim().min(1, { message: "Cidade é obrigatória" }),
+    state: z.string().trim().min(2, { message: "UF é obrigatória" }),
+
+    cardType: z.enum(["enterprise", "personal"], {
+      message: "Tipo de cartão é obrigatório",
+    }),
+    Enterprise: z.string().optional(),
+    numberCards: z
+      .string()
+      .min(1, { message: "Quantidade de cartões é obrigatória" }),
+    sellerId: z.string().uuid({ message: "Vendedor é obrigatório" }),
+    clinicId: z.string().uuid({ message: "Clínica é obrigatória" }),
+    observation: z.string().optional(),
+    dependents1: z.string().optional(),
+    dependents2: z.string().optional(),
+    dependents3: z.string().optional(),
+    dependents4: z.string().optional(),
+    dependents5: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (
+      data.cardType === "enterprise" &&
+      (!data.Enterprise || data.Enterprise.trim() === "")
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Nome da empresa é obrigatório para cartão empresarial",
+        path: ["Enterprise"],
+      });
+    }
+  });
 
 interface UpsertPatientFormProps {
   isOpen: boolean;
@@ -118,6 +202,7 @@ const UpsertPatientForm = ({
 }: UpsertPatientFormProps) => {
   const [seller, setSeller] = useState<Seller | null>(null);
   const [clinic, setClinic] = useState<Clinic | null>(null);
+  const [checkingCPF, setCheckingCPF] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     shouldUnregister: true,
@@ -126,7 +211,7 @@ const UpsertPatientForm = ({
       name: patient?.name ?? "",
       birthDate: patient?.birthDate
         ? new Date(patient.birthDate).toISOString().split("T")[0]
-        : "",
+        : "2007-09-01",
       phoneNumber: patient?.phoneNumber ?? "",
       rgNumber: patient?.rgNumber ?? "",
       cpfNumber: patient?.cpfNumber ?? "",
@@ -136,9 +221,11 @@ const UpsertPatientForm = ({
       state: patient?.state ?? "",
 
       cardType: patient?.cardType ?? "personal",
+      Enterprise: patient?.Enterprise ?? "",
       numberCards: patient?.numberCards?.toString() ?? "",
       sellerId: patient?.sellerId ?? sellerId,
       clinicId: patient?.clinicId ?? clinicId,
+      observation: patient?.observation ?? "",
       dependents1: patient?.dependents1 ?? "",
       dependents2: patient?.dependents2 ?? "",
       dependents3: patient?.dependents3 ?? "",
@@ -154,7 +241,7 @@ const UpsertPatientForm = ({
         name: patient?.name ?? "",
         birthDate: patient?.birthDate
           ? new Date(patient.birthDate).toISOString().split("T")[0]
-          : "",
+          : "2007-09-01",
         phoneNumber: patient?.phoneNumber ?? "",
         rgNumber: patient?.rgNumber ?? "",
         cpfNumber: patient?.cpfNumber ?? "",
@@ -164,9 +251,11 @@ const UpsertPatientForm = ({
         state: patient?.state ?? "",
 
         cardType: patient?.cardType ?? "personal",
+        Enterprise: patient?.Enterprise ?? "",
         numberCards: patient?.numberCards?.toString() ?? "",
         sellerId: patient?.sellerId ?? sellerId,
         clinicId: patient?.clinicId ?? clinicId,
+        observation: patient?.observation ?? "",
         dependents1: patient?.dependents1 ?? "",
         dependents2: patient?.dependents2 ?? "",
         dependents3: patient?.dependents3 ?? "",
@@ -225,11 +314,13 @@ const UpsertPatientForm = ({
       id: patient?.id,
       clinicId: values.clinicId,
       sellerId: values.sellerId,
+      Enterprise: values.Enterprise,
+      observation: values.observation,
     });
   };
 
   return (
-    <DialogContent className="max-h-[95vh] max-w-4xl overflow-x-hidden overflow-y-auto">
+    <DialogContent className="max-h-[88vh] max-w-4xl overflow-x-hidden overflow-y-auto">
       <DialogHeader>
         <DialogTitle className="text-amber-950">
           {patient ? patient.name : "Adicionar Paciente"}
@@ -303,7 +394,14 @@ const UpsertPatientForm = ({
                 <FormItem>
                   <FormLabel className="text-amber-950">RG</FormLabel>
                   <FormControl>
-                    <Input placeholder="Digite o número do RG" {...field} />
+                    <Input
+                      placeholder="Digite apenas números"
+                      {...field}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, "");
+                        field.onChange(value);
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -315,7 +413,12 @@ const UpsertPatientForm = ({
               name="cpfNumber"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-amber-950">CPF</FormLabel>
+                  <FormLabel className="text-amber-950">
+                    CPF{" "}
+                    {checkingCPF && (
+                      <Loader2 className="ml-2 inline h-4 w-4 animate-spin" />
+                    )}
+                  </FormLabel>
                   <FormControl>
                     <PatternFormat
                       format="###.###.###-##"
@@ -325,6 +428,29 @@ const UpsertPatientForm = ({
                       value={field.value}
                       onValueChange={(values) => {
                         field.onChange(values.value);
+                      }}
+                      onBlur={async () => {
+                        const cpf = field.value;
+                        if (cpf && cpf.length >= 11 && isValidCPF(cpf)) {
+                          setCheckingCPF(true);
+                          try {
+                            const exists = await checkCPFExists(
+                              cpf,
+                              patient?.id,
+                            );
+                            if (exists) {
+                              form.setError("cpfNumber", {
+                                type: "manual",
+                                message:
+                                  "Este CPF já está cadastrado no sistema",
+                              });
+                            } else {
+                              form.clearErrors("cpfNumber");
+                            }
+                          } finally {
+                            setCheckingCPF(false);
+                          }
+                        }
                       }}
                     />
                   </FormControl>
@@ -432,6 +558,24 @@ const UpsertPatientForm = ({
 
             <FormField
               control={form.control}
+              name="Enterprise"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-amber-950">Empresa</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Nome da empresa"
+                      disabled={form.watch("cardType") !== "enterprise"}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="numberCards"
               render={({ field }) => (
                 <FormItem>
@@ -500,6 +644,25 @@ const UpsertPatientForm = ({
               )}
             />
           </div>
+
+          <FormField
+            control={form.control}
+            name="observation"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="mt-1 text-amber-950">
+                  Observações
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Observações adicionais (opcional)"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <div className="gap-1">
             <FormField
