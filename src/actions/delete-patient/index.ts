@@ -20,7 +20,7 @@ export const deletePatient = actionClient
       throw new Error("Unauthorized");
     }
     if (session.user.role !== "admin") {
-      throw new Error("Unauthorized");
+      throw new Error("Contate o administrador para deletar este paciente");
     }
 
     // Buscar as clínicas do usuário

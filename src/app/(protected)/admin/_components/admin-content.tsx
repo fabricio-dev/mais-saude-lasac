@@ -138,7 +138,7 @@ export const AdminContent = () => {
           </div>
           <div>
             <Label className="text-sm font-medium">Role:</Label>
-            <p className="text-muted-foreground text-sm font-semibold text-emerald-600">
+            <p className="text-sm font-semibold text-emerald-600">
               Administrador
             </p>
           </div>
