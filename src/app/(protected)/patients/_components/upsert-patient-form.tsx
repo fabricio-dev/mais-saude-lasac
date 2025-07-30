@@ -40,6 +40,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { patientsTable } from "@/db/schema";
 
 // Função para verificar CPF duplicado
@@ -204,8 +211,6 @@ const UpsertPatientForm = ({
   const [sellers, setSellers] = useState<Seller[]>([]);
   const [clinics, setClinics] = useState<Clinic[]>([]);
   const [checkingCPF, setCheckingCPF] = useState(false);
-  const [openState, setOpenState] = useState(false);
-  const [openCardType, setOpenCardType] = useState(false);
   const [openSeller, setOpenSeller] = useState(false);
   const [openClinic, setOpenClinic] = useState(false);
 
@@ -509,73 +514,37 @@ const UpsertPatientForm = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-amber-950">
-                    UF
+                    UF{" "}
                     {loadingState && (
                       <Loader2 className="ml-2 inline h-4 w-4 animate-spin" />
                     )}
                   </FormLabel>
-                  <FormControl>
-                    <Popover
-                      open={openState}
-                      onOpenChange={(open) => {
-                        setOpenState(open);
-                        if (!open) {
-                          setLoadingState(true);
-                          setTimeout(() => {
-                            setLoadingState(false);
-                          }, 250);
-                        }
-                      }}
-                    >
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          role="combobox"
-                          aria-expanded={openState}
-                          className="w-full justify-between"
-                          disabled={loadingState}
-                        >
-                          {field.value || "Selecione a UF"}
-                          <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-full p-0">
-                        <Command>
-                          <CommandInput placeholder="Buscar UF..." />
-                          <CommandList>
-                            <CommandEmpty>Nenhuma UF encontrada.</CommandEmpty>
-                            <CommandGroup>
-                              {ufs.map((uf) => (
-                                <CommandItem
-                                  key={uf}
-                                  value={uf}
-                                  onSelect={async () => {
-                                    setLoadingState(true);
-                                    field.onChange(uf);
-                                    setOpenState(false);
-
-                                    // Simula processamento
-                                    setTimeout(() => {
-                                      setLoadingState(false);
-                                    }, 500);
-                                  }}
-                                >
-                                  <Check
-                                    className={`mr-2 h-4 w-4 ${
-                                      field.value === uf
-                                        ? "opacity-100"
-                                        : "opacity-0"
-                                    }`}
-                                  />
-                                  {uf}
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
-                  </FormControl>
+                  <Select
+                    onValueChange={field.onChange}
+                    onOpenChange={(open) => {
+                      if (!open) {
+                        setLoadingState(true);
+                        setTimeout(() => {
+                          setLoadingState(false);
+                        }, 250);
+                      }
+                    }}
+                    defaultValue={field.value}
+                    disabled={loadingState}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione a UF" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {ufs.map((uf) => (
+                        <SelectItem key={uf} value={uf}>
+                          {uf}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -587,96 +556,34 @@ const UpsertPatientForm = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-amber-950">
-                    Tipo de Cartão
+                    Tipo de Cartão{" "}
                     {loadingCardType && (
                       <Loader2 className="ml-2 inline h-4 w-4 animate-spin" />
                     )}
                   </FormLabel>
-                  <FormControl>
-                    <Popover
-                      open={openCardType}
-                      onOpenChange={(open) => {
-                        setOpenCardType(open);
-                        if (!open) {
-                          setLoadingCardType(true);
-                          setTimeout(() => {
-                            setLoadingCardType(false);
-                          }, 250);
-                        }
-                      }}
-                    >
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          role="combobox"
-                          aria-expanded={openCardType}
-                          className="w-full justify-between"
-                          disabled={loadingCardType}
-                        >
-                          {field.value === "enterprise"
-                            ? "EMPRESA"
-                            : field.value === "personal"
-                              ? "INDIVIDUAL"
-                              : "Selecione o tipo de cartão"}
-                          <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-full p-0">
-                        <Command>
-                          <CommandInput placeholder="Buscar tipo..." />
-                          <CommandList>
-                            <CommandEmpty>Nenhum tipo encontrado.</CommandEmpty>
-                            <CommandGroup>
-                              <CommandItem
-                                value="enterprise"
-                                onSelect={async () => {
-                                  setLoadingCardType(true);
-                                  field.onChange("enterprise");
-                                  setOpenCardType(false);
-
-                                  // Simula processamento
-                                  setTimeout(() => {
-                                    setLoadingCardType(false);
-                                  }, 500);
-                                }}
-                              >
-                                <Check
-                                  className={`mr-2 h-4 w-4 ${
-                                    field.value === "enterprise"
-                                      ? "opacity-100"
-                                      : "opacity-0"
-                                  }`}
-                                />
-                                EMPRESA
-                              </CommandItem>
-                              <CommandItem
-                                value="personal"
-                                onSelect={async () => {
-                                  setLoadingCardType(true);
-                                  field.onChange("personal");
-                                  setOpenCardType(false);
-
-                                  // Simula processamento
-                                  setTimeout(() => {
-                                    setLoadingCardType(false);
-                                  }, 500);
-                                }}
-                              >
-                                <Check
-                                  className={`mr-2 h-4 w-4 ${
-                                    field.value === "personal"
-                                      ? "opacity-100"
-                                      : "opacity-0"
-                                  }`}
-                                />
-                                INDIVIDUAL
-                              </CommandItem>
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
-                  </FormControl>
+                  <Select
+                    onValueChange={field.onChange}
+                    onOpenChange={(open) => {
+                      if (!open) {
+                        setLoadingCardType(true);
+                        setTimeout(() => {
+                          setLoadingCardType(false);
+                        }, 250);
+                      }
+                    }}
+                    defaultValue={field.value}
+                    disabled={loadingCardType}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o tipo de cartão" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="enterprise">EMPRESA</SelectItem>
+                      <SelectItem value="personal">INDIVIDUAL</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
