@@ -641,7 +641,7 @@ const UpsertPatientForm = ({
               control={form.control}
               name="sellerId"
               render={({ field }) => (
-                <FormItem>
+                <FormItem hidden={true}>
                   <FormLabel className="text-amber-950">
                     Vendedor{" "}
                     {loadingSeller && (
@@ -676,7 +676,7 @@ const UpsertPatientForm = ({
               control={form.control}
               name="clinicId"
               render={({ field }) => (
-                <FormItem>
+                <FormItem hidden={true}>
                   <FormLabel className="text-amber-950">
                     Clínica{" "}
                     {loadingClinic && (
@@ -707,25 +707,6 @@ const UpsertPatientForm = ({
               )}
             />
           </div>
-
-          <FormField
-            control={form.control}
-            name="observation"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="mt-1 text-amber-950">
-                  Observações
-                </FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="Observações adicionais (opcional)"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
 
           <div className="gap-1">
             <FormField
@@ -813,6 +794,25 @@ const UpsertPatientForm = ({
                   <FormControl>
                     <Input
                       placeholder="Nome do dependente (opcional)"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="observation"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="mt-1 text-amber-950">
+                    Observações
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      className="h-16"
+                      placeholder="Observações adicionais (opcional)"
                       {...field}
                     />
                   </FormControl>
