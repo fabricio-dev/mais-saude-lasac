@@ -164,33 +164,33 @@ interface Clinic {
 }
 
 const ufs = [
+  "PE",
+  "CE",
+  "BA",
+  "PB",
+  "PI",
+  "RN",
+  "SE",
+  "TO",
+  "MA",
   "AC",
   "AL",
   "AP",
   "AM",
-  "BA",
-  "CE",
   "DF",
   "ES",
   "GO",
-  "MA",
   "MT",
   "MS",
   "MG",
   "PA",
-  "PB",
   "PR",
-  "PE",
-  "PI",
   "RJ",
-  "RN",
   "RS",
   "RO",
   "RR",
   "SC",
   "SP",
-  "SE",
-  "TO",
 ];
 
 const UpsertPatientForm = ({
@@ -203,6 +203,20 @@ const UpsertPatientForm = ({
   const [seller, setSeller] = useState<Seller | null>(null);
   const [clinic, setClinic] = useState<Clinic | null>(null);
   const [checkingCPF, setCheckingCPF] = useState(false);
+  const [loadingState, setLoadingState] = useState(false);
+  const [loadingCardType, setLoadingCardType] = useState(false);
+  const [loadingSeller, setLoadingSeller] = useState(false);
+  const [loadingClinic, setLoadingClinic] = useState(false);
+
+  // Função utilitária para simular loading
+  const simulateLoading = async (
+    setLoading: (loading: boolean) => void,
+    delay = 500,
+  ) => {
+    setLoading(true);
+    await new Promise((resolve) => setTimeout(resolve, delay));
+    setLoading(false);
+  };
 
   const form = useForm<z.infer<typeof formSchema>>({
     shouldUnregister: true,
@@ -237,6 +251,17 @@ const UpsertPatientForm = ({
   // Carregar dados do vendedor e clínica
   useEffect(() => {
     if (isOpen) {
+      // Ativar todos os loadings ao abrir o formulário
+
+      setLoadingClinic(true);
+      setLoadingSeller(true);
+
+      // Simular loading por 0.5 segundos
+      simulateLoading(() => {}, 500).then(() => {
+        setLoadingClinic(false);
+        setLoadingSeller(false);
+      });
+
       form.reset({
         name: patient?.name ?? "",
         birthDate: patient?.birthDate
@@ -506,10 +531,22 @@ const UpsertPatientForm = ({
               name="state"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-amber-950">UF</FormLabel>
+                  <FormLabel className="text-amber-950">
+                    UF{" "}
+                    {loadingState && (
+                      <Loader2 className="ml-2 inline h-4 w-4 animate-spin" />
+                    )}
+                  </FormLabel>
                   <Select
                     onValueChange={field.onChange}
+                    onOpenChange={async (open) => {
+                      if (!open) {
+                        await simulateLoading(setLoadingState);
+                        setLoadingState(false);
+                      }
+                    }}
                     defaultValue={field.value}
+                    disabled={loadingState}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -535,11 +572,21 @@ const UpsertPatientForm = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-amber-950">
-                    Tipo de Cartão
+                    Tipo de Cartão{" "}
+                    {loadingCardType && (
+                      <Loader2 className="ml-2 inline h-4 w-4 animate-spin" />
+                    )}
                   </FormLabel>
                   <Select
                     onValueChange={field.onChange}
+                    onOpenChange={async (open) => {
+                      if (!open) {
+                        await simulateLoading(setLoadingCardType);
+                        setLoadingCardType(false);
+                      }
+                    }}
                     defaultValue={field.value}
+                    disabled={loadingCardType}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -595,11 +642,19 @@ const UpsertPatientForm = ({
               name="sellerId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-amber-950">Vendedor</FormLabel>
+                  <FormLabel className="text-amber-950">
+                    Vendedor{" "}
+                    {loadingSeller && (
+                      <Loader2 className="ml-2 inline h-4 w-4 animate-spin" />
+                    )}
+                  </FormLabel>
                   <Select
-                    onValueChange={field.onChange}
+                    onValueChange={async (value) => {
+                      field.onChange(value);
+                      await simulateLoading(setLoadingSeller);
+                    }}
                     defaultValue={field.value}
-                    disabled
+                    disabled={true || loadingSeller}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -622,11 +677,19 @@ const UpsertPatientForm = ({
               name="clinicId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-amber-950">Clínica</FormLabel>
+                  <FormLabel className="text-amber-950">
+                    Clínica{" "}
+                    {loadingClinic && (
+                      <Loader2 className="ml-2 inline h-4 w-4 animate-spin" />
+                    )}
+                  </FormLabel>
                   <Select
-                    onValueChange={field.onChange}
+                    onValueChange={async (value) => {
+                      field.onChange(value);
+                      await simulateLoading(setLoadingClinic);
+                    }}
                     defaultValue={field.value}
-                    disabled
+                    disabled={true || loadingClinic}
                   >
                     <FormControl>
                       <SelectTrigger>
