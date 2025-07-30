@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
+import { Check, ChevronDown, Loader2 } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -11,6 +11,14 @@ import { z } from "zod";
 
 import { upsertPatient } from "@/actions/upsert-patient";
 import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import {
   DialogContent,
   DialogDescription,
@@ -28,12 +36,10 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { patientsTable } from "@/db/schema";
 
 // Função para verificar CPF duplicado
@@ -161,33 +167,33 @@ interface Clinic {
   name: string;
 }
 const ufs = [
+  "PE",
+  "CE",
+  "BA",
+  "PB",
+  "PI",
+  "RN",
+  "SE",
+  "TO",
+  "MA",
   "AC",
   "AL",
   "AP",
   "AM",
-  "BA",
-  "CE",
   "DF",
   "ES",
   "GO",
-  "MA",
   "MT",
   "MS",
   "MG",
   "PA",
-  "PB",
   "PR",
-  "PE",
-  "PI",
   "RJ",
-  "RN",
   "RS",
   "RO",
   "RR",
   "SC",
   "SP",
-  "SE",
-  "TO",
 ];
 
 const UpsertPatientForm = ({
@@ -198,6 +204,17 @@ const UpsertPatientForm = ({
   const [sellers, setSellers] = useState<Seller[]>([]);
   const [clinics, setClinics] = useState<Clinic[]>([]);
   const [checkingCPF, setCheckingCPF] = useState(false);
+  const [openState, setOpenState] = useState(false);
+  const [openCardType, setOpenCardType] = useState(false);
+  const [openSeller, setOpenSeller] = useState(false);
+  const [openClinic, setOpenClinic] = useState(false);
+
+  // Estados para loaders dos comboboxes
+  const [loadingState, setLoadingState] = useState(false);
+  const [loadingCardType, setLoadingCardType] = useState(false);
+  const [loadingSeller, setLoadingSeller] = useState(false);
+  const [loadingClinic, setLoadingClinic] = useState(false);
+
   const form = useForm<z.infer<typeof formSchema>>({
     shouldUnregister: true,
     resolver: zodResolver(formSchema),
@@ -491,24 +508,74 @@ const UpsertPatientForm = ({
               name="state"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-amber-950">UF</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione a UF" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {ufs.map((uf) => (
-                        <SelectItem key={uf} value={uf}>
-                          {uf}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormLabel className="text-amber-950">
+                    UF
+                    {loadingState && (
+                      <Loader2 className="ml-2 inline h-4 w-4 animate-spin" />
+                    )}
+                  </FormLabel>
+                  <FormControl>
+                    <Popover
+                      open={openState}
+                      onOpenChange={(open) => {
+                        setOpenState(open);
+                        if (!open) {
+                          setLoadingState(true);
+                          setTimeout(() => {
+                            setLoadingState(false);
+                          }, 250);
+                        }
+                      }}
+                    >
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={openState}
+                          className="w-full justify-between"
+                          disabled={loadingState}
+                        >
+                          {field.value || "Selecione a UF"}
+                          <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0">
+                        <Command>
+                          <CommandInput placeholder="Buscar UF..." />
+                          <CommandList>
+                            <CommandEmpty>Nenhuma UF encontrada.</CommandEmpty>
+                            <CommandGroup>
+                              {ufs.map((uf) => (
+                                <CommandItem
+                                  key={uf}
+                                  value={uf}
+                                  onSelect={async () => {
+                                    setLoadingState(true);
+                                    field.onChange(uf);
+                                    setOpenState(false);
+
+                                    // Simula processamento
+                                    setTimeout(() => {
+                                      setLoadingState(false);
+                                    }, 500);
+                                  }}
+                                >
+                                  <Check
+                                    className={`mr-2 h-4 w-4 ${
+                                      field.value === uf
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    }`}
+                                  />
+                                  {uf}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -521,21 +588,95 @@ const UpsertPatientForm = ({
                 <FormItem>
                   <FormLabel className="text-amber-950">
                     Tipo de Cartão
+                    {loadingCardType && (
+                      <Loader2 className="ml-2 inline h-4 w-4 animate-spin" />
+                    )}
                   </FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o tipo de cartão" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="enterprise">EMPRESA</SelectItem>
-                      <SelectItem value="personal">INDIVIDUAL</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <Popover
+                      open={openCardType}
+                      onOpenChange={(open) => {
+                        setOpenCardType(open);
+                        if (!open) {
+                          setLoadingCardType(true);
+                          setTimeout(() => {
+                            setLoadingCardType(false);
+                          }, 250);
+                        }
+                      }}
+                    >
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={openCardType}
+                          className="w-full justify-between"
+                          disabled={loadingCardType}
+                        >
+                          {field.value === "enterprise"
+                            ? "EMPRESA"
+                            : field.value === "personal"
+                              ? "INDIVIDUAL"
+                              : "Selecione o tipo de cartão"}
+                          <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0">
+                        <Command>
+                          <CommandInput placeholder="Buscar tipo..." />
+                          <CommandList>
+                            <CommandEmpty>Nenhum tipo encontrado.</CommandEmpty>
+                            <CommandGroup>
+                              <CommandItem
+                                value="enterprise"
+                                onSelect={async () => {
+                                  setLoadingCardType(true);
+                                  field.onChange("enterprise");
+                                  setOpenCardType(false);
+
+                                  // Simula processamento
+                                  setTimeout(() => {
+                                    setLoadingCardType(false);
+                                  }, 500);
+                                }}
+                              >
+                                <Check
+                                  className={`mr-2 h-4 w-4 ${
+                                    field.value === "enterprise"
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  }`}
+                                />
+                                EMPRESA
+                              </CommandItem>
+                              <CommandItem
+                                value="personal"
+                                onSelect={async () => {
+                                  setLoadingCardType(true);
+                                  field.onChange("personal");
+                                  setOpenCardType(false);
+
+                                  // Simula processamento
+                                  setTimeout(() => {
+                                    setLoadingCardType(false);
+                                  }, 500);
+                                }}
+                              >
+                                <Check
+                                  className={`mr-2 h-4 w-4 ${
+                                    field.value === "personal"
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  }`}
+                                />
+                                INDIVIDUAL
+                              </CommandItem>
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -574,57 +715,162 @@ const UpsertPatientForm = ({
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
-              name="sellerId"
+              name="clinicId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-amber-950">Vendedor</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o vendedor" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {sellers.map((seller) => (
-                        <SelectItem key={seller.id} value={seller.id}>
-                          {seller.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormLabel className="text-amber-950">
+                    Clínica
+                    {loadingClinic && (
+                      <Loader2 className="ml-2 inline h-4 w-4 animate-spin" />
+                    )}
+                  </FormLabel>
+                  <FormControl>
+                    <Popover
+                      open={openClinic}
+                      onOpenChange={(open) => {
+                        setOpenClinic(open);
+                        if (!open) {
+                          setLoadingClinic(true);
+                          setTimeout(() => {
+                            setLoadingClinic(false);
+                          }, 250);
+                        }
+                      }}
+                    >
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={openClinic}
+                          className="w-full justify-between"
+                          disabled={loadingClinic}
+                        >
+                          {clinics.find((clinic) => clinic.id === field.value)
+                            ?.name || "Selecione a clínica"}
+                          <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0">
+                        <Command>
+                          <CommandInput placeholder="Buscar clínica..." />
+                          <CommandList>
+                            <CommandEmpty>
+                              Nenhuma clínica encontrada.
+                            </CommandEmpty>
+                            <CommandGroup>
+                              {clinics.map((clinic) => (
+                                <CommandItem
+                                  key={clinic.id}
+                                  value={clinic.name}
+                                  onSelect={async () => {
+                                    setLoadingClinic(true);
+                                    field.onChange(clinic.id);
+                                    setOpenClinic(false);
+
+                                    // Simula processamento
+                                    setTimeout(() => {
+                                      setLoadingClinic(false);
+                                    }, 500);
+                                  }}
+                                >
+                                  <Check
+                                    className={`mr-2 h-4 w-4 ${
+                                      field.value === clinic.id
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    }`}
+                                  />
+                                  {clinic.name}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
             <FormField
               control={form.control}
-              name="clinicId"
+              name="sellerId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-amber-950">Clínica</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione a clínica" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {clinics.map((clinic) => (
-                        <SelectItem key={clinic.id} value={clinic.id}>
-                          {clinic.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormLabel className="text-amber-950">
+                    Vendedor
+                    {loadingSeller && (
+                      <Loader2 className="ml-2 inline h-4 w-4 animate-spin" />
+                    )}
+                  </FormLabel>
+                  <FormControl>
+                    <Popover
+                      open={openSeller}
+                      onOpenChange={(open) => {
+                        setOpenSeller(open);
+                        if (!open) {
+                          setLoadingSeller(true);
+                          setTimeout(() => {
+                            setLoadingSeller(false);
+                          }, 250);
+                        }
+                      }}
+                    >
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={openSeller}
+                          className="w-full justify-between"
+                          disabled={loadingSeller}
+                        >
+                          {sellers.find((seller) => seller.id === field.value)
+                            ?.name || "Selecione o vendedor"}
+                          <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0">
+                        <Command>
+                          <CommandInput placeholder="Buscar vendedor..." />
+                          <CommandList>
+                            <CommandEmpty>
+                              Nenhum vendedor encontrado.
+                            </CommandEmpty>
+                            <CommandGroup>
+                              {sellers.map((seller) => (
+                                <CommandItem
+                                  key={seller.id}
+                                  value={seller.name}
+                                  onSelect={async () => {
+                                    setLoadingSeller(true);
+                                    field.onChange(seller.id);
+                                    setOpenSeller(false);
+
+                                    // Simula processamento
+                                    setTimeout(() => {
+                                      setLoadingSeller(false);
+                                    }, 500);
+                                  }}
+                                >
+                                  <Check
+                                    className={`mr-2 h-4 w-4 ${
+                                      field.value === seller.id
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    }`}
+                                  />
+                                  {seller.name}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
