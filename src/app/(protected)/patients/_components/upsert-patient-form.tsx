@@ -379,7 +379,14 @@ const UpsertPatientForm = ({
                 <FormItem>
                   <FormLabel className="text-amber-950">RG</FormLabel>
                   <FormControl>
-                    <Input placeholder="Digite o número do RG" {...field} />
+                    <Input
+                      placeholder="Digite apenas números"
+                      {...field}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, "");
+                        field.onChange(value);
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
