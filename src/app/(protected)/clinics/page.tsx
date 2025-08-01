@@ -67,8 +67,8 @@ const ClinicsPage = async ({ searchParams }: ClinicsPageProps) => {
     <PageContainer>
       <PageHeader>
         <PageHeaderContent>
-          <PageTitle>Clínicas</PageTitle>
-          <PageDescription>Gerencie as clínicas do seu sistema</PageDescription>
+          <PageTitle>Unidades</PageTitle>
+          <PageDescription>Gerencie as unidades do seu sistema</PageDescription>
         </PageHeaderContent>
         <PageActions>
           <AddClinicButton />
@@ -90,8 +90,8 @@ const ClinicsPage = async ({ searchParams }: ClinicsPageProps) => {
             <div className="col-span-full py-8 text-center">
               <p className="text-gray-500">
                 {searchTerm
-                  ? `Nenhuma clínica encontrada para "${searchTerm}"`
-                  : "Nenhuma clínica cadastrada"}
+                  ? `Nenhuma unidade encontrada para "${searchTerm}"`
+                  : "Nenhuma unidade cadastrada"}
               </p>
             </div>
           )}
@@ -104,7 +104,7 @@ const ClinicsPage = async ({ searchParams }: ClinicsPageProps) => {
 // Wrapper para suporte ao Suspense com searchParams
 const ClinicsPageWrapper = (props: ClinicsPageProps) => {
   return (
-    <Suspense fallback={<div>Carregando clínicas...</div>}>
+    <Suspense fallback={<div>Carregando unidades...</div>}>
       <ClinicsPage {...props} />
     </Suspense>
   );

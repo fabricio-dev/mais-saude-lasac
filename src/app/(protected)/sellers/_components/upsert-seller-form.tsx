@@ -237,7 +237,7 @@ const UpsertSellerForm = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-amber-950">
-                  Clínica do Vendedor
+                  Unidade do Vendedor
                 </FormLabel>
                 <Select
                   onValueChange={field.onChange}
@@ -245,7 +245,7 @@ const UpsertSellerForm = ({
                 >
                   <FormControl>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecione a clínica" />
+                      <SelectValue placeholder="Selecione a unidade" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>

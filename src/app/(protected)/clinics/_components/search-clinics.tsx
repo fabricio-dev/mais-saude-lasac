@@ -44,7 +44,7 @@ const SearchClinics = () => {
     <form onSubmit={handleSubmit} className="flex gap-2">
       <Input
         type="text"
-        placeholder="Pesquisar por nome da clínica..."
+        placeholder="Pesquisar por nome da unidade..."
         value={searchTerm}
         onChange={(e) => handleInputChange(e.target.value)}
         disabled={isPending}

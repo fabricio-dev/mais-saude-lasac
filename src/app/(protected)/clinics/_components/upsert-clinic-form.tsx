@@ -48,13 +48,13 @@ const UpsertClinicForm = ({ clinic, onSuccess }: UpsertClinicFormProps) => {
     onSuccess: () => {
       toast.success(
         clinic
-          ? "Clínica atualizada com sucesso"
-          : "Clínica adicionada com sucesso",
+          ? "Unidade atualizada com sucesso"
+          : "Unidade adicionada com sucesso",
       );
       onSuccess?.();
     },
     onError: () => {
-      toast.error("Erro ao salvar clínica");
+      toast.error("Erro ao salvar unidade");
     },
   });
 
@@ -69,12 +69,12 @@ const UpsertClinicForm = ({ clinic, onSuccess }: UpsertClinicFormProps) => {
     <DialogContent>
       <DialogHeader>
         <DialogTitle className="text-amber-950">
-          {clinic ? clinic.name : "Adicionar Clínica"}
+          {clinic ? clinic.name : "Adicionar Unidade"}
         </DialogTitle>
         <DialogDescription className="text-amber-800">
           {clinic
-            ? "Edite as informações da clínica"
-            : "Adicione uma nova clínica para gerenciar pacientes e convênios."}
+            ? "Edite as informações da unidade"
+            : "Adicione uma nova unidade para gerenciar pacientes e convênios."}
         </DialogDescription>
       </DialogHeader>
       <Form {...form}>
@@ -85,10 +85,10 @@ const UpsertClinicForm = ({ clinic, onSuccess }: UpsertClinicFormProps) => {
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-amber-950">
-                  Nome da Clínica
+                  Nome da Unidade
                 </FormLabel>
                 <FormControl>
-                  <Input placeholder="Digite o nome da clínica" {...field} />
+                  <Input placeholder="Digite o nome da unidade" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

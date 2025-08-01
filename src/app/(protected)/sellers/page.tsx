@@ -145,7 +145,7 @@ const SellersPage = async ({ searchParams }: SellersPageProps) => {
           <PageHeaderContent>
             <PageTitle>Vendedores</PageTitle>
             <PageDescription>
-              Gerencie os vendedores de suas clínicas
+              Gerencie os vendedores de suas unidades
             </PageDescription>
           </PageHeaderContent>
           <PageActions>

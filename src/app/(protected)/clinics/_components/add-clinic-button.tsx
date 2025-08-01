@@ -17,7 +17,7 @@ const AddClinicButton = () => {
       <DialogTrigger asChild>
         <Button className="bg-emerald-600 hover:bg-emerald-900">
           <Plus />
-          Adicionar Clínica
+          Adicionar Unidade
         </Button>
       </DialogTrigger>
       <UpsertClinicForm onSuccess={() => setIsOpen(false)} />

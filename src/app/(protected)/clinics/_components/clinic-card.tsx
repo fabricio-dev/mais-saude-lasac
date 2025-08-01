@@ -44,7 +44,7 @@ const ClinicCard = ({ clinic }: ClinicCardProps) => {
             className="w-full"
             onClick={() => setIsDialogOpen(true)}
           >
-            Editar clínica
+            Editar unidade
           </Button>
         </div>
       </CardContent>
