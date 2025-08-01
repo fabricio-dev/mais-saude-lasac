@@ -31,6 +31,8 @@ interface DashboardPageProps {
   }>;
 }
 
+// TODO: Verificar se o vendedor tem acesso ao dashboard
+
 const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
   const session = await auth.api.getSession({
     headers: await headers(),
