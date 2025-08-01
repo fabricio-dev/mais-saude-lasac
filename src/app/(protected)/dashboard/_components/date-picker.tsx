@@ -59,16 +59,16 @@ export function DatePicker({
             {date?.from ? (
               date.to ? (
                 <>
-                  {format(date.from, "dd LLL , y", {
+                  {format(date.from, "dd LLL , yy", {
                     locale: ptBR,
                   })}{" "}
                   -{" "}
-                  {format(date.to, "dd LLL, y", {
+                  {format(date.to, "dd LLL, yy", {
                     locale: ptBR,
                   })}
                 </>
               ) : (
-                format(date.from, "dd de LLL, y")
+                format(date.from, "dd de LLL, yy")
               )
             ) : (
               <span>Pick a date</span>

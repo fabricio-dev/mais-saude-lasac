@@ -1,6 +1,12 @@
 "use client";
 
-import { Building2, DollarSign, PencilIcon, Users } from "lucide-react";
+import {
+  Building2,
+  DollarSign,
+  PencilIcon,
+  Percent,
+  Users,
+} from "lucide-react";
 import { useState } from "react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -14,6 +20,7 @@ import {
 } from "@/components/ui/card";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { usePercentage } from "@/contexts/percentage-context";
 import { sellersTable } from "@/db/schema";
 
 import UpsertSellerForm from "./upsert-seller-form";
@@ -26,6 +33,8 @@ interface SellerCardProps {
 }
 const SellerCard = ({ seller }: SellerCardProps) => {
   const [isUpsertSellerFormOpen, setIsUpsertSellerFormOpen] = useState(false);
+  const { percentage } = usePercentage();
+
   const sellerInitials = seller.name
     .split(" ")
     .map((name) => name[0])
@@ -61,27 +70,37 @@ const SellerCard = ({ seller }: SellerCardProps) => {
       <CardContent className="flex flex-col gap-2">
         <Badge variant="outline" className="justify-between">
           <div className="flex items-center">
+            <Building2 className="mr-2 h-4 w-4" />
+            Unidade:
+          </div>
+          <span className="font-semibold">
+            {seller.clinicName || "Sem clínica"}
+          </span>
+        </Badge>
+        <Badge variant="outline" className="justify-between">
+          <div className="flex items-center">
             <Users className="mr-2 h-4 w-4" />
-            Pacientes Cadastrados
+            Pacientes Cadastrados:
           </div>
           <span className="font-semibold">{seller.patientsCount}</span>
         </Badge>
         <Badge variant="outline" className="justify-between">
           <div className="flex items-center">
             <DollarSign className="mr-2 h-4 w-4" />
-            Convênios Vendidos
+            Faturamento:
           </div>
           <span className="font-semibold">
             {formatCurrency(conveniosValue)}
           </span>
         </Badge>
+
         <Badge variant="outline" className="justify-between">
           <div className="flex items-center">
-            <Building2 className="mr-2 h-4 w-4" />
-            Clínica
+            <Percent className="mr-2 h-4 w-4" />
+            Comissão:
           </div>
           <span className="font-semibold">
-            {seller.clinicName || "Sem clínica"}
+            {formatCurrency(conveniosValue * (percentage / 100))}
           </span>
         </Badge>
       </CardContent>

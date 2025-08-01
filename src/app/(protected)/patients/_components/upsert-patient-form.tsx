@@ -628,7 +628,7 @@ const UpsertPatientForm = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-amber-950">
-                    Clínica
+                    Unidade
                     {loadingClinic && (
                       <Loader2 className="ml-2 inline h-4 w-4 animate-spin" />
                     )}

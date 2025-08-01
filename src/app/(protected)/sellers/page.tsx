@@ -1,4 +1,16 @@
-import { and, count, eq, ilike, inArray, or } from "drizzle-orm";
+import dayjs from "dayjs";
+import {
+  and,
+  count,
+  eq,
+  gte,
+  ilike,
+  inArray,
+  isNotNull,
+  isNull,
+  lte,
+  or,
+} from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -12,6 +24,7 @@ import {
   PageHeaderContent,
   PageTitle,
 } from "@/components/ui/page-container";
+import { PercentageProvider } from "@/contexts/percentage-context";
 import { db } from "@/db";
 import {
   clinicsTable,
@@ -21,13 +34,16 @@ import {
 } from "@/db/schema";
 import { auth } from "@/lib/auth";
 
+import { DatePicker } from "../dashboard/_components/date-picker";
 import AddSellerButton from "./_components/add-seller-button";
+import PercentageWrapper from "./_components/percentage-wrapper";
 import SearchSellers from "./_components/search-sellers";
 import SellerCard from "./_components/seller-card";
-
 interface SellersPageProps {
   searchParams: Promise<{
     search?: string;
+    from?: string;
+    to?: string;
   }>;
 }
 
@@ -43,6 +59,15 @@ const SellersPage = async ({ searchParams }: SellersPageProps) => {
     redirect("/vendedor/dashboard-seller");
   }
 
+  // Aguardar searchParams antes de usar
+  const { search, from, to } = await searchParams;
+
+  if (!from || !to) {
+    redirect(
+      `/sellers?from=${dayjs().subtract(1, "month").add(1, "day").format("YYYY-MM-DD")}&to=${dayjs().add(1, "day").format("YYYY-MM-DD")}`,
+    );
+  }
+
   // Buscar todas as clínicas do usuário
   const userClinics = await db
     .select({ clinicId: usersToClinicsTable.clinicId })
@@ -55,9 +80,6 @@ const SellersPage = async ({ searchParams }: SellersPageProps) => {
   if (clinicIds.length === 0) {
     redirect("/clinics");
   }
-
-  // Aguardar searchParams antes de usar
-  const { search } = await searchParams;
   const searchTerm = search?.trim();
 
   // Construir as condições de busca
@@ -77,7 +99,7 @@ const SellersPage = async ({ searchParams }: SellersPageProps) => {
     ) as typeof whereCondition;
   }
 
-  // Buscar vendedores com contagem de pacientes
+  // Buscar vendedores com contagem de pacientes ativos no período
   const sellersWithPatientsCount = await db
     .select({
       id: sellersTable.id,
@@ -94,47 +116,69 @@ const SellersPage = async ({ searchParams }: SellersPageProps) => {
     })
     .from(sellersTable)
     .innerJoin(clinicsTable, eq(sellersTable.clinicId, clinicsTable.id))
-    .leftJoin(patientsTable, eq(sellersTable.id, patientsTable.sellerId))
+    .leftJoin(
+      patientsTable,
+      or(
+        and(
+          eq(sellersTable.id, patientsTable.sellerId),
+          eq(patientsTable.isActive, true),
+          isNull(patientsTable.reactivatedAt),
+          gte(patientsTable.activeAt, new Date(from!)),
+          lte(patientsTable.activeAt, new Date(to!)),
+        ),
+        and(
+          eq(sellersTable.id, patientsTable.sellerId),
+          eq(patientsTable.isActive, true),
+          isNotNull(patientsTable.reactivatedAt),
+          gte(patientsTable.reactivatedAt, new Date(from!)),
+          lte(patientsTable.reactivatedAt, new Date(to!)),
+        ),
+      ),
+    )
     .where(whereCondition)
     .groupBy(sellersTable.id, clinicsTable.name);
 
   return (
-    <PageContainer>
-      <PageHeader>
-        <PageHeaderContent>
-          <PageTitle>Vendedores</PageTitle>
-          <PageDescription>
-            Gerencie os vendedores de suas clínicas
-          </PageDescription>
-        </PageHeaderContent>
-        <PageActions>
-          <AddSellerButton />
-        </PageActions>
-      </PageHeader>
-      <PageContent>
-        <div className="grid gap-6 md:grid-cols-2">
-          <Suspense fallback={<div>Carregando...</div>}>
-            <SearchSellers />
-          </Suspense>
-        </div>
+    <PercentageProvider>
+      <PageContainer>
+        <PageHeader>
+          <PageHeaderContent>
+            <PageTitle>Vendedores</PageTitle>
+            <PageDescription>
+              Gerencie os vendedores de suas clínicas
+            </PageDescription>
+          </PageHeaderContent>
+          <PageActions>
+            <PercentageWrapper />
+            <DatePicker />
+            <AddSellerButton />
+          </PageActions>
+        </PageHeader>
+        <PageContent>
+          <div className="grid gap-6 md:grid-cols-2">
+            <Suspense fallback={<div>Carregando...</div>}>
+              <SearchSellers />
+            </Suspense>
+          </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {sellersWithPatientsCount.length > 0 ? (
-            sellersWithPatientsCount.map((seller) => (
-              <SellerCard key={seller.id} seller={seller} />
-            ))
-          ) : (
-            <div className="col-span-full py-8 text-center">
-              <p className="text-gray-500">
-                {searchTerm
-                  ? `Nenhum vendedor encontrado para "${searchTerm}"`
-                  : "Nenhum vendedor cadastrado"}
-              </p>
-            </div>
-          )}
-        </div>
-      </PageContent>
-    </PageContainer>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {sellersWithPatientsCount.length > 0 ? (
+              sellersWithPatientsCount.map((seller) => (
+                <SellerCard key={seller.id} seller={seller} />
+              ))
+            ) : (
+              <div className="col-span-full py-8 text-center">
+                <p className="text-gray-500">
+                  {searchTerm
+                    ? `Nenhum vendedor encontrado para "${searchTerm}"`
+                    : "Nenhum vendedor cadastrado"}
+                </p>
+              </div>
+            )}
+          </div>
+        </PageContent>
+      </PageContainer>
+    </PercentageProvider>
   );
 };
 // Wrapper para suporte ao Suspense com searchParams
