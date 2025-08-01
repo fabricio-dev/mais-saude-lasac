@@ -16,7 +16,7 @@ const AuthenticationPage = async () => {
     if (session?.user.role === "admin") {
       redirect("/dashboard");
     } else {
-      redirect("/dashboard-seller");
+      redirect("/vendedor/dashboard-seller");
     }
   }
 
