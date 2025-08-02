@@ -24,7 +24,6 @@ import {
   PageHeaderContent,
   PageTitle,
 } from "@/components/ui/page-container";
-import { PercentageProvider } from "@/contexts/percentage-context";
 import { db } from "@/db";
 import {
   clinicsTable,
@@ -36,7 +35,6 @@ import { auth } from "@/lib/auth";
 
 import { DatePicker } from "../dashboard/_components/date-picker";
 import AddSellerButton from "./_components/add-seller-button";
-import PercentageWrapper from "./_components/percentage-wrapper";
 import SearchSellers from "./_components/search-sellers";
 import SellerCard from "./_components/seller-card";
 interface SellersPageProps {
@@ -139,46 +137,43 @@ const SellersPage = async ({ searchParams }: SellersPageProps) => {
     .groupBy(sellersTable.id, clinicsTable.name);
 
   return (
-    <PercentageProvider>
-      <PageContainer>
-        <PageHeader>
-          <PageHeaderContent>
-            <PageTitle>Vendedores</PageTitle>
-            <PageDescription>
-              Gerencie os vendedores de suas unidades
-            </PageDescription>
-          </PageHeaderContent>
-          <PageActions>
-            <PercentageWrapper />
-            <DatePicker />
-            <AddSellerButton />
-          </PageActions>
-        </PageHeader>
-        <PageContent>
-          <div className="grid gap-6 md:grid-cols-2">
-            <Suspense fallback={<div>Carregando...</div>}>
-              <SearchSellers />
-            </Suspense>
-          </div>
+    <PageContainer>
+      <PageHeader>
+        <PageHeaderContent>
+          <PageTitle>Vendedores</PageTitle>
+          <PageDescription>
+            Gerencie os vendedores de suas unidades
+          </PageDescription>
+        </PageHeaderContent>
+        <PageActions>
+          <DatePicker />
+          <AddSellerButton />
+        </PageActions>
+      </PageHeader>
+      <PageContent>
+        <div className="grid gap-6 md:grid-cols-2">
+          <Suspense fallback={<div>Carregando...</div>}>
+            <SearchSellers />
+          </Suspense>
+        </div>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {sellersWithPatientsCount.length > 0 ? (
-              sellersWithPatientsCount.map((seller) => (
-                <SellerCard key={seller.id} seller={seller} />
-              ))
-            ) : (
-              <div className="col-span-full py-8 text-center">
-                <p className="text-gray-500">
-                  {searchTerm
-                    ? `Nenhum vendedor encontrado para "${searchTerm}"`
-                    : "Nenhum vendedor cadastrado"}
-                </p>
-              </div>
-            )}
-          </div>
-        </PageContent>
-      </PageContainer>
-    </PercentageProvider>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {sellersWithPatientsCount.length > 0 ? (
+            sellersWithPatientsCount.map((seller) => (
+              <SellerCard key={seller.id} seller={seller} />
+            ))
+          ) : (
+            <div className="col-span-full py-8 text-center">
+              <p className="text-gray-500">
+                {searchTerm
+                  ? `Nenhum vendedor encontrado para "${searchTerm}"`
+                  : "Nenhum vendedor cadastrado"}
+              </p>
+            </div>
+          )}
+        </div>
+      </PageContent>
+    </PageContainer>
   );
 };
 // Wrapper para suporte ao Suspense com searchParams

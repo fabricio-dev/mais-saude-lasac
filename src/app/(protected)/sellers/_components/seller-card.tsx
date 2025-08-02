@@ -20,7 +20,6 @@ import {
 } from "@/components/ui/card";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { usePercentage } from "@/contexts/percentage-context";
 import { sellersTable } from "@/db/schema";
 
 import UpsertSellerForm from "./upsert-seller-form";
@@ -33,7 +32,6 @@ interface SellerCardProps {
 }
 const SellerCard = ({ seller }: SellerCardProps) => {
   const [isUpsertSellerFormOpen, setIsUpsertSellerFormOpen] = useState(false);
-  const { percentage } = usePercentage();
 
   const sellerInitials = seller.name
     .split(" ")
@@ -100,7 +98,7 @@ const SellerCard = ({ seller }: SellerCardProps) => {
             Comissão:
           </div>
           <span className="font-semibold">
-            {formatCurrency(conveniosValue * (percentage / 100))}
+            {formatCurrency(conveniosValue * 0.1)}
           </span>
         </Badge>
       </CardContent>
