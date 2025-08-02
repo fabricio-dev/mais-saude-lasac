@@ -228,7 +228,7 @@ const UpsertPatientForm = ({
       name: patient?.name ?? "",
       birthDate: patient?.birthDate
         ? new Date(patient.birthDate).toISOString().split("T")[0]
-        : "",
+        : "2007-09-01",
       phoneNumber: patient?.phoneNumber ?? "",
       rgNumber: patient?.rgNumber ?? "",
       cpfNumber: patient?.cpfNumber ?? "",

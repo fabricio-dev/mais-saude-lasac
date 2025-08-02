@@ -26,8 +26,9 @@ interface Patient {
   dependents3: string | null;
   dependents4: string | null;
   dependents5: string | null;
+  dependents6: string | null;
   observation: string | null;
-  statusAgreement: "expired" | "active" | "pending" | null;
+  statusAgreement: "expired" | "pending" | null;
   createdAt: Date;
   updatedAt: Date | null;
   sellerId: string | null;
