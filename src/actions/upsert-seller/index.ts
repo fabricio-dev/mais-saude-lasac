@@ -25,11 +25,11 @@ export const upsertSeller = actionClient
       .values({
         ...parsedInput,
         id: parsedInput.id,
-        clinicId: parsedInput.unity, // mudei para o id para testar
+        // mudei para o id para testar
       })
       .onConflictDoUpdate({
         target: [sellersTable.id],
-        set: { ...parsedInput, clinicId: parsedInput.unity },
+        set: { ...parsedInput },
       });
     revalidatePath("/sellers");
   });

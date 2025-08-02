@@ -3,6 +3,7 @@
 import {
   Building2,
   DollarSign,
+  KeyRound,
   PencilIcon,
   Percent,
   Users,
@@ -98,8 +99,22 @@ const SellerCard = ({ seller }: SellerCardProps) => {
             Comissão:
           </div>
           <span className="font-semibold">
-            {formatCurrency(conveniosValue * 0.1)}
+            {formatCurrency(conveniosValue * (seller.percentage / 100))}
           </span>
+        </Badge>
+        <Badge variant="outline" className="justify-between">
+          <div className="flex items-center">
+            <KeyRound className="mr-2 h-4 w-4" />
+            Tipo de Chave PIX:
+          </div>
+          <span className="font-semibold">{seller.pixKeyType}</span>
+        </Badge>
+        <Badge variant="outline" className="justify-between">
+          <div className="flex items-center">
+            <KeyRound className="mr-2 h-4 w-4" />
+            Chave PIX:
+          </div>
+          <span className="font-semibold">{seller.pixKey}</span>
         </Badge>
       </CardContent>
       <Separator />

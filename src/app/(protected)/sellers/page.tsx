@@ -106,11 +106,12 @@ const SellersPage = async ({ searchParams }: SellersPageProps) => {
       cpfNumber: sellersTable.cpfNumber,
       phoneNumber: sellersTable.phoneNumber,
       email: sellersTable.email,
-      password: sellersTable.password,
-      unity: sellersTable.unity,
       clinicId: sellersTable.clinicId,
       clinicName: clinicsTable.name,
       patientsCount: count(patientsTable.id),
+      percentage: sellersTable.percentage,
+      pixKey: sellersTable.pixKey,
+      pixKeyType: sellersTable.pixKeyType,
     })
     .from(sellersTable)
     .innerJoin(clinicsTable, eq(sellersTable.clinicId, clinicsTable.id))

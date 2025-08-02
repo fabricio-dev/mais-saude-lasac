@@ -83,8 +83,9 @@ export const sellersTable = pgTable("sellers", {
   cpfNumber: text("cpf_number").notNull(),
   phoneNumber: text("phone_number").notNull(),
   email: text("email").notNull(),
-  password: text("password").notNull(),
-  unity: text("unity").notNull(),
+  percentage: integer("percentage").notNull().default(10),
+  pixKey: text("pix_key"),
+  pixKeyType: text("pix_key_type"),
   clinicId: uuid("clinic_id").references(() => clinicsTable.id, {
     onDelete: "cascade",
   }),

@@ -442,7 +442,7 @@ export default function PatientsTable({ patients }: PatientsTableProps) {
             </div>
             <div class="card-content">
               <div class="patient-name">${patient.name}</div>
-              <div class="cpf">CPF: ${formatCpf(patient.cpfNumber)}</div>
+            
               
               ${
                 dependents.length > 0

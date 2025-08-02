@@ -49,13 +49,15 @@ import { sellersTable } from "@/db/schema";
 const formSchema = z.object({
   name: z.string().trim().min(1, { message: "Nome é obrigatório" }),
   email: z.string().trim().email({ message: "Email inválido" }),
-  password: z
-    .string()
-    .trim()
-    .min(8, { message: "Senha deve ter no mínimo 8 caracteres" }),
   cpfNumber: z.string().trim().min(11, { message: "CPF inválido" }),
   phoneNumber: z.string().trim().min(11, { message: "Telefone é obrigatório" }),
-  unity: z.string().trim().min(1, { message: "Clínica é obrigatória" }),
+  clinicId: z.string().uuid().min(1, { message: "Unidade é obrigatória" }),
+  percentage: z.coerce
+    .number()
+    .min(0, { message: "Porcentagem é obrigatória" })
+    .max(100, { message: "Porcentagem máxima é 100%" }),
+  pixKey: z.string().trim().optional(),
+  pixKeyType: z.string().trim().optional(),
 });
 
 interface UpsertSellerFormProps {
@@ -82,10 +84,12 @@ const UpsertSellerForm = ({
     defaultValues: {
       name: seller?.name ?? "",
       email: seller?.email ?? "",
-      password: seller?.password ?? "",
       cpfNumber: seller?.cpfNumber ?? "",
       phoneNumber: seller?.phoneNumber ?? "",
-      unity: seller?.unity ?? "",
+      clinicId: seller?.clinicId ?? "",
+      percentage: seller?.percentage ?? 10,
+      pixKey: seller?.pixKey ?? "",
+      pixKeyType: seller?.pixKeyType ?? "",
     },
   });
 
@@ -95,10 +99,12 @@ const UpsertSellerForm = ({
       form.reset({
         name: seller?.name ?? "",
         email: seller?.email ?? "",
-        password: seller?.password ?? "",
         cpfNumber: seller?.cpfNumber ?? "",
         phoneNumber: seller?.phoneNumber ?? "",
-        unity: seller?.unity ?? "",
+        clinicId: seller?.clinicId ?? "",
+        percentage: seller?.percentage ?? 10,
+        pixKey: seller?.pixKey ?? "",
+        pixKeyType: seller?.pixKeyType ?? "",
       });
     }
     const loadClinics = async () => {
@@ -188,23 +194,7 @@ const UpsertSellerForm = ({
               </FormItem>
             )}
           />
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-amber-950">Senha</FormLabel>
-                <FormControl>
-                  <Input
-                    type="password"
-                    placeholder="Mínimo 8 caracteres"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+
           <FormField
             control={form.control}
             name="cpfNumber"
@@ -233,7 +223,67 @@ const UpsertSellerForm = ({
           />
           <FormField
             control={form.control}
-            name="unity"
+            name="percentage"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-amber-950">Porcentagem</FormLabel>
+                <FormControl>
+                  <Input type="number" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="pixKeyType"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-amber-950">
+                  Tipo de Chave PIX
+                </FormLabel>
+                <FormControl>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    value={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Selecione o tipo de chave" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="CPF/CNPJ">CPF/CNPJ</SelectItem>
+                      <SelectItem value="E-mail">E-mail</SelectItem>
+                      <SelectItem value="Telefone">Telefone</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="pixKey"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-amber-950">Chave PIX</FormLabel>
+                <FormControl>
+                  <Input
+                    type="text"
+                    disabled={form.watch("pixKeyType") === ""}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="clinicId"
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-amber-950">
@@ -262,6 +312,7 @@ const UpsertSellerForm = ({
               </FormItem>
             )}
           />
+
           <DialogFooter>
             {seller && (
               <AlertDialog>
