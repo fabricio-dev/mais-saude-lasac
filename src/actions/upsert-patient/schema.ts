@@ -73,6 +73,7 @@ export const upsertPatientSchema = z
     dependents3: z.string().optional(),
     dependents4: z.string().optional(),
     dependents5: z.string().optional(),
+    dependents6: z.string().optional(),
   })
   .superRefine(async (data, ctx) => {
     // Verificar se CPF já existe no banco

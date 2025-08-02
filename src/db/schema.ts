@@ -94,8 +94,7 @@ export const sellersTable = pgTable("sellers", {
 export const typeCardEnum = pgEnum("type_card", ["enterprise", "personal"]);
 
 export const statusAgreementEnum = pgEnum("status_agreement", [
-  "expired",
-  "active",
+  "expired", //contrato expirado
   "pending", //pendente de assinatura para cliente que se auto cadastrar
 ]);
 
@@ -127,6 +126,7 @@ export const patientsTable = pgTable("patients", {
   dependents3: text("dependents3"),
   dependents4: text("dependents4"),
   dependents5: text("dependents5"),
+  dependents6: text("dependents6"),
   expirationDate: timestamp("expiration_date"), // estudar como fazer o campo ser automaticamente atualizado para um ano a mais
   statusAgreement: statusAgreementEnum("status_agreement"),
   observation: text("observation"),

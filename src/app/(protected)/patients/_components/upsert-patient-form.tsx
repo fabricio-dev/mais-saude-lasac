@@ -144,6 +144,7 @@ const formSchema = z
     dependents3: z.string().optional(),
     dependents4: z.string().optional(),
     dependents5: z.string().optional(),
+    dependents6: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     if (
@@ -247,6 +248,7 @@ const UpsertPatientForm = ({
       dependents3: patient?.dependents3 ?? "",
       dependents4: patient?.dependents4 ?? "",
       dependents5: patient?.dependents5 ?? "",
+      dependents6: patient?.dependents6 ?? "",
     },
   });
 
@@ -277,6 +279,7 @@ const UpsertPatientForm = ({
         dependents3: patient?.dependents3 ?? "",
         dependents4: patient?.dependents4 ?? "",
         dependents5: patient?.dependents5 ?? "",
+        dependents6: patient?.dependents6 ?? "",
       });
     }
     const loadData = async () => {
@@ -866,6 +869,24 @@ const UpsertPatientForm = ({
                 <FormItem>
                   <FormLabel className="mt-1 text-amber-950">
                     Dependente 5
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Nome do dependente (opcional)"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="dependents6"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="mt-1 text-amber-950">
+                    Dependente 6
                   </FormLabel>
                   <FormControl>
                     <Input

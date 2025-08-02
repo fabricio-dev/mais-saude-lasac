@@ -49,8 +49,9 @@ interface Patient {
   dependents3: string | null;
   dependents4: string | null;
   dependents5: string | null;
+  dependents6: string | null;
   observation: string | null;
-  statusAgreement: "expired" | "active" | "pending" | null;
+  statusAgreement: "expired" | "pending" | null;
   createdAt: Date;
   updatedAt: Date | null;
   sellerId: string | null;
@@ -262,7 +263,8 @@ export default function PatientsTable({ patients }: PatientsTableProps) {
             patient.dependents2 ||
             patient.dependents3 ||
             patient.dependents4 ||
-            patient.dependents5
+            patient.dependents5 ||
+            patient.dependents6
               ? `
           <div class="section">
             <h3>Dependentes</h3>
@@ -271,6 +273,7 @@ export default function PatientsTable({ patients }: PatientsTableProps) {
             ${patient.dependents3 ? `<div class="data-row"><span class="label">Dependente 3:</span><span class="value">${patient.dependents3}</span></div>` : ""}
             ${patient.dependents4 ? `<div class="data-row"><span class="label">Dependente 4:</span><span class="value">${patient.dependents4}</span></div>` : ""}
             ${patient.dependents5 ? `<div class="data-row"><span class="label">Dependente 5:</span><span class="value">${patient.dependents5}</span></div>` : ""}
+            ${patient.dependents6 ? `<div class="data-row"><span class="label">Dependente 6:</span><span class="value">${patient.dependents6}</span></div>` : ""}
           </div>
           `
               : ""
@@ -315,6 +318,7 @@ export default function PatientsTable({ patients }: PatientsTableProps) {
       patient.dependents3,
       patient.dependents4,
       patient.dependents5,
+      patient.dependents6,
     ].filter(Boolean);
 
     const printContent = `
