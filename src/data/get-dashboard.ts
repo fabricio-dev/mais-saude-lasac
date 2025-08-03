@@ -45,6 +45,7 @@ export const getDashboard = async ({ from, to, session }: Params) => {
     [totalPatients],
     [totalSellers],
     [totalClinics],
+    [totalEnterprise],
     topSellers,
     topClinics,
     patientsToExpire,
@@ -113,6 +114,27 @@ export const getDashboard = async ({ from, to, session }: Params) => {
             .where(eq(usersToClinicsTable.userId, session.user.id)),
         ),
       ),
+    // TODO: Implementa a query para o total de pacientes de empresas
+    db
+      .select({
+        total: count(),
+      })
+      .from(patientsTable)
+      .where(
+        and(
+          inArray(
+            //pega so o covenios da clinica do usuario logado
+            patientsTable.clinicId,
+            db
+              .select({ clinicId: usersToClinicsTable.clinicId })
+              .from(usersToClinicsTable)
+              .where(eq(usersToClinicsTable.userId, session.user.id)),
+          ),
+          eq(patientsTable.cardType, "enterprise"),
+          eq(patientsTable.isActive, true),
+        ),
+      ),
+
     // TODO: Implementa a query para os top vendedores
     db
       .select({
@@ -326,6 +348,7 @@ export const getDashboard = async ({ from, to, session }: Params) => {
     totalPatients,
     totalSellers,
     totalClinics,
+    totalEnterprise,
     topSellers,
     topClinics,
     patientsToExpire,

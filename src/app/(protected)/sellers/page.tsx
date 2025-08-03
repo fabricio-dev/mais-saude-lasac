@@ -10,6 +10,7 @@ import {
   isNull,
   lte,
   or,
+  sql,
 } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -109,6 +110,9 @@ const SellersPage = async ({ searchParams }: SellersPageProps) => {
       clinicId: sellersTable.clinicId,
       clinicName: clinicsTable.name,
       patientsCount: count(patientsTable.id),
+      enterpriseCount: count(
+        sql`CASE WHEN ${patientsTable.cardType} = 'enterprise' AND ${patientsTable.isActive} = true THEN 1 END`,
+      ),
       percentage: sellersTable.percentage,
       pixKey: sellersTable.pixKey,
       pixKeyType: sellersTable.pixKeyType,

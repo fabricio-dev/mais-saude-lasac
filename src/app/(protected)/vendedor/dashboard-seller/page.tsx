@@ -59,6 +59,7 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
     topSellers,
     patientsToExpire,
     dailyConveniosData,
+    totalEnterprise,
   } = await getDashboardSellers({
     from,
     to,
@@ -82,7 +83,10 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
       </PageHeader>
       <PageContent>
         <StatsCards
-          totalRevenue={formatCurrencyInCents(totalPatients.total)}
+          totalRevenue={formatCurrencyInCents(
+            totalPatients.total,
+            totalEnterprise.total,
+          )}
           totalPatients={totalPatients.total}
           sellerClinic={sellerClinic}
         />

@@ -5,7 +5,7 @@ import dayjs from "dayjs";
 
 dayjs.locale("pt-br");
 
-import { DollarSign } from "lucide-react";
+import { Users } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,7 +15,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { formatCurrencyInCents } from "@/helpers/currency";
 
 const chartConfig = {
   novos: {
@@ -55,7 +54,7 @@ export function ConveniosChart({ dailyConveniosData }: ConveniosChartProps) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center gap-2">
-        <DollarSign className="h-4 w-4" />
+        <Users className="h-4 w-4" />
         <CardTitle>Convenios Novos / Renovados</CardTitle>
       </CardHeader>
       <CardContent>
@@ -75,7 +74,7 @@ export function ConveniosChart({ dailyConveniosData }: ConveniosChartProps) {
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              tickFormatter={(value) => formatCurrencyInCents(value)}
+              tickFormatter={(value) => value + " conv."}
               allowDecimals={false}
             />
             <ChartTooltip

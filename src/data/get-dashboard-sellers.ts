@@ -59,6 +59,7 @@ export const getDashboardSellers = async ({ from, to, session }: Params) => {
   const [
     [totalPatients],
     [totalRenovados],
+    [totalEnterprise],
     topSellers,
     patientsToExpire,
     dailyConveniosData,
@@ -97,7 +98,7 @@ export const getDashboardSellers = async ({ from, to, session }: Params) => {
           ),
         ),
       ),
-    // Query para total de pacientes renovados (reativados)
+    // Query para total de pacientes renovados (reativados) do vendedor logado
     db
       .select({
         total: count(),
@@ -118,7 +119,25 @@ export const getDashboardSellers = async ({ from, to, session }: Params) => {
           sql`${patientsTable.reactivatedAt} IS NOT NULL`,
         ),
       ),
-
+    // TODO: Implementa a query para o total de pacientes de empresas
+    db
+      .select({
+        total: count(),
+      })
+      .from(patientsTable)
+      .where(
+        and(
+          inArray(
+            patientsTable.sellerId,
+            db
+              .select({ sellerId: sellersTable.id })
+              .from(sellersTable)
+              .where(eq(sellersTable.email, session.user.email)),
+          ),
+          eq(patientsTable.cardType, "enterprise"),
+          eq(patientsTable.isActive, true),
+        ),
+      ),
     // Query para top 7 vendedores das clínicas do mesmo usuário
     db
       .select({
@@ -317,6 +336,7 @@ export const getDashboardSellers = async ({ from, to, session }: Params) => {
   return {
     totalPatients,
     totalRenovados,
+    totalEnterprise,
     topSellers,
     patientsToExpire,
     dailyConveniosData,

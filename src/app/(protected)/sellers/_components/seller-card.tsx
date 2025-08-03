@@ -29,6 +29,7 @@ interface SellerCardProps {
   seller: typeof sellersTable.$inferSelect & {
     patientsCount: number;
     clinicName: string | null;
+    enterpriseCount: number;
   };
 }
 const SellerCard = ({ seller }: SellerCardProps) => {
@@ -39,8 +40,10 @@ const SellerCard = ({ seller }: SellerCardProps) => {
     .map((name) => name[0])
     .join("");
 
-  // Calcular valor dos convênios vendidos (pacientes * R$ 100,00)
-  const conveniosValue = seller.patientsCount * 100;
+  // Calcular valor dos convênios vendidos (pacientes individual * R$ 100,00) + (pacientes de empresas * R$ 90,00)
+  const conveniosValue =
+    (seller.patientsCount - seller.enterpriseCount) * 100 +
+    seller.enterpriseCount * 90;
 
   // Formatar valor como moeda brasileira
   const formatCurrency = (value: number): string => {
@@ -79,9 +82,16 @@ const SellerCard = ({ seller }: SellerCardProps) => {
         <Badge variant="outline" className="justify-between">
           <div className="flex items-center">
             <Users className="mr-2 h-4 w-4" />
-            Pacientes Cadastrados:
+            Convênios totais:
           </div>
           <span className="font-semibold">{seller.patientsCount}</span>
+        </Badge>
+        <Badge variant="outline" className="justify-between">
+          <div className="flex items-center">
+            <Users className="mr-2 h-4 w-4" />
+            Convênios de empresas:
+          </div>
+          <span className="font-semibold">{seller.enterpriseCount}</span>
         </Badge>
         <Badge variant="outline" className="justify-between">
           <div className="flex items-center">

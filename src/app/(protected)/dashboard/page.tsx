@@ -63,6 +63,7 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
     topClinics,
     patientsToExpire,
     dailyConveniosData,
+    totalEnterprise,
   } = await getDashboard({
     from,
     to,
@@ -86,7 +87,11 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
       </PageHeader>
       <PageContent>
         <StatsCards
-          totalRevenue={formatCurrencyInCents(totalPatients.total)}
+          // TODO: recebe total de pacientes subitrai os que sao empresas e multiplica por 100 e soma com o total de empresas que multiplica por 90
+          totalRevenue={formatCurrencyInCents(
+            totalPatients.total,
+            totalEnterprise.total,
+          )}
           totalPatients={totalPatients.total}
           totalSellers={totalSellers.total}
           totalClinics={totalClinics.total}
