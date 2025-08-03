@@ -132,6 +132,8 @@ export const getDashboard = async ({ from, to, session }: Params) => {
           ),
           eq(patientsTable.cardType, "enterprise"),
           eq(patientsTable.isActive, true),
+          gte(patientsTable.activeAt, new Date(from)),
+          lte(patientsTable.activeAt, new Date(to)),
         ),
       ),
 
