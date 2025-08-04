@@ -59,6 +59,10 @@ const isPatientExpired = (expirationDate: Date | null) => {
   if (!expirationDate) return false;
   return new Date(expirationDate) <= new Date();
 };
+const isPatientPending = (activeAt: Date | null) => {
+  if (!activeAt) return true;
+  return false;
+};
 
 export const patientsTableColumns = ({
   onActivate,
@@ -101,7 +105,7 @@ export const patientsTableColumns = ({
     cell: ({ row }) => {
       const cardType = row.getValue("cardType") as string;
       return (
-        <Badge variant={cardType === "enterprise" ? "default" : "secondary"}>
+        <Badge variant="secondary">
           {cardType === "enterprise" ? "EMPRESA" : "INDIVIDUAL"}
         </Badge>
       );
@@ -131,7 +135,7 @@ export const patientsTableColumns = ({
     cell: ({ row }) => {
       const expirationDate = row.getValue("expirationDate") as Date | null;
       const isExpired = isPatientExpired(expirationDate);
-
+      const isPending = isPatientPending(row.original.activeAt);
       return (
         <Badge
           variant={isExpired ? "destructive" : "default"}
@@ -141,7 +145,11 @@ export const patientsTableColumns = ({
               : "bg-green-100 text-green-800"
           }
         >
-          {isExpired ? "Vencido" : "Ativo"}
+          {isExpired && isPending
+            ? "Pendente"
+            : isExpired
+              ? "Vencido"
+              : "Ativo"}
         </Badge>
       );
     },
