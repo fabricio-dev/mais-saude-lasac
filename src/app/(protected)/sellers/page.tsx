@@ -1,17 +1,5 @@
 import dayjs from "dayjs";
-import {
-  and,
-  count,
-  eq,
-  gte,
-  ilike,
-  inArray,
-  isNotNull,
-  isNull,
-  lte,
-  or,
-  sql,
-} from "drizzle-orm";
+import { and, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -98,7 +86,36 @@ const SellersPage = async ({ searchParams }: SellersPageProps) => {
     ) as typeof whereCondition;
   }
 
-  // Buscar vendedores com contagem de pacientes ativos no período
+  // Definindo datas e condições SQL uma única vez - PRIORIZANDO SQL
+  const fromDate = new Date(from);
+  const toDate = new Date(to);
+
+  // Condições SQL centralizadas (sem duplicidade)
+  const conveniosCondition =
+    sql<number>`COUNT(CASE WHEN ${patientsTable.activeAt} >= ${fromDate} AND ${patientsTable.activeAt} <= ${toDate} AND ${patientsTable.activeAt} IS NOT NULL THEN 1 END)`.mapWith(
+      Number,
+    );
+  const conveniosRenovadosCondition =
+    sql<number>`COUNT(CASE WHEN ${patientsTable.reactivatedAt} >= ${fromDate} AND ${patientsTable.reactivatedAt} <= ${toDate} AND ${patientsTable.reactivatedAt} IS NOT NULL THEN 1 END)`.mapWith(
+      Number,
+    );
+  const totalCondition =
+    sql<number>`${conveniosCondition} + ${conveniosRenovadosCondition}`.mapWith(
+      Number,
+    );
+
+  const enterpriseCondition =
+    sql<number>`COUNT(CASE WHEN ${patientsTable.cardType} = 'enterprise' AND ${patientsTable.isActive} = true AND ${patientsTable.activeAt} >= ${fromDate} AND ${patientsTable.activeAt} <= ${toDate} AND ${patientsTable.activeAt} IS NOT NULL THEN 1 END)`.mapWith(
+      Number,
+    );
+  const enterpriseRenovadosCondition =
+    sql<number>`COUNT(CASE WHEN ${patientsTable.cardType} = 'enterprise' AND ${patientsTable.isActive} = true AND ${patientsTable.reactivatedAt} >= ${fromDate} AND ${patientsTable.reactivatedAt} <= ${toDate} AND ${patientsTable.reactivatedAt} IS NOT NULL THEN 1 END)`.mapWith(
+      Number,
+    );
+  const enterpriseTotalCondition =
+    sql<number>`${enterpriseCondition} + ${enterpriseRenovadosCondition}`.mapWith(
+      Number,
+    );
   const sellersWithPatientsCount = await db
     .select({
       id: sellersTable.id,
@@ -109,10 +126,9 @@ const SellersPage = async ({ searchParams }: SellersPageProps) => {
       email: sellersTable.email,
       clinicId: sellersTable.clinicId,
       clinicName: clinicsTable.name,
-      patientsCount: count(patientsTable.id),
-      enterpriseCount: count(
-        sql`CASE WHEN ${patientsTable.cardType} = 'enterprise' AND ${patientsTable.isActive} = true THEN 1 END`,
-      ),
+      patientsCount: totalCondition,
+      enterpriseCount: enterpriseTotalCondition,
+
       percentage: sellersTable.percentage,
       pixKey: sellersTable.pixKey,
       pixKeyType: sellersTable.pixKeyType,
@@ -121,21 +137,9 @@ const SellersPage = async ({ searchParams }: SellersPageProps) => {
     .innerJoin(clinicsTable, eq(sellersTable.clinicId, clinicsTable.id))
     .leftJoin(
       patientsTable,
-      or(
-        and(
-          eq(sellersTable.id, patientsTable.sellerId),
-          eq(patientsTable.isActive, true),
-          isNull(patientsTable.reactivatedAt),
-          gte(patientsTable.activeAt, new Date(from!)),
-          lte(patientsTable.activeAt, new Date(to!)),
-        ),
-        and(
-          eq(sellersTable.id, patientsTable.sellerId),
-          eq(patientsTable.isActive, true),
-          isNotNull(patientsTable.reactivatedAt),
-          gte(patientsTable.reactivatedAt, new Date(from!)),
-          lte(patientsTable.reactivatedAt, new Date(to!)),
-        ),
+      and(
+        eq(sellersTable.id, patientsTable.sellerId),
+        eq(patientsTable.isActive, true),
       ),
     )
     .where(whereCondition)
