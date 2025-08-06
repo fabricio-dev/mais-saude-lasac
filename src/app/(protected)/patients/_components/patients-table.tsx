@@ -514,6 +514,11 @@ export default function PatientsTable({ patients }: PatientsTableProps) {
       columnVisibility,
       rowSelection,
     },
+    initialState: {
+      pagination: {
+        pageSize: 12,
+      },
+    },
   });
 
   return (
