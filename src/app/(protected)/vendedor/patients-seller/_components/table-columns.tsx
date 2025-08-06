@@ -171,11 +171,13 @@ export const patientsTableColumns = ({
     cell: ({ row }) => {
       const patient = row.original;
       const isExpired = isPatientExpired(patient.expirationDate);
+      const isPending = isPatientPending(patient.activeAt);
 
       return (
         <TableActions
           patient={patient}
           isExpired={isExpired}
+          isPending={isPending}
           onActivate={onActivate}
           onDelete={onDelete}
           onPrintCard={onPrintCard}

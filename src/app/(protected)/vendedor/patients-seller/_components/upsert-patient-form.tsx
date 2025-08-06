@@ -122,7 +122,15 @@ const formSchema = z
     Enterprise: z.string().optional(),
     numberCards: z
       .string()
-      .min(1, { message: "Quantidade de cartões é obrigatória" }),
+      .min(1, { message: "Quantidade de cartões é obrigatória" })
+      .refine((value) => parseInt(value) > 0, {
+        message: "A quantidade de cartões deve ser maior que 0",
+      })
+      .refine((value) => parseInt(value) <= 6, {
+        message: "A quantidade de cartões não pode ser maior que 6",
+      }),
+    // TODO: Verificar se a quantidade de cartões é maior que o número de dependentes
+
     sellerId: z.string().uuid({ message: "Vendedor é obrigatório" }),
     clinicId: z.string().uuid({ message: "Clínica é obrigatória" }),
     observation: z.string().optional(),

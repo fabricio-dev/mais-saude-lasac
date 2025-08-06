@@ -11,6 +11,7 @@ interface TopSellersProps {
     avatarImageUrl: string | null;
     clinic: string;
     convenios: number;
+    conveniosRenovados: number;
   }[];
   currentSellerEmail?: string;
 }
@@ -101,7 +102,8 @@ export default function TopSellers({
                           : "text-muted-foreground"
                       }`}
                     >
-                      {seller.convenios} conv.
+                      novo: {seller.convenios} renov:{" "}
+                      {seller.conveniosRenovados}
                     </span>
                   </div>
                 </div>

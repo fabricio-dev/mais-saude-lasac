@@ -1,16 +1,5 @@
 import dayjs from "dayjs";
-import {
-  and,
-  asc,
-  count,
-  desc,
-  eq,
-  gte,
-  inArray,
-  lte,
-  or,
-  sql,
-} from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import {
@@ -56,10 +45,16 @@ export const getDashboardSellers = async ({ from, to, session }: Params) => {
     .startOf("day")
     .toDate();
   const regeExpiratedEndDate = dayjs().add(14, "days").endOf("day").toDate();
+
+  const conveniosCondition = sql<number>`COUNT(CASE WHEN ${patientsTable.activeAt} >= ${new Date(from)} AND ${patientsTable.activeAt} <= ${new Date(to)} AND ${patientsTable.activeAt} IS NOT NULL THEN 1 END)`;
+  const conveniosRenovadosCondition = sql<number>`COUNT(CASE WHEN ${patientsTable.reactivatedAt} >= ${new Date(from)} AND ${patientsTable.reactivatedAt} <= ${new Date(to)} AND ${patientsTable.reactivatedAt} IS NOT NULL THEN 1 END)`;
+  const totalCondition = sql<number>`${conveniosCondition} + ${conveniosRenovadosCondition}`;
+
   const [
     [totalPatients],
     [totalRenovados],
     [totalEnterprise],
+    [totalEnterpriseRenovated],
     topSellers,
     patientsToExpire,
     dailyConveniosData,
@@ -82,20 +77,8 @@ export const getDashboardSellers = async ({ from, to, session }: Params) => {
               .where(eq(sellersTable.email, session.user.email)),
           ),
           eq(patientsTable.isActive, true),
-          or(
-            // Pacientes ativados pela primeira vez no período
-            and(
-              gte(patientsTable.activeAt, new Date(from)),
-              lte(patientsTable.activeAt, new Date(to)),
-              sql`${patientsTable.reactivatedAt} IS NULL`,
-            ),
-            // Pacientes reativados no período
-            and(
-              gte(patientsTable.reactivatedAt, new Date(from)),
-              lte(patientsTable.reactivatedAt, new Date(to)),
-              sql`${patientsTable.reactivatedAt} IS NOT NULL`,
-            ),
-          ),
+          gte(patientsTable.activeAt, new Date(from)),
+          lte(patientsTable.activeAt, new Date(to)),
         ),
       ),
     // Query para total de pacientes renovados (reativados) do vendedor logado
@@ -136,9 +119,34 @@ export const getDashboardSellers = async ({ from, to, session }: Params) => {
           ),
           eq(patientsTable.cardType, "enterprise"),
           eq(patientsTable.isActive, true),
+          gte(patientsTable.activeAt, new Date(from)),
+          lte(patientsTable.activeAt, new Date(to)),
         ),
       ),
-    // Query para top 7 vendedores das clínicas do mesmo usuário
+    // TODO: Implementa a query para o total de pacientes de empresas renovados
+    db
+      .select({
+        total: count(),
+      })
+      .from(patientsTable)
+      .where(
+        and(
+          inArray(
+            patientsTable.sellerId,
+            db
+              .select({ sellerId: sellersTable.id })
+              .from(sellersTable)
+              .where(eq(sellersTable.email, session.user.email)),
+          ),
+
+          eq(patientsTable.cardType, "enterprise"),
+          eq(patientsTable.isActive, true),
+          gte(patientsTable.reactivatedAt, new Date(from)),
+          lte(patientsTable.reactivatedAt, new Date(to)),
+          sql`${patientsTable.reactivatedAt} IS NOT NULL`,
+        ),
+      ),
+    // Top vendedores - usando condições SQL globais (sem duplicidade)
     db
       .select({
         id: sellersTable.id,
@@ -146,7 +154,8 @@ export const getDashboardSellers = async ({ from, to, session }: Params) => {
         email: sellersTable.email,
         avatarImageUrl: sellersTable.avatarImageUrl,
         clinic: clinicsTable.name,
-        convenios: count(patientsTable.id),
+        convenios: conveniosCondition.mapWith(Number),
+        conveniosRenovados: conveniosRenovadosCondition.mapWith(Number),
       })
       .from(sellersTable)
       .innerJoin(clinicsTable, eq(sellersTable.clinicId, clinicsTable.id))
@@ -155,20 +164,6 @@ export const getDashboardSellers = async ({ from, to, session }: Params) => {
         and(
           eq(sellersTable.id, patientsTable.sellerId),
           eq(patientsTable.isActive, true),
-          or(
-            // Pacientes ativados pela primeira vez no período
-            and(
-              gte(patientsTable.activeAt, new Date(from)),
-              lte(patientsTable.activeAt, new Date(to)),
-              sql`${patientsTable.reactivatedAt} IS NULL`,
-            ),
-            // Pacientes reativados no período
-            and(
-              gte(patientsTable.reactivatedAt, new Date(from)),
-              lte(patientsTable.reactivatedAt, new Date(to)),
-              sql`${patientsTable.reactivatedAt} IS NOT NULL`,
-            ),
-          ),
         ),
       )
       .where(
@@ -193,7 +188,7 @@ export const getDashboardSellers = async ({ from, to, session }: Params) => {
         ),
       )
       .groupBy(sellersTable.id, clinicsTable.name)
-      .orderBy(desc(count(patientsTable.id)))
+      .orderBy(desc(totalCondition))
       .limit(7),
 
     // Pacientes do vendedor logado que estão para expirar
@@ -237,7 +232,6 @@ export const getDashboardSellers = async ({ from, to, session }: Params) => {
             gte(patientsTable.activeAt, chartSatartDate),
             lte(patientsTable.activeAt, chartEndDate),
             eq(patientsTable.isActive, true),
-            sql`${patientsTable.reactivatedAt} IS NULL`,
           ),
         )
         .groupBy(sql<string>`DATE(${patientsTable.activeAt})`)
@@ -337,6 +331,7 @@ export const getDashboardSellers = async ({ from, to, session }: Params) => {
     totalPatients,
     totalRenovados,
     totalEnterprise,
+    totalEnterpriseRenovated,
     topSellers,
     patientsToExpire,
     dailyConveniosData,
