@@ -74,6 +74,29 @@ const baseItems = [
     icon: Shield,
     requiresAdmin: true,
   },
+
+  //gestor
+  {
+    title: "DashboardG",
+    url: "/gerente/dashboard-gestor",
+    icon: LayoutDashboard,
+  },
+  {
+    title: "Sua UnidadeG",
+    url: "/gerente/clinics-gestor",
+    icon: Building2,
+  },
+  {
+    title: "ConvêniosG",
+    url: "/gerente/patients-gestor",
+    icon: IdCard,
+  },
+  {
+    title: "VendedoresG",
+    url: "/gerente/sellers-gestor",
+    icon: Users,
+  },
+
   //vendedor
   {
     title: "Dashboard",

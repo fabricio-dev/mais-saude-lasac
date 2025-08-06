@@ -31,10 +31,13 @@ export const getDashboardSellers = async ({ from, to, session }: Params) => {
     return {
       totalPatients: { total: 0 },
       totalRenovados: { total: 0 },
+      totalEnterprise: { total: 0 },
+      totalEnterpriseRenovated: { total: 0 },
       topSellers: [],
       patientsToExpire: [],
       dailyConveniosData: [],
       deactivatePatients: null,
+      sellerClinic: null,
     };
   }
 
@@ -51,15 +54,15 @@ export const getDashboardSellers = async ({ from, to, session }: Params) => {
   const totalCondition = sql<number>`${conveniosCondition} + ${conveniosRenovadosCondition}`;
 
   const [
-    [totalPatients],
-    [totalRenovados],
-    [totalEnterprise],
-    [totalEnterpriseRenovated],
+    [totalPatients = { total: 0 }],
+    [totalRenovados = { total: 0 }],
+    [totalEnterprise = { total: 0 }],
+    [totalEnterpriseRenovated = { total: 0 }],
     topSellers,
     patientsToExpire,
     dailyConveniosData,
     deactivatePatients,
-    [sellerClinic],
+    [sellerClinic = { clinicName: null }],
   ] = await Promise.all([
     // TODO: Implementa a query para o total de pacientes
     db
