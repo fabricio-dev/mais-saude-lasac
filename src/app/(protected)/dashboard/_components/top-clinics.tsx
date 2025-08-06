@@ -8,6 +8,7 @@ interface TopClinicsProps {
   topClinics: {
     clinic: string;
     patients: number;
+    patientsRenovated: number;
   }[];
 }
 
@@ -48,7 +49,7 @@ export default function TopClinics({ topClinics }: TopClinicsProps) {
                     <h3 className="text-sm">{clinic.clinic}</h3>
                     <div className="text-right">
                       <span className="text-muted-foreground text-sm font-medium">
-                        {clinic.patients} Convenios
+                        {clinic.patients + clinic.patientsRenovated} Convenios
                       </span>
                     </div>
                   </div>

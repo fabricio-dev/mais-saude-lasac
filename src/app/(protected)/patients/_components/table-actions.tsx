@@ -74,6 +74,7 @@ interface Patient {
 interface TableActionsProps {
   patient: Patient;
   isExpired: boolean;
+  isPending: boolean;
   onActivate: (patientId: string) => void;
   onDelete: (patientId: string) => void;
   onPrintCard: (patient: Patient) => void;
@@ -83,6 +84,7 @@ interface TableActionsProps {
 export default function TableActions({
   patient,
   isExpired,
+  isPending,
   onActivate,
   onDelete,
   onPrintCard,
@@ -146,34 +148,39 @@ export default function TableActions({
             </DropdownMenuSubContent>
           </DropdownMenuSub>
 
-          {isExpired && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <DropdownMenuItem
-                  onSelect={(e) => e.preventDefault()}
-                  className="cursor-pointer text-green-600"
-                >
-                  <CheckCircle className="mr-2 h-4 w-4" />
-                  Ativar
-                </DropdownMenuItem>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Ativar Paciente</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Tem certeza que deseja ativar este paciente? Isso irá
-                    renovar a data de expiração por mais 1 ano.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => onActivate(patient.id)}>
-                    Ativar
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <DropdownMenuItem
+                onSelect={(e) => e.preventDefault()}
+                className={`cursor-pointer ${isExpired ? "text-green-600" : "text-muted-foreground"}`}
+              >
+                <CheckCircle
+                  className={`mr-2 h-4 w-4 ${isExpired ? "text-green-600" : "text-muted-foreground"}`}
+                />
+                {isPending ? "Ativar" : "Renovar"}
+              </DropdownMenuItem>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  {isPending ? "Ativar convenio" : "Renovar convenio"}
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  {isPending
+                    ? "Atenção! Este convenio está aguardando a aprovação. Ao ativar você estará garantindo que o cliente ja fez o pagamento. Isso ira garantir que ele tenha acesso aos beneficios do convenio."
+                    : isExpired
+                      ? "Tem certeza que deseja renovar este convenio? Isso irá renovar a data de vencimento por mais 1 ano."
+                      : "Tem certeza que deseja Fazer a Renovação antecipada deste convenio?  Isso irá somar 1 ano a data de vencimento atual."}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={() => onActivate(patient.id)}>
+                  {isPending ? "Ativar" : "Renovar"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
 
           <AlertDialog>
             <AlertDialogTrigger asChild>

@@ -160,11 +160,12 @@ export const patientsTableColumns = ({
     cell: ({ row }) => {
       const patient = row.original;
       const isExpired = isPatientExpired(patient.expirationDate);
-
+      const isPending = isPatientPending(patient.activeAt);
       return (
         <TableActions
           patient={patient}
           isExpired={isExpired}
+          isPending={isPending}
           onActivate={onActivate}
           onDelete={onDelete}
           onPrintCard={onPrintCard}
@@ -231,6 +232,7 @@ export const patientsTableColumnsSimple: ColumnDef<Patient>[] = [
     cell: ({ row }) => {
       const expirationDate = row.getValue("expirationDate") as Date | null;
       const isExpired = isPatientExpired(expirationDate);
+      const isPending = isPatientPending(row.original.activeAt);
 
       return (
         <Badge
@@ -241,7 +243,11 @@ export const patientsTableColumnsSimple: ColumnDef<Patient>[] = [
               : "bg-green-100 text-green-800"
           }
         >
-          {isExpired ? "Vencido" : "Ativo"}
+          {isExpired && isPending
+            ? "Pendente"
+            : isExpired
+              ? "Vencido"
+              : "Ativo"}
         </Badge>
       );
     },

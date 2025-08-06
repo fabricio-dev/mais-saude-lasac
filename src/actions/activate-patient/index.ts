@@ -50,6 +50,7 @@ export const activatePatient = actionClient
         throw new Error("Você não tem permissão para ativar este paciente");
       }
     } else {
+      // como o gerente vai ser um vendedor, ele vai poder ativar o convenio de qualquer paciente da clinica  ver se esse if suporta ele
       // Para vendedores (role "user"): verificar se o paciente pertence à clínica do vendedor
       const seller = await db
         .select()
@@ -75,21 +76,34 @@ export const activatePatient = actionClient
     // Calcular nova data de expiração (data atual + 1 ano)
     const newExpirationDate = dayjs().add(1, "year").toDate();
 
-    // Determinar se é primeira ativação ou reativação
+    const timeRemaining = dayjs(patient.expirationDate).diff(dayjs(), "days");
+    const newExpirationDateAntecipated = dayjs()
+      .add(1, "year")
+      .add(timeRemaining, "days")
+      .toDate();
+
+    // Determinar se é primeira ativação ou renovacao de convenio
     const updateData =
-      patient.activeAt === null
+      patient.activeAt === null // ver se eh aoto cadastro
         ? {
             activeAt: new Date(),
             isActive: true,
             expirationDate: newExpirationDate,
             updatedAt: new Date(),
           }
-        : {
-            expirationDate: newExpirationDate,
-            reactivatedAt: new Date(),
-            isActive: true,
-            updatedAt: new Date(),
-          };
+        : patient.expirationDate && patient.expirationDate > new Date()
+          ? {
+              expirationDate: newExpirationDateAntecipated,
+              reactivatedAt: new Date(),
+              isActive: true,
+              updatedAt: new Date(),
+            }
+          : {
+              expirationDate: newExpirationDate,
+              reactivatedAt: new Date(),
+              isActive: true,
+              updatedAt: new Date(),
+            };
 
     // Atualizar o paciente
     await db

@@ -10,6 +10,7 @@ interface TopSellersProps {
     avatarImageUrl: string | null;
     clinic: string;
     convenios: number;
+    conveniosRenovados: number;
   }[];
 }
 
@@ -47,7 +48,7 @@ export default function TopSellers({ sellers }: TopSellersProps) {
               </div>
               <div className="text-right">
                 <span className="text-muted-foreground text-sm font-medium">
-                  {seller.convenios} conv.
+                  novo. {seller.convenios} ren.{seller.conveniosRenovados}
                 </span>
               </div>
             </div>
