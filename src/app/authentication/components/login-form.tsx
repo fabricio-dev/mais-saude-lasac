@@ -60,6 +60,8 @@ const LoginForm = () => {
         onSuccess: () => {
           if (session.data?.user.role === "admin") {
             router.push("/dashboard");
+          } else if (session.data?.user.role === "gestor") {
+            router.push("/gerente/dashboard-gestor");
           } else {
             router.push("/vendedor/dashboard-seller");
           }
@@ -72,12 +74,19 @@ const LoginForm = () => {
   };
 
   const handleGoogleLogin = async () => {
+    const getCallbackURL = () => {
+      if (session.data?.user.role === "admin") {
+        return "/dashboard";
+      } else if (session.data?.user.role === "gestor") {
+        return "/gerente/dashboard-gestor";
+      } else {
+        return "/vendedor/dashboard-seller";
+      }
+    };
+
     await authClient.signIn.social({
       provider: "google",
-      callbackURL:
-        session.data?.user.role === "admin"
-          ? "/dashboard"
-          : "/vendedor/dashboard-seller",
+      callbackURL: getCallbackURL(),
       scopes: ["email", "profile"],
     });
   };

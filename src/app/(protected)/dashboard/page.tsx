@@ -41,7 +41,11 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
     redirect("/authentication");
   }
   if (session.user.role !== "admin") {
-    redirect("/vendedor/dashboard-seller");
+    if (session.user.role === "gestor") {
+      redirect("/gerente/dashboard-gestor");
+    } else {
+      redirect("/vendedor/dashboard-seller");
+    }
   }
 
   if (!session?.user.clinic) {

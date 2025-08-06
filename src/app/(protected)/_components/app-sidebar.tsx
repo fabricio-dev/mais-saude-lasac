@@ -77,24 +77,28 @@ const baseItems = [
 
   //gestor
   {
-    title: "DashboardG",
+    title: "Dashboard",
     url: "/gerente/dashboard-gestor",
     icon: LayoutDashboard,
+    requiresGestor: true,
   },
   {
-    title: "Sua UnidadeG",
+    title: "Sua Unidade",
     url: "/gerente/clinics-gestor",
     icon: Building2,
+    requiresGestor: true,
   },
   {
-    title: "ConvêniosG",
+    title: "Convênios",
     url: "/gerente/patients-gestor",
     icon: IdCard,
+    requiresGestor: true,
   },
   {
-    title: "VendedoresG",
+    title: "Vendedores",
     url: "/gerente/sellers-gestor",
     icon: Users,
+    requiresGestor: true,
   },
 
   //vendedor
@@ -117,12 +121,15 @@ export function AppSidebar() {
   const session = authClient.useSession();
   const pathname = usePathname();
   // const { isAdmin, userRole } = usePermissions(); mudei par o de baixo
-  const { isAdmin } = usePermissions();
+  const { isAdmin, isGestor } = usePermissions();
 
   // Filtrar itens do menu baseado nas permissões do usuário
   const items = baseItems.filter((item) => {
     if (item.requiresAdmin) {
       return isAdmin;
+    }
+    if (item.requiresGestor) {
+      return isGestor;
     }
     if (item.requiresUser) {
       return session.data?.user.role === "user";
@@ -191,6 +198,10 @@ export function AppSidebar() {
                       {isAdmin ? (
                         <Badge variant="secondary" className="text-xs">
                           Admin
+                        </Badge>
+                      ) : isGestor ? (
+                        <Badge variant="secondary" className="text-xs">
+                          Gestor
                         </Badge>
                       ) : (
                         <Badge variant="secondary" className="text-xs">

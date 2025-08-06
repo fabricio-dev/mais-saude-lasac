@@ -2,6 +2,7 @@ import { authClient } from "@/lib/auth-client";
 import {
   getRolePermissions,
   isAdmin,
+  isGestor,
   isUser,
   type UserRole,
 } from "@/types/auth";
@@ -18,6 +19,7 @@ export const usePermissions = () => {
     userRole,
     permissions,
     isAdmin: isAdmin(userRole),
+    isGestor: isGestor(userRole),
     isUser: isUser(userRole),
     isLoading: session.isPending,
     isAuthenticated: !!user,

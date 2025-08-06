@@ -1,4 +1,4 @@
-export type UserRole = "admin" | "user";
+export type UserRole = "admin" | "user" | "gestor";
 
 export interface UserWithRole {
   id: string;
@@ -27,6 +27,13 @@ export const getRolePermissions = (role: UserRole): AdminActions => {
         canManageSellers: true,
         canViewAllData: true,
       };
+    case "gestor":
+      return {
+        canManageUsers: false,
+        canManageClinics: false,
+        canManageSellers: true,
+        canViewAllData: true,
+      };
     case "user":
     default:
       return {
@@ -40,6 +47,10 @@ export const getRolePermissions = (role: UserRole): AdminActions => {
 
 export const isAdmin = (role?: string): boolean => {
   return role === "admin";
+};
+
+export const isGestor = (role?: string): boolean => {
+  return role === "gestor";
 };
 
 export const isUser = (role?: string): boolean => {
