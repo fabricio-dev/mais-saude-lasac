@@ -22,17 +22,32 @@ export const deleteSeller = actionClient
     if (!session?.user) {
       throw new Error("Unauthorized");
     }
-    if (session.user.role !== "admin") {
+    if (session.user.role !== "admin" && session.user.role !== "gestor") {
       throw new Error("Unauthorized");
     }
 
-    // Buscar as clínicas do usuário
-    const userClinics = await db
-      .select({ clinicId: usersToClinicsTable.clinicId })
-      .from(usersToClinicsTable)
-      .where(eq(usersToClinicsTable.userId, session.user.id));
+    let clinicIds: string[] = [];
 
-    const clinicIds = userClinics.map((uc) => uc.clinicId);
+    if (session.user.role === "admin") {
+      // Buscar as clínicas do usuário admin
+      const userClinics = await db
+        .select({ clinicId: usersToClinicsTable.clinicId })
+        .from(usersToClinicsTable)
+        .where(eq(usersToClinicsTable.userId, session.user.id));
+
+      clinicIds = userClinics.map((uc) => uc.clinicId);
+    } else if (session.user.role === "gestor") {
+      // Buscar a clínica do gestor baseada no email do usuário logado
+      const gestor = await db.query.sellersTable.findFirst({
+        where: eq(sellersTable.email, session.user.email),
+      });
+
+      if (!gestor || !gestor.clinicId) {
+        throw new Error("Gestor não encontrado ou sem clínica associada");
+      }
+
+      clinicIds = [gestor.clinicId];
+    }
 
     if (clinicIds.length === 0) {
       throw new Error("Você não tem permissão para deletar este vendedor");
@@ -53,5 +68,6 @@ export const deleteSeller = actionClient
 
     await db.delete(sellersTable).where(eq(sellersTable.id, parsedInput.id));
     revalidatePath("/sellers");
+    revalidatePath("/gerente/sellers-gestor");
   });
 //deletar vendedor e usuario vinculados a ele
