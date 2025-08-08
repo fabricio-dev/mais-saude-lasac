@@ -22,7 +22,12 @@ export async function middleware(request: NextRequest) {
   ];
 
   // Rotas específicas para gestores
-  const gestorRoutes = ["/gerente/dashboard-gestor"];
+  const gestorRoutes = [
+    "/gerente/dashboard-gestor",
+    "/gerente/patients-gestor",
+    "/gerente/sellers-gestor",
+    "/gerente/clinics-gestor",
+  ];
 
   // Verificar se a rota é protegida
   const isProtectedRoute = protectedRoutes.some((route) =>
