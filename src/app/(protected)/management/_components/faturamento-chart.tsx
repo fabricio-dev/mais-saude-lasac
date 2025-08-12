@@ -33,34 +33,20 @@ const FaturamentoChart = ({
   data,
   isLoading = false,
 }: FaturamentoChartProps) => {
-  // Debug: log dos dados recebidos
-  // console.log("FaturamentoChart - dados recebidos:", data);
+  // Verificar se há dados válidos
+  const hasValidData =
+    data && data.length > 0 && data.some((item) => item.faturamento > 0);
 
-  // Dados de teste para verificar se o gráfico funciona
-  const testData = [
-    { month: "Jan", faturamento: 50000, isWithinPeriod: false },
-    { month: "Fev", faturamento: 75000, isWithinPeriod: true },
-    { month: "Mar", faturamento: 60000, isWithinPeriod: true },
-    { month: "Abr", faturamento: 90000, isWithinPeriod: false },
-    { month: "Mai", faturamento: 80000, isWithinPeriod: false },
-  ];
-
-  // Usar dados de teste se não houver dados reais ou se todos os valores forem zero
-  const rawData =
-    data && data.length > 0 && data.some((item) => item.faturamento > 0)
-      ? data
-      : testData;
-
-  // Preparar dados para o gráfico
-  const chartData = rawData.map((item) => ({
-    month: item.month,
-    faturamento: item.faturamento,
-    isWithinPeriod: item.isWithinPeriod,
-    // Para compatibilidade com o sistema de cores do recharts
-    fill: item.isWithinPeriod ? "#10B981" : "#9CA3AF",
-  }));
-
-  // console.log("FaturamentoChart - dados do gráfico:", chartData);
+  // Preparar dados para o gráfico (apenas se houver dados válidos)
+  const chartData = hasValidData
+    ? data.map((item) => ({
+        month: item.month,
+        faturamento: item.faturamento,
+        isWithinPeriod: item.isWithinPeriod,
+        // Para compatibilidade com o sistema de cores do recharts
+        fill: item.isWithinPeriod ? "#10B981" : "#9CA3AF",
+      }))
+    : [];
 
   if (isLoading) {
     return (
@@ -79,7 +65,7 @@ const FaturamentoChart = ({
     );
   }
 
-  if (!chartData || chartData.length === 0) {
+  if (!hasValidData) {
     return (
       <Card>
         <CardHeader>
@@ -88,7 +74,7 @@ const FaturamentoChart = ({
         <CardContent>
           <div className="flex h-[300px] items-center justify-center">
             <div className="text-gray-500">
-              Nenhum dado disponível para o período selecionado
+              Dados não encontrados para o período selecionado
             </div>
           </div>
         </CardContent>
