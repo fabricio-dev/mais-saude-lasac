@@ -4,6 +4,7 @@ import "@/styles/print.css";
 
 import { Printer } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { parseAsIsoDate, useQueryState } from "nuqs";
 import { useEffect, useRef, useState } from "react";
 import { useReactToPrint } from "react-to-print";
 
@@ -63,7 +64,13 @@ const RelatorioUnidades = ({
   const [selectedClinicName, setSelectedClinicName] =
     useState<string>("Todas as unidades");
   const [reportPeriod, setReportPeriod] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const printRef = useRef<HTMLDivElement>(null);
+
+  // Monitorar mudanças nos parâmetros de data usando nuqs
+  const [from] = useQueryState("from", parseAsIsoDate);
+  const [to] = useQueryState("to", parseAsIsoDate);
+  const [clinicId] = useQueryState("clinicId");
   const [data, setData] = useState<UnidadeData>({
     faturamentoTotal: initialData.faturamentoTotal,
     totalConvenios: initialData.totalConvenios,
@@ -149,6 +156,24 @@ const RelatorioUnidades = ({
     initializeClinic();
   }, [searchParams]);
 
+  // Detectar mudanças nos parâmetros de data e ativar loading
+  useEffect(() => {
+    const currentFromStr = from?.toISOString().split("T")[0];
+    const currentToStr = to?.toISOString().split("T")[0];
+    const currentClinicId = clinicId || "all";
+
+    // Verificar se os parâmetros atuais são diferentes dos searchParams
+    const hasDateChanged =
+      currentFromStr !== searchParams.from ||
+      currentToStr !== searchParams.to ||
+      currentClinicId !== (searchParams.clinicId || "all");
+
+    if (hasDateChanged) {
+      setIsLoading(true);
+      // O loading será desativado quando os dados forem atualizados no próximo useEffect
+    }
+  }, [from, to, clinicId, searchParams]);
+
   // Atualizar dados quando mudamos de dados iniciais (página recarrega com nova clínica)
   useEffect(() => {
     setData({
@@ -161,6 +186,8 @@ const RelatorioUnidades = ({
       totalEnterprise: initialData.totalEnterprise,
       faturamentoMensal: initialData.faturamentoMensal,
     });
+    // Desativar loading quando novos dados chegam
+    setIsLoading(false);
   }, [initialData]);
 
   return (
@@ -208,12 +235,16 @@ const RelatorioUnidades = ({
               conveniosVencidos={data.conveniosVencidos}
               conveniosRenovados={data.conveniosRenovados}
               novosConvenios={data.novosConvenios}
+              isLoading={isLoading}
             />
           </div>
 
           {/* Gráfico de faturamento mensal */}
           <div className="print-section">
-            <FaturamentoChart data={data.faturamentoMensal} />
+            <FaturamentoChart
+              data={data.faturamentoMensal}
+              isLoading={isLoading}
+            />
           </div>
 
           {/* Gráficos de pizza */}
@@ -224,12 +255,14 @@ const RelatorioUnidades = ({
                   vencidos: data.conveniosVencidos,
                   renovados: data.conveniosRenovados,
                 }}
+                isLoading={isLoading}
               />
               <NovosConveniosRenovacaoChart
                 data={{
                   novosConvenios: data.novosConvenios,
                   renovacoes: data.conveniosRenovados,
                 }}
+                isLoading={isLoading}
               />
             </div>
           </div>
