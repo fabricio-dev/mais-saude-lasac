@@ -26,7 +26,7 @@ import { authClient } from "@/lib/auth-client";
 export const AdminContent = () => {
   const { isAdmin, user } = usePermissions();
   const [userEmail, setUserEmail] = useState("");
-  const [newRole, setNewRole] = useState<"admin" | "user">("user");
+  const [newRole, setNewRole] = useState<"gestor" | "user">("user");
   const [isLoading, setIsLoading] = useState(false);
 
   if (!isAdmin) {
@@ -82,6 +82,12 @@ export const AdminContent = () => {
       return;
     }
 
+    // Verificar se não está tentando alterar o próprio role
+    if (userEmail === user?.email) {
+      toast.error("Você não pode alterar seu próprio role");
+      return;
+    }
+
     try {
       setIsLoading(true);
 
@@ -101,15 +107,49 @@ export const AdminContent = () => {
 
       const targetUser = usersResult.data.users[0];
 
-      // Alterar role do usuário
-      const result = await authClient.admin.setRole({
-        userId: targetUser.id,
-        role: newRole,
-      });
+      // Verificar se o usuário não é um admin (não permitir alterar role de outros admins)
+      if (targetUser.role === "admin") {
+        toast.error("Não é possível alterar o role de outros administradores");
+        return;
+      }
 
-      if (result.data) {
-        toast.success(`Role do usuário alterado para: ${newRole}`);
-        setUserEmail("");
+      // Para "gestor", primeiro definir como "user" e depois atualizar manualmente
+      if (newRole === "gestor") {
+        // Definir como user primeiro
+        await authClient.admin.setRole({
+          userId: targetUser.id,
+          role: "user",
+        });
+
+        // Fazer uma requisição para atualizar o role para "gestor" no banco
+        const updateResponse = await fetch("/api/admin/update-role", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId: targetUser.id,
+            role: "gestor",
+          }),
+        });
+
+        if (updateResponse.ok) {
+          toast.success("Role do usuário alterado para: Gestor");
+          setUserEmail("");
+        } else {
+          toast.error("Erro ao definir role como gestor");
+        }
+      } else {
+        // Para role "user", usar o método normal
+        const result = await authClient.admin.setRole({
+          userId: targetUser.id,
+          role: "user",
+        });
+
+        if (result.data) {
+          toast.success("Role do usuário alterado para: Usuário");
+          setUserEmail("");
+        }
       }
     } catch {
       toast.error("Erro ao alterar role do usuário");
@@ -185,7 +225,7 @@ export const AdminContent = () => {
         <CardHeader>
           <CardTitle>Alterar Role de Usuário</CardTitle>
           <CardDescription>
-            Alterar o papel de um usuário no sistema
+            Alterar o papel de um usuário entre Gestor ou Usuário
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -203,14 +243,14 @@ export const AdminContent = () => {
             <Label htmlFor="newRole">Novo Role</Label>
             <Select
               value={newRole}
-              onValueChange={(value: "admin" | "user") => setNewRole(value)}
+              onValueChange={(value: "gestor" | "user") => setNewRole(value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o role" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="user">Usuário</SelectItem>
-                <SelectItem value="admin">Administrador</SelectItem>
+                <SelectItem value="gestor">Gestor</SelectItem>
               </SelectContent>
             </Select>
           </div>

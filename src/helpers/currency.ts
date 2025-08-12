@@ -1,3 +1,10 @@
+export const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(value);
+};
+
 export const formatCurrencyInCents = (
   individual: number,
   enterprise: number,
@@ -6,8 +13,5 @@ export const formatCurrencyInCents = (
 
   const b = enterprise * 90; //multiplica os pacientes que sao de empresas por 90
 
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(a + b);
+  return formatCurrency(a + b);
 };

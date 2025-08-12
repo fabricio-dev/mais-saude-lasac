@@ -42,6 +42,7 @@
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.59.0",
     "react-number-format": "^5.4.4",
+    "react-to-print": "^3.1.1",
     "recharts": "^2.15.4",
     "remove": "^0.1.5",
     "sonner": "^2.0.5",

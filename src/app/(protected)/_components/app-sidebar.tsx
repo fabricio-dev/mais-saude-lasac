@@ -63,7 +63,7 @@ const baseItems = [
     requiresAdmin: true,
   },
   {
-    title: "Gestão",
+    title: "Relatórios",
     url: "/management",
     icon: Settings,
     requiresAdmin: true,
