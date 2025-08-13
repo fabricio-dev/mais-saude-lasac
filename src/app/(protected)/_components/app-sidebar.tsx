@@ -82,12 +82,12 @@ const baseItems = [
     icon: LayoutDashboard,
     requiresGestor: true,
   },
-  {
-    title: "Sua Unidade",
-    url: "/gerente/clinics-gestor",
-    icon: Building2,
-    requiresGestor: true,
-  },
+  // {
+  //   title: "Sua Unidade",
+  //   url: "/gerente/clinics-gestor",
+  //   icon: Building2,
+  //   requiresGestor: true,
+  // },
   {
     title: "Convênios",
     url: "/gerente/patients-gestor",
