@@ -1,6 +1,6 @@
 "use client";
 
-import { Cell, Pie, PieChart, Tooltip } from "recharts";
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -99,26 +99,30 @@ const DistribuicaoVendasChart = ({
       </CardHeader>
       <CardContent>
         {/* Versão para tela */}
-        <div className="flex h-[300px] w-full items-center justify-center print:hidden">
-          <PieChart width={300} height={300}>
-            <Pie
-              data={chartData}
-              cx="50%"
-              cy="50%"
-              innerRadius={60}
-              outerRadius={100}
-              paddingAngle={5}
-              dataKey="value"
-            >
-              {chartData.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={COLORS[index % COLORS.length]}
-                />
-              ))}
-            </Pie>
-            <Tooltip content={<CustomTooltip />} />
-          </PieChart>
+        <div className="flex h-[250px] w-full items-center justify-center sm:h-[300px] print:hidden">
+          <div className="h-full w-full max-w-[350px] sm:max-w-[400px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius="60%"
+                  outerRadius="90%"
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={COLORS[index % COLORS.length]}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip content={<CustomTooltip />} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
         {/* Versão para impressão - sem ChartContainer */}
@@ -150,18 +154,21 @@ const DistribuicaoVendasChart = ({
         </div>
 
         {/* Legenda personalizada */}
-        <div className="mt-4 flex justify-center gap-6">
+        <div className="mt-4 flex flex-col justify-center gap-2 sm:flex-row sm:gap-6">
           {chartData.map((entry, index) => (
-            <div key={entry.name} className="flex items-center gap-2">
+            <div
+              key={entry.name}
+              className="flex items-center justify-center gap-2 sm:justify-start"
+            >
               <div
-                className={`h-3 w-3 rounded-full legend-distribuicao-${index}`}
+                className={`h-3 w-3 rounded-full legend-distribuicao-${index} flex-shrink-0`}
                 style={{
                   backgroundColor: COLORS[index],
                   WebkitPrintColorAdjust: "exact",
                   colorAdjust: "exact",
                 }}
               />
-              <span className="text-sm text-gray-600">
+              <span className="text-center text-sm text-gray-600 sm:text-left">
                 {entry.name}: {entry.value} ({entry.percentage}%)
               </span>
             </div>

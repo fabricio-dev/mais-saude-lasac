@@ -92,37 +92,44 @@ const NovosConveniosRenovacaoChart = ({
       <CardContent>
         {/* Versão para tela */}
         <div className="print:hidden">
-          <ChartContainer config={chartConfig} className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={chartData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={100}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {chartData.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
+          <ChartContainer
+            config={chartConfig}
+            className="h-[250px] w-full sm:h-[300px]"
+          >
+            <div className="flex h-full w-full items-center justify-center">
+              <div className="h-full w-full max-w-[350px] sm:max-w-[400px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={chartData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius="60%"
+                      outerRadius="90%"
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {chartData.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={COLORS[index % COLORS.length]}
+                        />
+                      ))}
+                    </Pie>
+                    <ChartTooltip
+                      content={
+                        <ChartTooltipContent
+                          formatter={(value, name) => [
+                            `${value} (${chartData.find((d) => d.name === name)?.percentage}%)`,
+                            name,
+                          ]}
+                        />
+                      }
                     />
-                  ))}
-                </Pie>
-                <ChartTooltip
-                  content={
-                    <ChartTooltipContent
-                      formatter={(value, name) => [
-                        `${value} (${chartData.find((d) => d.name === name)?.percentage}%)`,
-                        name,
-                      ]}
-                    />
-                  }
-                />
-              </PieChart>
-            </ResponsiveContainer>
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
           </ChartContainer>
         </div>
 
@@ -155,14 +162,21 @@ const NovosConveniosRenovacaoChart = ({
         </div>
 
         {/* Legenda personalizada */}
-        <div className="mt-4 flex justify-center gap-6">
+        <div className="mt-4 flex flex-col justify-center gap-2 sm:flex-row sm:gap-6">
           {chartData.map((entry, index) => (
-            <div key={entry.name} className="flex items-center gap-2">
+            <div
+              key={entry.name}
+              className="flex items-center justify-center gap-2 sm:justify-start"
+            >
               <div
-                className="h-3 w-3 rounded-full"
-                style={{ backgroundColor: COLORS[index] }}
+                className="h-3 w-3 flex-shrink-0 rounded-full"
+                style={{
+                  backgroundColor: COLORS[index],
+                  WebkitPrintColorAdjust: "exact",
+                  colorAdjust: "exact",
+                }}
               />
-              <span className="text-sm text-gray-600">
+              <span className="text-center text-sm text-gray-600 sm:text-left">
                 {entry.name}: {entry.value} ({entry.percentage}%)
               </span>
             </div>
