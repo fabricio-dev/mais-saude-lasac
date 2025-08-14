@@ -23,11 +23,11 @@ interface ConveniosVencidosRenovadosChartProps {
 const chartConfig = {
   vencidos: {
     label: "Vencidos",
-    color: "#ef4444",
+    color: "#dc2626",
   },
   renovados: {
     label: "Renovados",
-    color: "#f97316",
+    color: "#16a34a",
   },
 } satisfies ChartConfig;
 
@@ -71,18 +71,18 @@ const ConveniosVencidosRenovadosChart = ({
 
   const chartData = [
     {
-      name: "Vencidos",
-      value: data.vencidos,
-      percentage: ((data.vencidos / total) * 100).toFixed(1),
-    },
-    {
       name: "Renovados",
       value: data.renovados,
       percentage: ((data.renovados / total) * 100).toFixed(1),
     },
+    {
+      name: "Vencidos",
+      value: data.vencidos,
+      percentage: ((data.vencidos / total) * 100).toFixed(1),
+    },
   ];
 
-  const COLORS = ["#ef4444", "#f97316"];
+  const COLORS = ["#16a34a", "#dc2626"];
 
   return (
     <Card>
@@ -159,8 +159,12 @@ const ConveniosVencidosRenovadosChart = ({
           {chartData.map((entry, index) => (
             <div key={entry.name} className="flex items-center gap-2">
               <div
-                className="h-3 w-3 rounded-full"
-                style={{ backgroundColor: COLORS[index] }}
+                className={`h-3 w-3 rounded-full legend-vencidos-${index}`}
+                style={{
+                  backgroundColor: COLORS[index],
+                  WebkitPrintColorAdjust: "exact",
+                  colorAdjust: "exact",
+                }}
               />
               <span className="text-sm text-gray-600">
                 {entry.name}: {entry.value} ({entry.percentage}%)

@@ -22,15 +22,15 @@
   .print-table-layout {
     display: table !important;
     width: 100% !important;
-    height: 100vh !important;
+    height: auto !important;
     table-layout: fixed !important;
     border-collapse: collapse !important;
   }
 
-  /* Linha 1: Cabeçalho (10% da altura) */
+  /* Linha 1: Cabeçalho */
   .print-header-row {
     display: table-row !important;
-    height: 10% !important;
+    height: 120px !important;
   }
 
   .print-header-cell {
@@ -40,10 +40,10 @@
     border-bottom: 1px solid #e5e7eb !important;
   }
 
-  /* Linha 2: Gráfico de barras (40% da altura) */
+  /* Linha 2: Gráfico de barras */
   .print-chart-bar-row {
     display: table-row !important;
-    height: 40% !important;
+    height: 350px !important;
   }
 
   .print-chart-bar-cell {
@@ -52,10 +52,10 @@
     padding: 1rem !important;
   }
 
-  /* Linha 3: Gráficos de pizza (50% da altura) */
+  /* Linha 3: Gráficos de pizza */
   .print-charts-pizza-row {
     display: table-row !important;
-    height: 50% !important;
+    height: 350px !important;
   }
 
   .print-charts-pizza-cell {
@@ -176,12 +176,16 @@
   /* CSS específico por classes para garantir cores corretas */
   .print-pie-vencidos .pie-sector-0,
   .print-pie-vencidos .pie-sector-0 path {
-    fill: #ef4444 !important; /* Vencidos - Vermelho */
+    fill: #16a34a !important; /* Renovados - Verde (primeiro no array) */
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
   }
 
   .print-pie-vencidos .pie-sector-1,
   .print-pie-vencidos .pie-sector-1 path {
-    fill: #f97316 !important; /* Renovados - Laranja */
+    fill: #dc2626 !important; /* Vencidos - Vermelho (segundo no array) */
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
   }
 
   .print-pie-novos .pie-sector-0,
@@ -218,16 +222,15 @@
   .print-pie-tipos .pie-sector-0,
   .print-pie-tipos .pie-sector-0 path {
     fill: #8b5cf6 !important; /* Empresarial - Roxo */
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
   }
 
   .print-pie-tipos .pie-sector-1,
   .print-pie-tipos .pie-sector-1 path {
-    fill: #06b6d4 !important; /* Familiar - Azul */
-  }
-
-  .print-pie-tipos .pie-sector-2,
-  .print-pie-tipos .pie-sector-2 path {
     fill: #f97316 !important; /* Individual - Laranja */
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
   }
 
   /* Cards dos gráficos */
@@ -304,11 +307,199 @@
     width: 0.75rem !important;
   }
 
-  /* Forçar uma única página */
-  * {
+  /* Controle de quebra de página */
+  .print-table-layout {
+    page-break-inside: auto !important;
+    page-break-after: auto !important;
+    page-break-before: auto !important;
+  }
+
+  /* Primeira página - evitar quebras */
+  .print-header-row,
+  .print-chart-bar-row,
+  .print-charts-pizza-row {
     page-break-inside: avoid !important;
     page-break-after: avoid !important;
     page-break-before: avoid !important;
+  }
+
+  /* Controle condicional de quebra de página */
+  .print-charts-pizza-row.with-table {
+    page-break-after: always !important;
+  }
+
+  .print-charts-pizza-row.single-page {
+    page-break-after: avoid !important;
+  }
+
+  /* Layout otimizado para página única */
+  .print-table-layout.single-page {
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  /* Ajustar alturas para página única */
+  .single-page .print-header-row {
+    height: 90px !important;
+  }
+
+  .single-page .print-chart-bar-row {
+    height: 270px !important;
+  }
+
+  .single-page .print-charts-pizza-row {
+    height: 360px !important;
+  }
+
+  /* Reduzir padding para página única */
+  .single-page .print-chart-bar-cell {
+    padding: 0.5rem 1rem !important;
+  }
+
+  .single-page .print-charts-pizza-cell {
+    padding: 0.75rem 1rem !important;
+  }
+
+  /* Ajustar gráficos de pizza para página única */
+  .single-page .print-pizza-item .card {
+    min-height: 310px !important;
+    max-height: 310px !important;
+    overflow: visible !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+  }
+
+  .single-page .print-pizza-item .card-content {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: visible !important;
+    padding: 0.5rem !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .single-page .print-pie-vencidos,
+  .single-page .print-pie-novos,
+  .single-page .print-pie-distribuicao,
+  .single-page .print-pie-tipos {
+    height: 230px !important;
+    min-height: 230px !important;
+    max-height: 230px !important;
+    flex-shrink: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* Garantir que as legendas sejam visíveis na página única */
+  .single-page .mt-4 {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    margin-top: 0.5rem !important;
+    min-height: 45px !important;
+    max-height: 45px !important;
+    justify-content: center !important;
+    align-items: center !important;
+    font-size: 10px !important;
+    overflow: visible !important;
+    flex-shrink: 0 !important;
+    gap: 0.75rem !important;
+    position: relative !important;
+    z-index: 10 !important;
+  }
+
+  .single-page .mt-4 .flex {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  .single-page .mt-4 .text-sm {
+    font-size: 9px !important;
+    line-height: 1.2 !important;
+    display: inline !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    white-space: nowrap !important;
+  }
+
+  /* Garantir cores das legendas em página única */
+  .single-page .legend-distribuicao-0,
+  .single-page .legend-distribuicao-1,
+  .single-page .legend-tipos-0,
+  .single-page .legend-tipos-1,
+  .single-page .legend-vencidos-0,
+  .single-page .legend-vencidos-1 {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 10px !important;
+    height: 10px !important;
+    flex-shrink: 0 !important;
+    margin-right: 0.25rem !important;
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  /* Ajustar tamanho dos SVGs dos gráficos de pizza na página única */
+  .single-page .print-pie-vencidos svg,
+  .single-page .print-pie-novos svg,
+  .single-page .print-pie-distribuicao svg,
+  .single-page .print-pie-tipos svg {
+    width: 100% !important;
+    height: 210px !important;
+    max-height: 210px !important;
+    display: block !important;
+    margin: 0 auto !important;
+  }
+
+  /* Centralizar o componente PieChart */
+  .single-page .print-pie-vencidos .recharts-wrapper,
+  .single-page .print-pie-novos .recharts-wrapper,
+  .single-page .print-pie-distribuicao .recharts-wrapper,
+  .single-page .print-pie-tipos .recharts-wrapper {
+    margin: 0 auto !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+  }
+
+  /* Garantir que as legendas tenham espaço reservado */
+  .single-page .print-pizza-item .card {
+    padding-bottom: 0 !important;
+  }
+
+  .single-page .print-pizza-item .card-header {
+    padding: 0.5rem !important;
+    flex-shrink: 0 !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
+    text-align: center !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .single-page .print-pizza-item .card-title {
+    font-size: 12px !important;
+    margin: 0 !important;
+    line-height: 1.3 !important;
+    text-align: center !important;
+  }
+
+  /* Segunda página - tabela */
+  .print-table-row {
+    page-break-before: always !important;
+    page-break-inside: auto !important;
+    page-break-after: auto !important;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
   }
 
   /* Garantir que TODOS os elementos dos gráficos sejam visíveis */
@@ -438,40 +629,46 @@
   .print-table-row {
     display: table-row !important;
     height: auto !important;
+    page-break-before: always !important;
+    page-break-inside: auto !important;
   }
 
   .print-table-cell {
     display: table-cell !important;
     vertical-align: top !important;
-    padding: 1rem !important;
+    padding: 0 1rem 2rem 1rem !important;
   }
 
   .print-table-title {
-    font-size: 14px !important;
+    font-size: 18px !important;
     font-weight: 600 !important;
-    margin: 0 0 0.5rem 0 !important;
+    margin: 0 0 1rem 0 !important;
     text-align: center !important;
+    color: #111827 !important;
   }
 
   .print-table {
     width: 100% !important;
     border-collapse: collapse !important;
-    font-size: 10px !important;
+    font-size: 12px !important;
     margin: 0 !important;
+    page-break-inside: auto !important;
   }
 
   .print-table th,
   .print-table td {
     border: 1px solid #e5e7eb !important;
-    padding: 0.25rem 0.5rem !important;
+    padding: 0.5rem 0.75rem !important;
     text-align: center !important;
     vertical-align: middle !important;
+    page-break-inside: avoid !important;
   }
 
   .print-table th {
     background-color: #f9fafb !important;
     font-weight: 600 !important;
-    font-size: 9px !important;
+    font-size: 11px !important;
+    color: #374151 !important;
   }
 
   .print-table th:first-child,
@@ -479,7 +676,147 @@
     text-align: left !important;
   }
 
+  .print-table tbody tr {
+    page-break-inside: avoid !important;
+  }
+
   .print-table tbody tr:nth-child(even) {
     background-color: #f9fafb !important;
+  }
+
+  /* Cabeçalho da segunda página */
+  .print-table-page-header {
+    text-align: center !important;
+    margin-bottom: 1.5rem !important;
+    padding: 1rem 0 0.75rem 0 !important;
+    border-bottom: 2px solid #e5e7eb !important;
+    background-color: #f9fafb !important;
+  }
+
+  .print-table-page-header h2 {
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    margin: 0 !important;
+    color: #111827 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+  }
+
+  .print-table-page-header p {
+    font-size: 12px !important;
+    margin: 0.5rem 0 0 0 !important;
+    color: #374151 !important;
+    font-weight: 500 !important;
+  }
+
+  /* Estilos específicos para legendas dos gráficos de pizza na impressão */
+  .print-table-layout .mt-4 div[style*="background-color"],
+  .print-table-layout .mt-4 div[style*="backgroundColor"] {
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  /* Cores específicas para legendas - Distribuição de Vendas */
+  .legend-distribuicao-0 {
+    background-color: #3b82f6 !important;
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  .legend-distribuicao-1 {
+    background-color: #10b981 !important;
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  /* Cores específicas para legendas - Tipos de Convênio */
+  .legend-tipos-0 {
+    background-color: #8b5cf6 !important;
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  .legend-tipos-1 {
+    background-color: #f97316 !important;
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  /* Cores específicas para legendas - Convênios Vencidos vs Renovados */
+  .legend-vencidos-0 {
+    background-color: #16a34a !important; /* Renovados - Verde (primeiro no array) */
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  .legend-vencidos-1 {
+    background-color: #dc2626 !important; /* Vencidos - Vermelho (segundo no array) */
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  /* Garantir que todas as legendas tenham as cores preservadas */
+  .print-table-layout .legend-distribuicao-0,
+  .print-table-layout .legend-distribuicao-1,
+  .print-table-layout .legend-tipos-0,
+  .print-table-layout .legend-tipos-1,
+  .print-table-layout .legend-vencidos-0,
+  .print-table-layout .legend-vencidos-1 {
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Forçar cores específicas para gráfico Tipos de Convênio na impressão */
+  .print-pie-tipos svg .recharts-pie-sector:nth-child(1) path,
+  .print-pie-tipos svg .recharts-pie .recharts-pie-sector:nth-child(1) path {
+    fill: #8b5cf6 !important; /* Empresarial - Roxo */
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  .print-pie-tipos svg .recharts-pie-sector:nth-child(2) path,
+  .print-pie-tipos svg .recharts-pie .recharts-pie-sector:nth-child(2) path {
+    fill: #f97316 !important; /* Individual - Laranja */
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  /* Forçar cores específicas para gráfico Distribuição de Vendas na impressão */
+  .print-pie-distribuicao svg .recharts-pie-sector:nth-child(1) path,
+  .print-pie-distribuicao
+    svg
+    .recharts-pie
+    .recharts-pie-sector:nth-child(1)
+    path {
+    fill: #3b82f6 !important; /* Renovação - Azul */
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  .print-pie-distribuicao svg .recharts-pie-sector:nth-child(2) path,
+  .print-pie-distribuicao
+    svg
+    .recharts-pie
+    .recharts-pie-sector:nth-child(2)
+    path {
+    fill: #10b981 !important; /* Novo - Verde */
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  /* Forçar cores específicas para gráfico Convênios Vencidos vs Renovados na impressão */
+  .print-pie-vencidos svg .recharts-pie-sector:nth-child(1) path,
+  .print-pie-vencidos svg .recharts-pie .recharts-pie-sector:nth-child(1) path {
+    fill: #16a34a !important; /* Renovados - Verde (primeiro no array) */
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  .print-pie-vencidos svg .recharts-pie-sector:nth-child(2) path,
+  .print-pie-vencidos svg .recharts-pie .recharts-pie-sector:nth-child(2) path {
+    fill: #dc2626 !important; /* Vencidos - Vermelho (segundo no array) */
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
   }
 }

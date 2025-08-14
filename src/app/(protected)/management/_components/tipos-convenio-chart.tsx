@@ -158,8 +158,12 @@ const TiposConvenioChart = ({
           {chartData.map((entry, index) => (
             <div key={entry.name} className="flex items-center gap-2">
               <div
-                className="h-3 w-3 rounded-full"
-                style={{ backgroundColor: COLORS[index] }}
+                className={`h-3 w-3 rounded-full legend-tipos-${index}`}
+                style={{
+                  backgroundColor: COLORS[index],
+                  WebkitPrintColorAdjust: "exact",
+                  colorAdjust: "exact",
+                }}
               />
               <span className="text-sm text-gray-600">
                 {entry.name}: {entry.value} ({entry.percentage}%)

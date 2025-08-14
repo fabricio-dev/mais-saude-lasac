@@ -447,7 +447,9 @@ const RelatorioVendedores = ({
         </div>
 
         {/* Layout para impressão - Tabela A4 */}
-        <div className="print-table-layout hidden print:table">
+        <div
+          className={`print-table-layout hidden print:table ${selectedVendedor !== "all" ? "single-page" : ""}`}
+        >
           {/* Linha 1: Cabeçalho */}
           <div className="print-header-row">
             <div className="print-header-cell">
@@ -494,7 +496,9 @@ const RelatorioVendedores = ({
           </div>
 
           {/* Linha 3: Gráficos de Pizza */}
-          <div className="print-charts-pizza-row">
+          <div
+            className={`print-charts-pizza-row ${selectedVendedor !== "all" ? "single-page" : "with-table"}`}
+          >
             <div className="print-charts-pizza-cell">
               <div className="print-pizza-container">
                 <div className="print-pizza-item">
@@ -517,7 +521,13 @@ const RelatorioVendedores = ({
           {selectedVendedor === "all" && (
             <div className="print-table-row">
               <div className="print-table-cell">
-                <h3 className="print-table-title">Detalhamento por Vendedor</h3>
+                <div className="print-table-page-header">
+                  <h2>Detalhamento por Vendedor</h2>
+                  <p>
+                    {selectedClinicName} | {selectedVendedorName} |{" "}
+                    {reportPeriod || "Não especificado"}
+                  </p>
+                </div>
                 <table className="print-table">
                   <thead>
                     <tr>
@@ -532,10 +542,18 @@ const RelatorioVendedores = ({
                     {data.rankingVendedores.map((vendedor) => (
                       <tr key={vendedor.nome}>
                         <td>{vendedor.nome}</td>
-                        <td>{vendedor.totalConvenios}</td>
-                        <td>{vendedor.conveniosEmpresariais}</td>
-                        <td>{vendedor.renovacoes}</td>
-                        <td>{vendedor.novosConvenios}</td>
+                        <td>
+                          {vendedor.totalConvenios.toLocaleString("pt-BR")}
+                        </td>
+                        <td>
+                          {vendedor.conveniosEmpresariais.toLocaleString(
+                            "pt-BR",
+                          )}
+                        </td>
+                        <td>{vendedor.renovacoes.toLocaleString("pt-BR")}</td>
+                        <td>
+                          {vendedor.novosConvenios.toLocaleString("pt-BR")}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
