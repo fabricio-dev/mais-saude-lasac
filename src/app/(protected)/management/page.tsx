@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { PageContainer, PageContent } from "@/components/ui/page-container";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getManagement } from "@/data/get-management";
+import { getVendedores } from "@/data/get-vendedores";
 import { auth } from "@/lib/auth";
 
 import RelatorioUnidades from "./_components/relatorio-unidades";
@@ -15,6 +16,8 @@ interface ManagementPageProps {
     from: string;
     to: string;
     clinicId?: string;
+    vendedorId?: string;
+    tab?: string;
   }>;
 }
 
@@ -38,7 +41,7 @@ const ManagementPage = async ({ searchParams }: ManagementPageProps) => {
     redirect("/clinics");
   }
   const params = await searchParams;
-  const { from, to, clinicId } = params;
+  const { from, to, clinicId, vendedorId, tab } = params;
 
   if (!from || !to) {
     redirect(
@@ -46,11 +49,20 @@ const ManagementPage = async ({ searchParams }: ManagementPageProps) => {
     );
   }
 
-  // Buscar dados de management
+  // Buscar dados de management (unidades)
   const managementData = await getManagement({
     from,
     to,
     clinicId: clinicId || "all",
+    session,
+  });
+
+  // Buscar dados de vendedores - usar a clínica do usuário se não especificada
+  const vendedoresData = await getVendedores({
+    from,
+    to,
+    clinicId: clinicId || session.user.clinic.id,
+    vendedorId: vendedorId || "all",
     session,
   });
 
@@ -59,7 +71,7 @@ const ManagementPage = async ({ searchParams }: ManagementPageProps) => {
       <PageContent>
         <div className="flex w-full flex-col gap-6">
           <div className="flex w-full flex-col gap-6">
-            <Tabs defaultValue="unidades" className="w-full">
+            <Tabs defaultValue={tab || "unidades"} className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="unidades">
                   Relatório de Unidades
@@ -75,7 +87,10 @@ const ManagementPage = async ({ searchParams }: ManagementPageProps) => {
                 />
               </TabsContent>
               <TabsContent value="vendedores" className="mt-6 w-full">
-                <RelatorioVendedores />
+                <RelatorioVendedores
+                  searchParams={params}
+                  initialData={vendedoresData}
+                />
               </TabsContent>
             </Tabs>
           </div>

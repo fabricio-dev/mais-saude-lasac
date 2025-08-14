@@ -194,6 +194,42 @@
     fill: #06b6d4 !important; /* Renovações - Azul */
   }
 
+  /* CSS para gráficos de vendedores */
+  .print-pie-distribuicao .pie-sector-0,
+  .print-pie-distribuicao .pie-sector-0 path {
+    fill: #3b82f6 !important; /* Top 1 - Azul */
+  }
+
+  .print-pie-distribuicao .pie-sector-1,
+  .print-pie-distribuicao .pie-sector-1 path {
+    fill: #10b981 !important; /* Top 2 - Verde */
+  }
+
+  .print-pie-distribuicao .pie-sector-2,
+  .print-pie-distribuicao .pie-sector-2 path {
+    fill: #f59e0b !important; /* Top 3 - Amarelo */
+  }
+
+  .print-pie-distribuicao .pie-sector-3,
+  .print-pie-distribuicao .pie-sector-3 path {
+    fill: #6b7280 !important; /* Outros - Cinza */
+  }
+
+  .print-pie-tipos .pie-sector-0,
+  .print-pie-tipos .pie-sector-0 path {
+    fill: #8b5cf6 !important; /* Empresarial - Roxo */
+  }
+
+  .print-pie-tipos .pie-sector-1,
+  .print-pie-tipos .pie-sector-1 path {
+    fill: #06b6d4 !important; /* Familiar - Azul */
+  }
+
+  .print-pie-tipos .pie-sector-2,
+  .print-pie-tipos .pie-sector-2 path {
+    fill: #f97316 !important; /* Individual - Laranja */
+  }
+
   /* Cards dos gráficos */
   .print-table-layout .card {
     height: 100% !important;
@@ -313,6 +349,46 @@
     position: static !important;
   }
 
+  /* Forçar renderização de todos os elementos dos gráficos */
+  .print-table-layout .recharts-bar,
+  .print-table-layout .recharts-bar rect,
+  .print-table-layout .recharts-pie,
+  .print-table-layout .recharts-pie-sector,
+  .print-table-layout .recharts-pie-sector path,
+  .print-table-layout .recharts-cartesian-axis,
+  .print-table-layout .recharts-cartesian-axis-line,
+  .print-table-layout .recharts-cartesian-axis-tick,
+  .print-table-layout .recharts-cartesian-axis-tick-line,
+  .print-table-layout .recharts-cartesian-axis-tick-value,
+  .print-table-layout .recharts-cartesian-grid,
+  .print-table-layout .recharts-cartesian-grid-horizontal,
+  .print-table-layout .recharts-cartesian-grid-vertical {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  /* Forçar cores específicas para barras */
+  .print-table-layout .recharts-bar rect {
+    fill: #3b82f6 !important;
+    stroke: none !important;
+  }
+
+  /* Forçar cores específicas para linhas de grade */
+  .print-table-layout .recharts-cartesian-grid line {
+    stroke: #e5e7eb !important;
+    stroke-dasharray: 3 3 !important;
+    opacity: 0.3 !important;
+  }
+
+  /* Forçar cores para texto dos eixos */
+  .print-table-layout .recharts-cartesian-axis-tick-value {
+    fill: #374151 !important;
+    font-size: 10px !important;
+  }
+
   /* Estilo para cabeçalho */
   .print-header {
     text-align: center;
@@ -356,5 +432,54 @@
   .print-stat-value {
     font-weight: 700;
     color: #111827;
+  }
+
+  /* Estilos para tabela de vendedores na impressão */
+  .print-table-row {
+    display: table-row !important;
+    height: auto !important;
+  }
+
+  .print-table-cell {
+    display: table-cell !important;
+    vertical-align: top !important;
+    padding: 1rem !important;
+  }
+
+  .print-table-title {
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    margin: 0 0 0.5rem 0 !important;
+    text-align: center !important;
+  }
+
+  .print-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    font-size: 10px !important;
+    margin: 0 !important;
+  }
+
+  .print-table th,
+  .print-table td {
+    border: 1px solid #e5e7eb !important;
+    padding: 0.25rem 0.5rem !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+  }
+
+  .print-table th {
+    background-color: #f9fafb !important;
+    font-weight: 600 !important;
+    font-size: 9px !important;
+  }
+
+  .print-table th:first-child,
+  .print-table td:first-child {
+    text-align: left !important;
+  }
+
+  .print-table tbody tr:nth-child(even) {
+    background-color: #f9fafb !important;
   }
 }

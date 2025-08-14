@@ -15,19 +15,19 @@ interface Clinic {
   name: string;
 }
 
-interface SelectClinicProps {
+interface SelectClinicVendedoresProps {
   value?: string;
   onValueChange?: (value: string) => void;
   placeholder?: string;
   onFirstClinicLoaded?: (clinicId: string) => void;
 }
 
-export default function SelectClinic({
+export default function SelectClinicVendedores({
   value,
   onValueChange,
   placeholder = "Selecione uma unidade",
   onFirstClinicLoaded,
-}: SelectClinicProps) {
+}: SelectClinicVendedoresProps) {
   const [clinics, setClinics] = useState<Clinic[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -48,8 +48,10 @@ export default function SelectClinic({
 
             if (salgueiroClinic) {
               onFirstClinicLoaded(salgueiroClinic.id);
+            } else {
+              // Se não encontrou Salgueiro, seleciona a primeira
+              onFirstClinicLoaded(clinicsData[0].id);
             }
-            // Para o relatório de unidades, se não encontrou Salgueiro, não seleciona nada (mantém "all")
           }
         }
       } catch (error) {
@@ -71,7 +73,6 @@ export default function SelectClinic({
           />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">Todas as unidades</SelectItem>
           {clinics.map((clinic) => (
             <SelectItem key={clinic.id} value={clinic.id}>
               {clinic.name}

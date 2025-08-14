@@ -110,6 +110,13 @@ const RelatorioUnidades = ({
     }
   };
 
+  // Função para lidar com o carregamento da primeira clínica (Salgueiro como padrão)
+  const handleFirstClinicLoaded = (clinicId: string) => {
+    if (selectedClinic === "all") {
+      handleClinicChange(clinicId);
+    }
+  };
+
   // Função para lidar com mudança de clínica
   const handleClinicChange = (clinicId: string) => {
     setSelectedClinic(clinicId);
@@ -200,6 +207,7 @@ const RelatorioUnidades = ({
               value={selectedClinic}
               onValueChange={handleClinicChange}
               placeholder="Selecione uma unidade"
+              onFirstClinicLoaded={handleFirstClinicLoaded}
             />
           </div>
           <div className="w-full sm:w-auto">
