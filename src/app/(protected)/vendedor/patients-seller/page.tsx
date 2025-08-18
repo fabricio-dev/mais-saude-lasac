@@ -16,6 +16,7 @@ import { db } from "@/db";
 import { patientsTable, sellersTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 
+import GenerateLinkButton from "../../_components/generate-link-button";
 import AddPatientButton from "./_components/add-patient-button";
 import ListExpiredButton from "./_components/list-expired-button";
 import PatientsTable from "./_components/patients-table";
@@ -111,6 +112,7 @@ const PatientsSellerPage = async ({
         </PageHeaderContent>
         <PageActions>
           <div className="flex gap-2">
+            <GenerateLinkButton sellerId={seller.id} sellerName={seller.name} />
             <ListExpiredButton />
             <AddPatientButton
               sellerId={seller.id}

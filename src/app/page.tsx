@@ -8,7 +8,9 @@ import {
   Instagram,
   Linkedin,
   Search,
+  UserPlus,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { z } from "zod";
@@ -315,16 +317,27 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-100 to-purple-200">
-      {/* Header com botão Entrar */}
+      {/* Header com botões */}
       <header className="absolute top-0 right-0 p-6">
-        <Link href="/authentication">
-          <Button
-            variant="outline"
-            className="bg-white/80 backdrop-blur-sm hover:bg-white/90"
-          >
-            Entrar
-          </Button>
-        </Link>
+        <div className="flex gap-3">
+          <Link href="/convenio">
+            <Button
+              variant="outline"
+              className="bg-emerald-600/90 text-white backdrop-blur-sm hover:bg-emerald-700/90"
+            >
+              <UserPlus className="mr-2 h-4 w-4" />
+              Seja um Conveniado
+            </Button>
+          </Link>
+          <Link href="/authentication">
+            <Button
+              variant="outline"
+              className="bg-white/80 backdrop-blur-sm hover:bg-white/90"
+            >
+              Entrar
+            </Button>
+          </Link>
+        </div>
       </header>
 
       {/* Seção principal */}
@@ -337,9 +350,14 @@ export default function Home() {
             className="mb-8 text-center"
           >
             <div className="mb-4 flex justify-center">
-              {/* Logo placeholder - você pode substituir por sua imagem */}
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-indigo-600">
-                <Search className="h-6 w-6" />
+              <div className="flex h-32 w-48 items-center justify-center rounded-lg">
+                <Image
+                  src="/logo03.svg"
+                  alt="Mais Saúde Lasac Logo"
+                  width={200}
+                  height={150}
+                  className="h-full w-full rounded-lg object-contain"
+                />
               </div>
             </div>
             <h1 className="mb-2 text-3xl font-bold text-white">

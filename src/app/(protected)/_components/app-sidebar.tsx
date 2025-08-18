@@ -149,12 +149,12 @@ export function AppSidebar() {
 
   return (
     <Sidebar>
-      <SidebarHeader className="border-b p-6">
+      <SidebarHeader className="border-b p-3">
         <Image
           src="/logo.svg"
           alt="Mais Saude Lasac Logo"
-          width={100}
-          height={100}
+          width={200}
+          height={150}
           className="h-full w-full"
         />
       </SidebarHeader>
