@@ -20,6 +20,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+import { PaymentInfoDialog } from "./convenio/_components/payment-info-dialog";
+
 // Interface para os dados do paciente retornados do banco
 interface PacienteDb {
   id: string;
@@ -137,6 +139,7 @@ export default function Home() {
   const [convenios, setConvenios] = useState<Convenio[]>([]);
   const [semResultados, setSemResultados] = useState(false);
   const [consentimento, setConsentimento] = useState(false);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [errors, setErrors] = useState<
     Partial<Record<keyof ConsultaConvenioForm, string>>
   >({});
@@ -329,6 +332,13 @@ export default function Home() {
               Seja um Conveniado
             </Button>
           </Link>
+          <Button
+            variant="outline"
+            className="bg-blue-600/90 text-white backdrop-blur-sm hover:bg-blue-700/90"
+            onClick={() => setShowPaymentDialog(true)}
+          >
+            💳 Informações PIX
+          </Button>
           <Link href="/authentication">
             <Button
               variant="outline"
@@ -449,65 +459,120 @@ export default function Home() {
                     <h2 className="mb-4 text-xl font-semibold text-gray-800">
                       Convênios encontrados
                     </h2>
-                    <div className="space-y-4">
+                    <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
                       {convenios.map((conv, i) => (
                         <motion.div
                           key={i}
                           initial={{ opacity: 0, y: 15 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.4, delay: i * 0.1 }}
-                          className="rounded-lg border border-gray-200 bg-gray-50 p-5 transition hover:bg-gray-100"
+                          className="group relative mx-auto aspect-[1.586/1] w-full max-w-lg cursor-pointer"
+                          style={{ perspective: "1000px" }}
                         >
-                          <div className="flex flex-col gap-4 md:flex-row md:items-center">
-                            <div className="flex-shrink-0">
-                              <div className="flex h-15 w-15 items-center justify-center rounded-lg bg-indigo-100">
-                                <FileText className="h-8 w-8 text-indigo-600" />
+                          <div
+                            className="relative h-full w-full transition-transform duration-700 group-hover:[transform:rotateY(180deg)]"
+                            style={{ transformStyle: "preserve-3d" }}
+                          >
+                            {/* Face frontal - Logo */}
+                            <div
+                              className="absolute inset-0 rounded-xl shadow-lg"
+                              style={{
+                                backfaceVisibility: "hidden",
+                                backgroundImage: `url('/logo03.svg')`,
+                                backgroundPosition: "center",
+                                backgroundRepeat: "no-repeat",
+                                backgroundSize: "cover",
+                                backgroundColor: "#f8fafc",
+                              }}
+                            >
+                              {/* Overlay para controlar a transparência do logo */}
+                              <div className="absolute inset-0 rounded-xl border border-gray-200 bg-white/90"></div>
+
+                              <div className="relative z-10 flex h-full flex-col justify-between p-2">
+                                <div className="text-center">
+                                  <div className="inline-block rounded-lg px-4 py-2">
+                                    <h3 className="pt-4 text-xl font-bold text-gray-800">
+                                      {conv.nome}
+                                    </h3>
+                                  </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                  <span
+                                    className={`block rounded px-3 py-2 text-center text-sm font-medium ${getStatusClassName(conv.validadeOriginal)}`}
+                                  >
+                                    <p>
+                                      Status:{" "}
+                                      {getStatusConvenio(conv.validadeOriginal)}
+                                    </p>
+
+                                    <p className="text-sm font-medium text-gray-600">
+                                      Vencimento: {conv.validade}
+                                    </p>
+                                  </span>
+
+                                  <p className="mt-3 rounded-lg px-4 py-2 text-center text-sm font-bold text-gray-600">
+                                    Passe o mouse para ver mais detalhes
+                                  </p>
+                                </div>
                               </div>
                             </div>
-                            <div className="flex-grow">
-                              <h3 className="text-lg font-semibold text-gray-800">
-                                {conv.nome}
-                              </h3>
-                              <p className="mb-2 text-sm text-gray-600">
-                                Tipo: {conv.tipo}
-                              </p>
-                              <p className="mb-1 text-sm text-gray-600">
-                                {conv.tipo === "Empresarial"
-                                  ? "Empresa: " + conv.empresa
-                                  : ""}
-                              </p>
 
-                              {conv.dependentes &&
-                                conv.dependentes.length > 0 && (
-                                  <div className="mb-3">
-                                    <p className="mb-2 text-sm font-medium text-gray-700">
-                                      Dependentes:
+                            {/* Face traseira - Informações */}
+                            <div
+                              className="absolute inset-0 rounded-xl border border-gray-200 bg-white p-3 pl-8 shadow-lg"
+                              style={{
+                                backfaceVisibility: "hidden",
+                                transform: "rotateY(180deg)",
+                              }}
+                            >
+                              <div className="flex h-full flex-col justify-between">
+                                <div>
+                                  <h3 className="mb-2 text-lg font-semibold text-gray-800">
+                                    {conv.nome}
+                                  </h3>
+
+                                  <div className="mb-2 space-y-2">
+                                    <p className="text-sm text-gray-600">
+                                      <span className="font-medium">Tipo:</span>{" "}
+                                      {conv.tipo}
                                     </p>
-                                    <div className="space-y-1">
-                                      {conv.dependentes.map(
-                                        (dependente, idx) => (
-                                          <div
-                                            key={idx}
-                                            className="flex items-center text-sm text-gray-600"
-                                          >
-                                            <span className="mr-2">•</span>
-                                            <span>{dependente}</span>
-                                          </div>
-                                        ),
+
+                                    {conv.tipo === "Empresarial" &&
+                                      conv.empresa && (
+                                        <p className="text-sm text-gray-600">
+                                          <span className="font-medium">
+                                            Empresa:
+                                          </span>{" "}
+                                          {conv.empresa}
+                                        </p>
                                       )}
-                                    </div>
                                   </div>
-                                )}
-                              <div className="flex flex-wrap gap-2 text-sm">
-                                <span
-                                  className={`rounded px-2 py-1 ${getStatusClassName(conv.validadeOriginal)}`}
-                                >
-                                  Status:{" "}
-                                  {getStatusConvenio(conv.validadeOriginal)}
-                                </span>
-                                <span className="rounded bg-blue-100 px-2 py-1 text-blue-800">
-                                  Vencimento: {conv.validade}
-                                </span>
+
+                                  {conv.dependentes &&
+                                    conv.dependentes.length > 0 && (
+                                      <div className="mb-2 gap-2">
+                                        <p className="text-sm font-medium text-gray-700">
+                                          Dependentes:
+                                        </p>
+                                        <div>
+                                          {conv.dependentes.map(
+                                            (dependente, idx) => (
+                                              <div
+                                                key={idx}
+                                                className="flex items-center text-lg text-gray-600"
+                                              >
+                                                <span className="mr-1">•</span>
+                                                <span className="truncate">
+                                                  {dependente}
+                                                </span>
+                                              </div>
+                                            ),
+                                          )}
+                                        </div>
+                                      </div>
+                                    )}
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -671,6 +736,12 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* Dialog de Informações de Pagamento */}
+      <PaymentInfoDialog
+        open={showPaymentDialog}
+        onOpenChange={setShowPaymentDialog}
+      />
     </div>
   );
 }
