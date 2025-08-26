@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Copy, CreditCard, Loader2, Phone } from "lucide-react";
+import { Copy, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useAction } from "next-safe-action/hooks";
@@ -32,6 +32,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
+import { PaymentInfoDialog } from "../_components/payment-info-dialog";
 
 // Função para verificar CPF duplicado
 const checkCPFExists = async (cpf: string): Promise<boolean> => {
@@ -127,6 +129,8 @@ interface VendedorInfo {
   pixKeyType: string;
 }
 
+const pixEmpresa = "87 999252333";
+
 export default function ConvenioVendedorPage() {
   const router = useRouter();
   const params = useParams();
@@ -134,6 +138,7 @@ export default function ConvenioVendedorPage() {
   const [checkingCPF, setCheckingCPF] = useState(false);
   const [vendedorInfo, setVendedorInfo] = useState<VendedorInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
 
   const vendedorId = params.vendedorId as string;
   const clinicId =
@@ -203,13 +208,13 @@ export default function ConvenioVendedorPage() {
   const createPatientAction = useAction(createPatient, {
     onSuccess: () => {
       toast.success(
-        `Solicitação de convênio enviada com sucesso! ${vendedorInfo?.name} entrará em contato em breve.`,
+        `Solicitação de convênio enviada com sucesso! Nossa equipe entrará em contato em breve.`,
       );
-      form.reset();
-      // Redirecionar para página inicial após 3 segundos
+      setShowPaymentDialog(true);
+      // Reset do form após um pequeno delay para evitar conflitos
       setTimeout(() => {
-        router.push("/");
-      }, 3000);
+        form.reset();
+      }, 100);
     },
     onError: (error) => {
       toast.error(error.error.serverError || "Erro ao enviar solicitação");
@@ -226,17 +231,17 @@ export default function ConvenioVendedorPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-emerald-50 via-green-100 to-teal-200">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-r from-indigo-600 to-emerald-500">
         <div className="text-center">
-          <Loader2 className="mx-auto h-8 w-8 animate-spin text-emerald-600" />
-          <p className="mt-2 text-emerald-700">Carregando...</p>
+          <Loader2 className="mx-auto h-8 w-8 animate-spin text-white" />
+          <p className="mt-2 text-white">Carregando...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-100 to-teal-200">
+    <div className="min-h-screen bg-gradient-to-r from-indigo-600 to-emerald-500">
       {/* Header */}
       <header className="bg-white/80 shadow-sm backdrop-blur-sm">
         <div className="mx-auto max-w-7xl px-4 py-4">
@@ -262,64 +267,65 @@ export default function ConvenioVendedorPage() {
       <PageContainer>
         <div className="mx-auto max-w-4xl py-8">
           <div className="mb-8 text-center">
-            <h1 className="mb-2 text-3xl font-bold text-emerald-900">
+            <h1 className="mb-2 text-3xl font-bold text-white">
               Seja um Conveniado
             </h1>
             {vendedorInfo && (
-              <div className="mb-4 rounded-lg bg-emerald-100 p-4">
-                <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                  <p className="text-emerald-800">
-                    <span className="font-semibold">Vendedor:</span>{" "}
-                    {vendedorInfo.name}
-                  </p>
-                  <p className="text-emerald-700">
-                    <span className="font-semibold">Unidade:</span>{" "}
-                    {vendedorInfo.clinicName}
-                  </p>
-                  <p className="flex items-center text-emerald-700">
-                    <Phone className="mr-2 h-4 w-4" />
-                    <span className="font-semibold">WhatsApp:</span>{" "}
+              <div className="mb-4 rounded-lg bg-white p-6 shadow-sm">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div className="flex items-center justify-center text-emerald-800">
+                    <span className="min-w-[80px] font-semibold">
+                      Vendedor:
+                    </span>
+                    <span className="ml-2">{vendedorInfo.name}</span>
+                  </div>
+
+                  <div className="flex items-center justify-center text-emerald-700">
+                    <span className="min-w-[80px] font-semibold">Unidade:</span>
+                    <span className="ml-2">{vendedorInfo.clinicName}</span>
+                  </div>
+
+                  <div className="flex items-center justify-center text-emerald-700">
+                    <span className="min-w-[80px] font-semibold">
+                      WhatsApp:
+                    </span>
                     <a
                       href={`https://wa.me/55${vendedorInfo.phoneNumber.replace(/\D/g, "")}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="ml-1 hover:underline"
+                      className="ml-2 text-emerald-600 transition-colors hover:text-emerald-800 hover:underline"
                     >
                       {vendedorInfo.phoneNumber}
                     </a>
-                  </p>
-                  <div className="flex items-center text-emerald-700">
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    <span className="font-semibold">
-                      PIX ({vendedorInfo.pixKeyType}):
-                    </span>{" "}
-                    <span className="ml-1 font-mono text-sm">
-                      {vendedorInfo.pixKey}
+                  </div>
+
+                  <div className="flex items-center justify-center text-emerald-700">
+                    <span className="min-w-[80px] font-semibold">PIX:</span>
+                    <span className="rounded bg-gray-100 px-2 py-1 font-mono text-sm">
+                      {pixEmpresa}
                     </span>
                     <button
                       onClick={async () => {
                         try {
-                          await navigator.clipboard.writeText(
-                            vendedorInfo.pixKey,
-                          );
+                          await navigator.clipboard.writeText(pixEmpresa);
                           toast.success("Chave PIX copiada!");
                         } catch {
                           toast.error("Erro ao copiar chave PIX");
                         }
                       }}
-                      className="ml-2 rounded p-1 hover:bg-emerald-200"
+                      className="ml-2 rounded p-1.5 text-emerald-600 transition-colors hover:bg-emerald-100 hover:text-emerald-800"
                       title="Copiar chave PIX"
                     >
-                      <Copy className="h-3 w-3" />
+                      <Copy className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
               </div>
             )}
-            <p className="text-emerald-700">
+            <p className="text-white">
               Preencha seus dados para solicitar seu convênio. Ao finalizar seu
-              cadastro, faca o pagamento atraves do PIX e aguarde e envie o
-              comprovante para o vendedor, no numero do whatsapp.
+              cadastro, faca o pagamento atraves do PIX e envie o comprovante
+              para o vendedor, no numero do whatsapp.
             </p>
           </div>
 
@@ -803,17 +809,27 @@ export default function ConvenioVendedorPage() {
                     />
                   </div>
 
-                  {/* Botão de Envio */}
-                  <div className="flex justify-center pt-6">
+                  {/* Botões de Envio */}
+                  <div className="flex flex-col space-y-3 pt-6 sm:flex-row sm:justify-center sm:space-y-0 sm:space-x-4">
                     <Button
                       type="submit"
                       disabled={createPatientAction.isExecuting}
-                      className="w-full max-w-md bg-emerald-600 hover:bg-emerald-700"
+                      className="w-full bg-emerald-600 hover:bg-emerald-700 sm:max-w-md"
                       size="lg"
                     >
                       {createPatientAction.isExecuting
                         ? "Enviando..."
                         : "Solicitar Convênio"}
+                    </Button>
+
+                    <Button
+                      type="button"
+                      onClick={() => setShowPaymentDialog(true)}
+                      variant="outline"
+                      className="w-full text-black hover:bg-gray-200 sm:w-auto"
+                      size="lg"
+                    >
+                      💳 Informações de Pagamento
                     </Button>
                   </div>
                 </form>
@@ -822,6 +838,12 @@ export default function ConvenioVendedorPage() {
           </Card>
         </div>
       </PageContainer>
+
+      {/* Dialog de Informações de Pagamento */}
+      <PaymentInfoDialog
+        open={showPaymentDialog}
+        onOpenChange={setShowPaymentDialog}
+      />
     </div>
   );
 }

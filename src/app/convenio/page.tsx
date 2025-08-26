@@ -12,7 +12,7 @@ import { ConvenioForm } from "./_components/convenio-form";
 
 export default function ConvenioPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-100 to-teal-200">
+    <div className="min-h-screen bg-gradient-to-r from-indigo-600 to-emerald-500">
       {/* Header */}
       <header className="bg-white/80 shadow-sm backdrop-blur-sm">
         <div className="mx-auto max-w-7xl px-4 py-4">

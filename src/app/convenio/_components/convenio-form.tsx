@@ -2,9 +2,9 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useAction } from "next-safe-action/hooks";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { PatternFormat } from "react-number-format";
 import { toast } from "sonner";
@@ -30,6 +30,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
+import { PaymentInfoDialog } from "./payment-info-dialog";
 
 // Função para verificar CPF duplicado
 const checkCPFExists = async (cpf: string): Promise<boolean> => {
@@ -85,6 +87,18 @@ const isValidCPF = (cpf: string): boolean => {
   return digit2 === parseInt(cleanCPF.charAt(10));
 };
 
+// Interfaces para clínicas e vendedores
+interface Clinic {
+  id: string;
+  name: string;
+}
+
+interface Seller {
+  id: string;
+  name: string;
+  clinicId: string;
+}
+
 const ufs = [
   "PE",
   "CE",
@@ -116,15 +130,17 @@ const ufs = [
 ];
 
 export function ConvenioForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [checkingCPF, setCheckingCPF] = useState(false);
+  const [clinics, setClinics] = useState<Clinic[]>([]);
+  const [sellers, setSellers] = useState<Seller[]>([]);
+  const [loadingClinics, setLoadingClinics] = useState(true);
+  const [loadingSellers, setLoadingSellers] = useState(false);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
 
   // IDs padrão ou da URL
-  const clinicId =
-    searchParams.get("clinicId") || "e95a2da4-96c0-4277-b4c3-bcf8f2c5414a";
-  const sellerId =
-    searchParams.get("sellerId") || "4c6d6dc0-e3a1-4281-abce-31cd51fdb787";
+  const defaultClinicId = searchParams.get("clinicId") || "";
+  const defaultSellerId = searchParams.get("sellerId") || "";
 
   const form = useForm<z.infer<typeof createPatientSchema>>({
     resolver: zodResolver(createPatientSchema),
@@ -141,8 +157,8 @@ export function ConvenioForm() {
       cardType: "personal",
       Enterprise: "",
       numberCards: "1",
-      clinicId: clinicId,
-      sellerId: sellerId,
+      clinicId: defaultClinicId,
+      sellerId: defaultSellerId,
       observation: "",
       dependents1: "",
       dependents2: "",
@@ -155,35 +171,103 @@ export function ConvenioForm() {
 
   const createPatientAction = useAction(createPatient, {
     onSuccess: () => {
-      toast.success(
-        "Solicitação de convênio enviada com sucesso! Entraremos em contato em breve.",
-      );
-      form.reset();
-      // Redirecionar para página inicial após 2 segundos
+      console.log("Sucesso! Mostrando dialog...");
+      setShowPaymentDialog(true);
+      toast.success("Solicitação de convênio enviada com sucesso!");
+      // Reset do form após um pequeno delay para evitar conflitos
       setTimeout(() => {
-        router.push("/");
-      }, 2000);
+        form.reset();
+      }, 100);
     },
     onError: (error) => {
+      console.log("Erro:", error);
       toast.error(error.error.serverError || "Erro ao enviar solicitação");
     },
   });
 
   const onSubmit = (values: z.infer<typeof createPatientSchema>) => {
-    createPatientAction.execute({
-      ...values,
-      clinicId: clinicId,
-      sellerId: sellerId,
-    });
+    createPatientAction.execute(values);
   };
+
+  // Carregar clínicas do usuário admin
+  useEffect(() => {
+    const fetchClinics = async () => {
+      try {
+        setLoadingClinics(true);
+        const response = await fetch("/api/clinics");
+        if (response.ok) {
+          const data = await response.json();
+          setClinics(data);
+
+          // Se há um clinicId padrão da URL, definir no formulário
+          if (
+            defaultClinicId &&
+            data.some((clinic: Clinic) => clinic.id === defaultClinicId)
+          ) {
+            form.setValue("clinicId", defaultClinicId);
+          }
+        } else {
+          toast.error("Erro ao carregar clínicas");
+        }
+      } catch (error) {
+        console.error("Erro ao carregar clínicas:", error);
+        toast.error("Erro ao carregar clínicas");
+      } finally {
+        setLoadingClinics(false);
+      }
+    };
+
+    fetchClinics();
+  }, [defaultClinicId, form]);
+
+  // Carregar vendedores quando a clínica for selecionada
+  const selectedClinicId = form.watch("clinicId");
+
+  useEffect(() => {
+    const fetchSellers = async (clinicId: string) => {
+      if (!clinicId) {
+        setSellers([]);
+        return;
+      }
+
+      try {
+        setLoadingSellers(true);
+        const response = await fetch(`/api/sellers?clinicId=${clinicId}`);
+        if (response.ok) {
+          const data = await response.json();
+          setSellers(data);
+
+          // Se há um sellerId padrão da URL e pertence à clínica, definir no formulário
+          if (
+            defaultSellerId &&
+            data.some((seller: Seller) => seller.id === defaultSellerId)
+          ) {
+            form.setValue("sellerId", defaultSellerId);
+          } else {
+            // Limpar sellerId se mudou de clínica
+            form.setValue("sellerId", "");
+          }
+        } else {
+          toast.error("Erro ao carregar vendedores");
+        }
+      } catch (error) {
+        console.error("Erro ao carregar vendedores:", error);
+        toast.error("Erro ao carregar vendedores");
+      } finally {
+        setLoadingSellers(false);
+      }
+    };
+
+    fetchSellers(selectedClinicId);
+  }, [selectedClinicId, defaultSellerId, form]);
 
   return (
     <div className="mx-auto max-w-4xl py-8">
       <div className="mb-8 text-center">
-        <h1 className="mb-2 text-3xl font-bold text-emerald-900">
+        <h1 className="mb-2 text-3xl font-bold text-white">
           Seja um Conveniado
         </h1>
-        <p className="text-emerald-700">
+        <p className="text-white">
           Preencha seus dados para solicitar seu convênio. Nossa equipe entrará
           em contato para finalizar o processo.
         </p>
@@ -436,6 +520,74 @@ export function ConvenioForm() {
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <FormField
                     control={form.control}
+                    name="clinicId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-emerald-950">
+                          Unidade{" "}
+                          {loadingClinics && (
+                            <Loader2 className="ml-2 inline h-4 w-4 animate-spin" />
+                          )}
+                        </FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          disabled={loadingClinics}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione a clínica" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {clinics.map((clinic) => (
+                              <SelectItem key={clinic.id} value={clinic.id}>
+                                {clinic.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="sellerId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-emerald-950">
+                          Vendedor{" "}
+                          {loadingSellers && (
+                            <Loader2 className="ml-2 inline h-4 w-4 animate-spin" />
+                          )}
+                        </FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          disabled={loadingSellers || !selectedClinicId}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o vendedor" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {sellers.map((seller) => (
+                              <SelectItem key={seller.id} value={seller.id}>
+                                {seller.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
                     name="cardType"
                     render={({ field }) => (
                       <FormItem>
@@ -649,23 +801,39 @@ export function ConvenioForm() {
                 />
               </div>
 
-              {/* Botão de Envio */}
-              <div className="flex justify-center pt-6">
+              {/* Botões de Envio */}
+              <div className="flex flex-col space-y-3 pt-6 sm:flex-row sm:justify-center sm:space-y-0 sm:space-x-4">
                 <Button
                   type="submit"
                   disabled={createPatientAction.isExecuting}
-                  className="w-full max-w-md bg-emerald-600 hover:bg-emerald-700"
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 sm:max-w-md"
                   size="lg"
                 >
                   {createPatientAction.isExecuting
                     ? "Enviando..."
                     : "Solicitar Convênio"}
                 </Button>
+
+                <Button
+                  type="button"
+                  onClick={() => setShowPaymentDialog(true)}
+                  variant="outline"
+                  className="w-full sm:w-auto"
+                  size="lg"
+                >
+                  💳 Informações de Pagamento
+                </Button>
               </div>
             </form>
           </Form>
         </CardContent>
       </Card>
+
+      {/* Dialog de Informações de Pagamento */}
+      <PaymentInfoDialog
+        open={showPaymentDialog}
+        onOpenChange={setShowPaymentDialog}
+      />
     </div>
   );
 }
