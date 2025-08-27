@@ -232,7 +232,9 @@ export function ConvenioForm() {
 
       try {
         setLoadingSellers(true);
-        const response = await fetch(`/api/sellers?clinicId=${clinicId}`);
+        const response = await fetch(
+          `/api/public/sellers?clinicId=${clinicId}`,
+        );
         if (response.ok) {
           const data = await response.json();
           setSellers(data);
@@ -248,7 +250,8 @@ export function ConvenioForm() {
             form.setValue("sellerId", "");
           }
         } else {
-          toast.error("Erro ao carregar vendedores");
+          const errorData = await response.json();
+          toast.error(errorData.error || "Erro ao carregar vendedores");
         }
       } catch (error) {
         console.error("Erro ao carregar vendedores:", error);
@@ -558,7 +561,7 @@ export function ConvenioForm() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-emerald-950">
-                          Vendedor{" "}
+                          vendedor{" "}
                           {loadingSellers && (
                             <Loader2 className="ml-2 inline h-4 w-4 animate-spin" />
                           )}

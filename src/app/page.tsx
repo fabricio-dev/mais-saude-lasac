@@ -4,9 +4,11 @@ import { motion } from "framer-motion";
 import {
   Facebook,
   FileText,
+  Hand,
   IdCard,
   Instagram,
   Linkedin,
+  Mouse,
   Search,
   UserPlus,
 } from "lucide-react";
@@ -19,8 +21,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-import { PaymentInfoDialog } from "./convenio/_components/payment-info-dialog";
 
 // Interface para os dados do paciente retornados do banco
 interface PacienteDb {
@@ -139,7 +139,8 @@ export default function Home() {
   const [convenios, setConvenios] = useState<Convenio[]>([]);
   const [semResultados, setSemResultados] = useState(false);
   const [consentimento, setConsentimento] = useState(false);
-  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+
+  const [flippedCards, setFlippedCards] = useState<Set<number>>(new Set());
   const [errors, setErrors] = useState<
     Partial<Record<keyof ConsultaConvenioForm, string>>
   >({});
@@ -318,6 +319,22 @@ export default function Home() {
     }
   };
 
+  const handleCardClick = (cardIndex: number) => {
+    console.log("Card clicked:", cardIndex);
+    setFlippedCards((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(cardIndex)) {
+        newSet.delete(cardIndex);
+        console.log("Card unflipped:", cardIndex);
+      } else {
+        newSet.add(cardIndex);
+        console.log("Card flipped:", cardIndex);
+      }
+      console.log("New flipped cards:", Array.from(newSet));
+      return newSet;
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-100 to-purple-200">
       {/* Header com botões */}
@@ -332,14 +349,8 @@ export default function Home() {
               Seja um Conveniado
             </Button>
           </Link>
-          <Button
-            variant="outline"
-            className="bg-blue-600/90 text-white backdrop-blur-sm hover:bg-blue-700/90"
-            onClick={() => setShowPaymentDialog(true)}
-          >
-            💳 Informações PIX
-          </Button>
-          <Link href="/authentication">
+
+          <Link href="/authentication" className="pr-7 pl-2">
             <Button
               variant="outline"
               className="bg-white/80 backdrop-blur-sm hover:bg-white/90"
@@ -359,7 +370,7 @@ export default function Home() {
             transition={{ duration: 0.6 }}
             className="mb-8 text-center"
           >
-            <div className="mb-4 flex justify-center">
+            <div className="mb-4 flex justify-center pt-10">
               <div className="flex h-32 w-48 items-center justify-center rounded-lg">
                 <Image
                   src="/logo03.svg"
@@ -466,18 +477,31 @@ export default function Home() {
                           initial={{ opacity: 0, y: 15 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.4, delay: i * 0.1 }}
-                          className="group relative mx-auto aspect-[1.586/1] w-full max-w-lg cursor-pointer"
+                          className="group relative mx-auto aspect-[1.586/1] w-full max-w-lg cursor-pointer transition-transform active:scale-95 md:active:scale-100"
                           style={{ perspective: "1000px" }}
+                          onClick={() => handleCardClick(i)}
                         >
                           <div
-                            className="relative h-full w-full transition-transform duration-700 group-hover:[transform:rotateY(180deg)]"
-                            style={{ transformStyle: "preserve-3d" }}
+                            className={`relative h-full w-full transition-transform duration-700 ${
+                              flippedCards.has(i)
+                                ? "[transform:rotateY(180deg)] md:[transform:rotateY(180deg)]"
+                                : "md:group-hover:[transform:rotateY(180deg)]"
+                            }`}
+                            style={{
+                              transformStyle: "preserve-3d",
+                              WebkitTransformStyle: "preserve-3d",
+                            }}
                           >
                             {/* Face frontal - Logo */}
                             <div
-                              className="absolute inset-0 rounded-xl shadow-lg"
+                              className={`absolute inset-0 rounded-xl shadow-lg ${
+                                flippedCards.has(i)
+                                  ? "hidden md:block"
+                                  : "block"
+                              }`}
                               style={{
                                 backfaceVisibility: "hidden",
+                                WebkitBackfaceVisibility: "hidden",
                                 backgroundImage: `url('/logo03.svg')`,
                                 backgroundPosition: "center",
                                 backgroundRepeat: "no-repeat",
@@ -490,29 +514,36 @@ export default function Home() {
 
                               <div className="relative z-10 flex h-full flex-col justify-between p-2">
                                 <div className="text-center">
-                                  <div className="inline-block rounded-lg px-4 py-2">
-                                    <h3 className="pt-4 text-xl font-bold text-gray-800">
+                                  <div className="inline-block rounded-lg px-2 py-1 md:px-4 md:py-2">
+                                    <h3 className="pt-2 text-lg font-bold text-gray-800 md:pt-4 md:text-xl">
                                       {conv.nome}
                                     </h3>
                                   </div>
                                 </div>
 
-                                <div className="space-y-4">
+                                <div className="space-y-2 md:space-y-4">
                                   <span
-                                    className={`block rounded px-3 py-2 text-center text-sm font-medium ${getStatusClassName(conv.validadeOriginal)}`}
+                                    className={`block rounded px-2 py-1 text-center text-xs font-medium md:px-3 md:py-2 md:text-sm ${getStatusClassName(conv.validadeOriginal)}`}
                                   >
-                                    <p>
+                                    <p className="text-xs md:text-sm">
                                       Status:{" "}
                                       {getStatusConvenio(conv.validadeOriginal)}
                                     </p>
 
-                                    <p className="text-sm font-medium text-gray-600">
+                                    <p className="text-xs font-medium text-gray-600 md:text-sm">
                                       Vencimento: {conv.validade}
                                     </p>
                                   </span>
 
-                                  <p className="mt-3 rounded-lg px-4 py-2 text-center text-sm font-bold text-gray-600">
-                                    Passe o mouse para ver mais detalhes
+                                  <p className="mt-2 rounded-lg px-2 py-1 text-center text-xs font-bold text-gray-600 md:mt-3 md:px-4 md:py-2 md:text-sm">
+                                    <span className="hidden items-center justify-center gap-1 md:flex">
+                                      <Mouse className="h-4 w-4" />
+                                      Passe o mouse para ver mais detalhes
+                                    </span>
+                                    <span className="flex items-center justify-center gap-1 md:hidden">
+                                      <Hand className="h-3 w-3" />
+                                      Toque para ver mais detalhes
+                                    </span>
                                   </p>
                                 </div>
                               </div>
@@ -520,27 +551,32 @@ export default function Home() {
 
                             {/* Face traseira - Informações */}
                             <div
-                              className="absolute inset-0 rounded-xl border border-gray-200 bg-white p-3 pl-8 shadow-lg"
+                              className={`absolute inset-0 rounded-xl border border-gray-200 bg-white p-2 pl-4 shadow-lg md:p-3 md:pl-8 ${
+                                flippedCards.has(i)
+                                  ? "block"
+                                  : "hidden md:block"
+                              }`}
                               style={{
                                 backfaceVisibility: "hidden",
+                                WebkitBackfaceVisibility: "hidden",
                                 transform: "rotateY(180deg)",
                               }}
                             >
                               <div className="flex h-full flex-col justify-between">
                                 <div>
-                                  <h3 className="mb-2 text-lg font-semibold text-gray-800">
+                                  <h3 className="mb-1 text-base font-semibold text-gray-800 md:mb-2 md:text-lg">
                                     {conv.nome}
                                   </h3>
 
-                                  <div className="mb-2 space-y-2">
-                                    <p className="text-sm text-gray-600">
+                                  <div className="mb-1 space-y-1 md:mb-2 md:space-y-2">
+                                    <p className="text-sm text-gray-600 md:text-base">
                                       <span className="font-medium">Tipo:</span>{" "}
                                       {conv.tipo}
                                     </p>
 
                                     {conv.tipo === "Empresarial" &&
                                       conv.empresa && (
-                                        <p className="text-sm text-gray-600">
+                                        <p className="text-sm text-gray-600 md:text-base">
                                           <span className="font-medium">
                                             Empresa:
                                           </span>{" "}
@@ -551,8 +587,8 @@ export default function Home() {
 
                                   {conv.dependentes &&
                                     conv.dependentes.length > 0 && (
-                                      <div className="mb-2 gap-2">
-                                        <p className="text-sm font-medium text-gray-700">
+                                      <div className="mb-1 gap-1 md:mb-2 md:gap-2">
+                                        <p className="text-sm font-medium text-gray-700 md:text-base">
                                           Dependentes:
                                         </p>
                                         <div>
@@ -560,7 +596,7 @@ export default function Home() {
                                             (dependente, idx) => (
                                               <div
                                                 key={idx}
-                                                className="flex items-center text-lg text-gray-600"
+                                                className="flex items-center text-sm text-gray-600 md:text-base"
                                               >
                                                 <span className="mr-1">•</span>
                                                 <span className="truncate">
@@ -736,12 +772,6 @@ export default function Home() {
           </div>
         </div>
       </footer>
-
-      {/* Dialog de Informações de Pagamento */}
-      <PaymentInfoDialog
-        open={showPaymentDialog}
-        onOpenChange={setShowPaymentDialog}
-      />
     </div>
   );
 }
