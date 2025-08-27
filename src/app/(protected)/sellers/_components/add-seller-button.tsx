@@ -15,9 +15,10 @@ const AddSellerButton = () => {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-emerald-600 hover:bg-emerald-900">
-          <Plus />
-          Novo Vendedor
+        <Button className="w-full bg-emerald-600 hover:bg-emerald-900 sm:w-auto">
+          <Plus className="mr-2 h-4 w-4" />
+          <span className="hidden sm:inline">Novo Vendedor</span>
+          <span className="sm:hidden">Novo</span>
         </Button>
       </DialogTrigger>
       <UpsertSellerForm isOpen={isOpen} onSuccess={() => setIsOpen(false)} />

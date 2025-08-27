@@ -5,6 +5,7 @@ import { ptBR } from "date-fns/locale";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { parseAsIsoDate, useQueryState } from "nuqs";
 import * as React from "react";
+import { useEffect, useState } from "react";
 import { DateRange } from "react-day-picker";
 
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ import { cn } from "@/lib/utils";
 export function DatePicker({
   className,
 }: React.HTMLAttributes<HTMLDivElement>) {
+  const [isMobile, setIsMobile] = useState(false);
   const [from, setFrom] = useQueryState(
     "from",
     parseAsIsoDate.withDefault(subMonths(new Date(), 1)),
@@ -27,6 +29,17 @@ export function DatePicker({
     "to",
     parseAsIsoDate.withDefault(new Date()),
   );
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+
+    checkScreenSize();
+    window.addEventListener("resize", checkScreenSize);
+
+    return () => window.removeEventListener("resize", checkScreenSize);
+  }, []);
   const handleDateSelect = (dateRange: DateRange | undefined) => {
     if (dateRange?.from) {
       setFrom(dateRange.from, {
@@ -51,28 +64,49 @@ export function DatePicker({
             id="date"
             variant={"outline"}
             className={cn(
-              "justify-start text-left font-normal",
+              "w-full justify-start text-left font-normal sm:w-auto",
               !date && "text-muted-foreground",
             )}
           >
-            <CalendarIcon />
-            {date?.from ? (
-              date.to ? (
-                <>
-                  {format(date.from, "dd LLL , yy", {
-                    locale: ptBR,
-                  })}{" "}
-                  -{" "}
-                  {format(date.to, "dd LLL, yy", {
-                    locale: ptBR,
-                  })}
-                </>
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            <span className="hidden sm:inline">
+              {date?.from ? (
+                date.to ? (
+                  <>
+                    {format(date.from, "dd LLL, yy", {
+                      locale: ptBR,
+                    })}{" "}
+                    -{" "}
+                    {format(date.to, "dd LLL, yy", {
+                      locale: ptBR,
+                    })}
+                  </>
+                ) : (
+                  format(date.from, "dd de LLL, yy")
+                )
               ) : (
-                format(date.from, "dd de LLL, yy")
-              )
-            ) : (
-              <span>Pick a date</span>
-            )}
+                <span>Selecionar período</span>
+              )}
+            </span>
+            <span className="sm:hidden">
+              {date?.from ? (
+                date.to ? (
+                  <>
+                    {format(date.from, "dd/MM", {
+                      locale: ptBR,
+                    })}{" "}
+                    -{" "}
+                    {format(date.to, "dd/MM", {
+                      locale: ptBR,
+                    })}
+                  </>
+                ) : (
+                  format(date.from, "dd/MM/yy")
+                )
+              ) : (
+                <span>Período</span>
+              )}
+            </span>
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
@@ -82,7 +116,7 @@ export function DatePicker({
             defaultMonth={date?.from}
             selected={date}
             onSelect={handleDateSelect}
-            numberOfMonths={2}
+            numberOfMonths={isMobile ? 1 : 2}
             locale={ptBR}
           />
         </PopoverContent>
