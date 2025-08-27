@@ -102,12 +102,12 @@ const PatientsSellerPage = async ({
       <PageHeader>
         <PageHeaderContent>
           <PageTitle>
-            {isShowingExpired ? "Pacientes Vencidos" : "Meus Pacientes"}
+            {isShowingExpired ? "Convenios Vencidos" : "Meus Convenios"}
           </PageTitle>
           <PageDescription>
             {isShowingExpired
-              ? "Pacientes com data de expiração vencida"
-              : "Gerencie seus pacientes"}
+              ? "Convenios com data de expiração vencida"
+              : "Gerencie seus convenios"}
           </PageDescription>
         </PageHeaderContent>
         <PageActions>

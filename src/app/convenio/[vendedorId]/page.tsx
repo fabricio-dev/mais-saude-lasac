@@ -770,7 +770,7 @@ export default function ConvenioVendedorPage() {
                         control={form.control}
                         name="dependents6"
                         render={({ field }) => (
-                          <FormItem>
+                          <FormItem hidden={true}>
                             <FormLabel className="text-emerald-950">
                               Dependente 6
                             </FormLabel>
@@ -784,30 +784,29 @@ export default function ConvenioVendedorPage() {
                           </FormItem>
                         )}
                       />
+                      <FormField
+                        control={form.control}
+                        name="observation"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-emerald-950">
+                              Observações
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Observações adicionais (opcional)"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
                   </div>
 
                   {/* Observações */}
-                  <div>
-                    <FormField
-                      control={form.control}
-                      name="observation"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-emerald-950">
-                            Observações
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="Observações adicionais (opcional)"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  {/* <div></div> */}
 
                   {/* Botões de Envio */}
                   <div className="flex flex-col space-y-3 pt-6 sm:flex-row sm:justify-center sm:space-y-0 sm:space-x-4">

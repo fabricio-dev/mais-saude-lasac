@@ -8,7 +8,7 @@ export async function consultarPacientes(termo: string) {
     // Remove formatação do CPF (se for CPF)
     const cpfLimpo = termo.replace(/\D/g, "");
 
-    // Consulta no banco usando Drizzle - busca por CPF ou nome
+    // Consulta no banco usando Drizzle - busca por CPF, nome do titular ou nome dos dependentes
     const pacientesEncontrados = await db
       .select()
       .from(patientsTable)
@@ -16,6 +16,12 @@ export async function consultarPacientes(termo: string) {
         or(
           eq(patientsTable.cpfNumber, cpfLimpo),
           ilike(patientsTable.name, `%${termo}%`),
+          ilike(patientsTable.dependents1, `%${termo}%`),
+          ilike(patientsTable.dependents2, `%${termo}%`),
+          ilike(patientsTable.dependents3, `%${termo}%`),
+          ilike(patientsTable.dependents4, `%${termo}%`),
+          ilike(patientsTable.dependents5, `%${termo}%`),
+          ilike(patientsTable.dependents6, `%${termo}%`),
         ),
       );
 

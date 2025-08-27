@@ -58,12 +58,12 @@ const consultaConvenioSchema = z.object({
           return numbers.length === 11;
         }
 
-        // Se contém letras (nome), deve ter pelo menos 2 caracteres
+        // Se contém letras (nome do titular ou dependente), deve ter pelo menos 2 caracteres
         return trimmed.length >= 2;
       },
       {
         message:
-          "Digite um CPF válido (11 dígitos) ou um nome com pelo menos 2 caracteres",
+          "Digite um CPF válido (11 dígitos) ou um nome (titular ou dependente) com pelo menos 2 caracteres",
       },
     )
     .refine(
@@ -385,7 +385,8 @@ export default function Home() {
               Consulta de Benefícios
             </h1>
             <p className="text-white/90">
-              Verifique seus convênios e benefícios utilizando seu CPF ou nome
+              Verifique seus convênios e benefícios utilizando CPF, nome do
+              titular ou nome de dependente
             </p>
           </motion.div>
 
@@ -402,14 +403,14 @@ export default function Home() {
                       htmlFor="cpf"
                       className="mb-1 block text-sm font-medium text-gray-700"
                     >
-                      CPF ou Nome
+                      CPF, Nome do Titular ou Dependente
                     </Label>
                     <div className="relative">
                       <Input
                         type="text"
                         id="cpf"
                         name="cpf"
-                        placeholder="123.456.789-09 ou João Silva"
+                        placeholder="123.456.789-09 ou Maria Silva"
                         value={cpf}
                         onChange={handleCpfChange}
                         className={`pr-10 ${errors.cpf ? "border-red-500" : ""}`}
@@ -636,7 +637,7 @@ export default function Home() {
                       Nenhum convênio encontrado
                     </h3>
                     <p className="text-gray-500">
-                      Não encontramos benefícios associados a este CPF.
+                      Não encontramos benefícios associados a este CPF ou nome.
                     </p>
                   </div>
                 )}
@@ -674,11 +675,11 @@ export default function Home() {
               <IdCard className="h-8 w-8" />
             </div>
             <h3 className="mb-2 font-semibold text-gray-800">
-              Informe seu CPF ou Nome
+              Informe seu CPF, Nome ou Nome do Dependente
             </h3>
             <p className="text-gray-600">
-              Digite seu CPF no formato correto ou seu nome completo para
-              realizar a consulta.
+              Digite seu CPF no formato correto, seu nome completo ou o nome de
+              um dependente para realizar a consulta.
             </p>
           </motion.div>
 
