@@ -707,16 +707,16 @@ const UpsertPatientForm = ({
                           disabled={loadingClinic}
                         >
                           {clinics.find((clinic) => clinic.id === field.value)
-                            ?.name || "Selecione a clínica"}
+                            ?.name || "Selecione a unidade"}
                           <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-full p-0">
                         <Command>
-                          <CommandInput placeholder="Buscar clínica..." />
+                          <CommandInput placeholder="Buscar unidade..." />
                           <CommandList>
                             <CommandEmpty>
-                              Nenhuma clínica encontrada.
+                              Nenhuma unidade encontrada.
                             </CommandEmpty>
                             <CommandGroup>
                               {clinics.map((clinic) => (
