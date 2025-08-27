@@ -14,7 +14,7 @@ export async function GET(request: Request) {
       );
     }
 
-    // Buscar vendedores da clínica especificada com nome "administrativo" (case-insensitive)
+    // Buscar vendedores da clínica especificada com nome "Cadastro-externo" (case-insensitive)
     const sellers = await db.query.sellersTable.findMany({
       where: (seller, { eq, and, ilike }) =>
         and(
