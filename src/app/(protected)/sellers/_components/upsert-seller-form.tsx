@@ -156,10 +156,10 @@ const UpsertSellerForm = ({
         <DialogTitle className="text-amber-950">
           {seller ? seller.name : "Adicionar Vendedor"}
         </DialogTitle>
-        <DialogDescription className="text-amber-800">
+        <DialogDescription className="space-y-2 text-amber-800">
           {seller
             ? "Edite as informacoes do vendedor"
-            : "Adicione um novo vendedor para gerenciar as vendas dos convenios."}
+            : "Adicione um novo vendedor."}
         </DialogDescription>
       </DialogHeader>
       <Form {...form}>
