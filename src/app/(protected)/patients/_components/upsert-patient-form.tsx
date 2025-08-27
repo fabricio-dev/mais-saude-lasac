@@ -176,7 +176,7 @@ interface UpsertPatientFormProps {
 interface Seller {
   id: string;
   name: string;
-  // mudei para o id para testar
+  clinicId: string;
 }
 interface Clinic {
   id: string;
@@ -218,6 +218,7 @@ const UpsertPatientForm = ({
   onSuccess,
 }: UpsertPatientFormProps) => {
   const [sellers, setSellers] = useState<Seller[]>([]);
+  const [allSellers, setAllSellers] = useState<Seller[]>([]);
   const [clinics, setClinics] = useState<Clinic[]>([]);
   const [checkingCPF, setCheckingCPF] = useState(false);
   const [openSeller, setOpenSeller] = useState(false);
@@ -296,7 +297,17 @@ const UpsertPatientForm = ({
         const sellersResponse = await fetch("/api/sellers");
         if (sellersResponse.ok) {
           const sellersData = await sellersResponse.json();
-          setSellers(sellersData);
+          setAllSellers(sellersData);
+
+          // Se estamos editando um paciente e ele tem uma clínica, filtrar vendedores
+          if (patient?.clinicId) {
+            const filteredSellers = sellersData.filter(
+              (seller: Seller) => seller.clinicId === patient.clinicId,
+            );
+            setSellers(filteredSellers);
+          } else {
+            setSellers([]); // Para novo paciente, começar com lista vazia
+          }
         }
         // Carregar clínicas
         const clinicsResponse = await fetch("/api/clinics");
@@ -311,6 +322,36 @@ const UpsertPatientForm = ({
 
     loadData();
   }, [isOpen, patient, form]);
+
+  // Watcher para filtrar vendedores baseado na clínica selecionada
+  const selectedClinicId = form.watch("clinicId");
+
+  useEffect(() => {
+    if (selectedClinicId && allSellers.length > 0) {
+      // Filtrar vendedores pela clínica selecionada
+      const filteredSellers = allSellers.filter(
+        (seller) => seller.clinicId === selectedClinicId,
+      );
+      setSellers(filteredSellers);
+
+      // Limpar seleção de vendedor se o vendedor atual não pertence à nova clínica
+      // Mas apenas se não estivermos editando um paciente existente ou se a clínica mudou
+      const currentSellerId = form.getValues("sellerId");
+      if (
+        currentSellerId &&
+        !filteredSellers.some((seller) => seller.id === currentSellerId) &&
+        (!patient || patient.clinicId !== selectedClinicId)
+      ) {
+        form.setValue("sellerId", "");
+      }
+    } else if (!selectedClinicId) {
+      setSellers([]);
+      // Só limpar o vendedor se não estivermos editando um paciente existente
+      if (!patient) {
+        form.setValue("sellerId", "");
+      }
+    }
+  }, [selectedClinicId, allSellers, form, patient]);
 
   const upsertPatientAction = useAction(upsertPatient, {
     onSuccess: () => {
@@ -726,8 +767,9 @@ const UpsertPatientForm = ({
                   </FormLabel>
                   <FormControl>
                     <Popover
-                      open={openSeller}
+                      open={openSeller && (!!selectedClinicId || !!patient)}
                       onOpenChange={(open) => {
+                        if (!selectedClinicId && !patient) return;
                         setOpenSeller(open);
                         if (!open) {
                           setLoadingSeller(true);
@@ -743,7 +785,9 @@ const UpsertPatientForm = ({
                           role="combobox"
                           aria-expanded={openSeller}
                           className="w-full justify-between"
-                          disabled={loadingSeller}
+                          disabled={
+                            loadingSeller || (!selectedClinicId && !patient)
+                          }
                         >
                           {sellers.find((seller) => seller.id === field.value)
                             ?.name || "Selecione o vendedor"}

@@ -166,6 +166,7 @@ export function ConvenioForm() {
       dependents4: "",
       dependents5: "",
       dependents6: "",
+      acceptTerms: false,
     },
   });
 
@@ -800,8 +801,68 @@ export function ConvenioForm() {
                 </div>
               </div>
 
-              {/* Observações */}
-              {/* <div></div> */}
+              {/* Termos e Condições */}
+              <div>
+                <h3 className="mb-4 text-lg font-semibold text-emerald-900">
+                  Termos e Condições
+                </h3>
+                <div className="space-y-4">
+                  <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+                    <p className="mb-3 text-sm text-emerald-800">
+                      Para prosseguir com sua solicitação de convênio, é
+                      necessário aceitar nossos termos de uso e política de
+                      privacidade.
+                    </p>
+                    <div className="mb-3">
+                      <a
+                        href="/contrato"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center text-sm font-medium text-emerald-700 underline hover:text-emerald-900"
+                      >
+                        📋 Visualizar Contrato e Termos de Uso
+                        <svg
+                          className="ml-1 h-3 w-3"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                          />
+                        </svg>
+                      </a>
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="acceptTerms"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-y-0 space-x-3">
+                          <FormControl>
+                            <input
+                              type="checkbox"
+                              checked={field.value}
+                              onChange={field.onChange}
+                              className="mt-0.5 h-4 w-4 rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500"
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel className="text-sm font-medium text-emerald-950">
+                              Li e aceito os termos de uso e política de
+                              privacidade
+                            </FormLabel>
+                            <FormMessage />
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+              </div>
 
               {/* Botões de Envio */}
               <div className="flex flex-col space-y-3 pt-6 sm:flex-row sm:justify-center sm:space-y-0 sm:space-x-4">
