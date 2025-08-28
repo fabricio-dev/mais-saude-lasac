@@ -103,8 +103,7 @@ export const patientsTable = pgTable("patients", {
   name: text("name").notNull(),
   birthDate: date("birth_date").notNull(),
   rgNumber: text("rg_number").notNull(),
-  cpfNumber: text("cpf_number"), // Permite null no banco, mas validação obrigatória nos formulários
-
+  cpfNumber: text("cpf_number").notNull(), // Permite vazio no banco, mas validação obrigatória nos formulários
   phoneNumber: text("phone_number").notNull(),
   address: text("address").notNull(),
   homeNumber: text("home_number").notNull(),
