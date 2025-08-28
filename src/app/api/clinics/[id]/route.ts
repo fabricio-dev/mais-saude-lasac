@@ -6,10 +6,10 @@ import { clinicsTable } from "@/db/schema";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const clinicId = params.id as string;
+    const { id: clinicId } = await params;
 
     const clinic = await db
       .select({ name: clinicsTable.name })
