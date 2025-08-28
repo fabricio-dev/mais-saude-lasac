@@ -104,6 +104,17 @@ const PatientsGestorPage = async ({
     ],
   });
 
+  // Buscar vendedores da clínica do gestor
+  const sellers = await db.query.sellersTable.findMany({
+    where: eq(sellersTable.clinicId, gestor.clinicId),
+    columns: {
+      id: true,
+      name: true,
+      email: true,
+    },
+    orderBy: (sellers, { asc }) => [asc(sellers.name)],
+  });
+
   return (
     <PageContainer>
       <PageHeader>
@@ -124,6 +135,7 @@ const PatientsGestorPage = async ({
             <AddPatientButton
               sellerId={gestor.id}
               clinicId={gestor.clinicId!}
+              sellers={sellers}
             />
           </div>
         </PageActions>
@@ -143,6 +155,7 @@ const PatientsGestorPage = async ({
                 birthDate: new Date(patient.birthDate),
               }))}
               gestorClinicId={gestor.clinicId!}
+              sellers={sellers}
             />
           </div>
         </div>

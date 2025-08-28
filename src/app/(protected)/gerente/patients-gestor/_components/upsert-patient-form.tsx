@@ -160,11 +160,13 @@ interface UpsertPatientFormProps {
   onSuccess?: () => void;
   sellerId: string;
   clinicId: string;
+  sellers: Seller[];
 }
 
 interface Seller {
   id: string;
   name: string;
+  email: string;
 }
 
 interface Clinic {
@@ -208,8 +210,8 @@ const UpsertPatientForm = ({
   onSuccess,
   sellerId,
   clinicId,
+  sellers,
 }: UpsertPatientFormProps) => {
-  const [seller, setSeller] = useState<Seller | null>(null);
   const [clinic, setClinic] = useState<Clinic | null>(null);
   const [checkingCPF, setCheckingCPF] = useState(false);
   const [loadingState, setLoadingState] = useState(false);
@@ -302,16 +304,6 @@ const UpsertPatientForm = ({
 
     const loadData = async () => {
       try {
-        // Carregar dados do vendedor específico
-        const sellersResponse = await fetch("/api/sellers");
-        if (sellersResponse.ok) {
-          const sellersData = await sellersResponse.json();
-          const currentSeller = sellersData.find(
-            (s: Seller) => s.id === sellerId,
-          );
-          setSeller(currentSeller || null);
-        }
-
         // Carregar dados da clínica específica
         const clinicsResponse = await fetch("/api/clinics");
         if (clinicsResponse.ok) {
@@ -668,12 +660,26 @@ const UpsertPatientForm = ({
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Vendedor" />
+                        <SelectValue
+                          placeholder={
+                            sellers.length > 0
+                              ? "Selecione o vendedor"
+                              : "Carregando vendedores..."
+                          }
+                        />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {seller && (
-                        <SelectItem value={seller.id}>{seller.name}</SelectItem>
+                      {sellers.length > 0 ? (
+                        sellers.map((seller) => (
+                          <SelectItem key={seller.id} value={seller.id}>
+                            {seller.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="" disabled>
+                          Nenhum vendedor encontrado
+                        </SelectItem>
                       )}
                     </SelectContent>
                   </Select>

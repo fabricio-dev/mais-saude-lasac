@@ -71,6 +71,12 @@ interface Patient {
   activeAt: Date | null;
 }
 
+interface Seller {
+  id: string;
+  name: string;
+  email: string;
+}
+
 interface TableActionsProps {
   patient: Patient;
   isExpired: boolean;
@@ -81,6 +87,7 @@ interface TableActionsProps {
   onPrintContract: (patient: Patient) => void;
   sellerId: string;
   clinicId: string;
+  sellers: Seller[];
 }
 
 export default function TableActions({
@@ -93,6 +100,7 @@ export default function TableActions({
   onPrintContract,
   sellerId,
   clinicId,
+  sellers,
 }: TableActionsProps) {
   return (
     <div className="flex items-center">
@@ -127,6 +135,7 @@ export default function TableActions({
                 isOpen={true}
                 sellerId={sellerId}
                 clinicId={clinicId}
+                sellers={sellers}
               />
             </DialogContent>
           </Dialog>

@@ -9,12 +9,23 @@ import { Dialog } from "@/components/ui/dialog";
 
 import UpsertPatientForm from "./upsert-patient-form";
 
+interface Seller {
+  id: string;
+  name: string;
+  email: string;
+}
+
 interface AddPatientButtonProps {
   sellerId: string;
   clinicId: string;
+  sellers: Seller[];
 }
 
-const AddPatientButton = ({ sellerId, clinicId }: AddPatientButtonProps) => {
+const AddPatientButton = ({
+  sellerId,
+  clinicId,
+  sellers,
+}: AddPatientButtonProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -30,6 +41,7 @@ const AddPatientButton = ({ sellerId, clinicId }: AddPatientButtonProps) => {
         onSuccess={() => setIsOpen(false)}
         sellerId={sellerId}
         clinicId={clinicId}
+        sellers={sellers}
       />
     </Dialog>
   );

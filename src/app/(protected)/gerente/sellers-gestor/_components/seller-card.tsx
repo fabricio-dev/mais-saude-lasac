@@ -23,6 +23,7 @@ import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { sellersTable } from "@/db/schema";
 
+import GenerateLinkButton from "./generate-link-button";
 import UpsertSellerForm from "./upsert-seller-form";
 
 interface SellerCardProps {
@@ -128,13 +129,13 @@ const SellerCard = ({ seller }: SellerCardProps) => {
         </Badge>
       </CardContent>
       <Separator />
-      <CardFooter>
+      <CardFooter className="flex gap-2">
         <Dialog
           open={isUpsertSellerFormOpen}
           onOpenChange={setIsUpsertSellerFormOpen}
         >
           <DialogTrigger asChild>
-            <Button className="w-full bg-red-800 hover:bg-red-900">
+            <Button className="flex-1 bg-red-800 hover:bg-red-900">
               <PencilIcon className="mr-1" />
               Editar
             </Button>
@@ -145,6 +146,7 @@ const SellerCard = ({ seller }: SellerCardProps) => {
             onSuccess={() => setIsUpsertSellerFormOpen(false)}
           />
         </Dialog>
+        <GenerateLinkButton sellerId={seller.id} sellerName={seller.name} />
       </CardFooter>
     </Card>
   );

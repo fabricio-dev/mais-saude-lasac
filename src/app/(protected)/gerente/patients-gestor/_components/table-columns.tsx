@@ -39,6 +39,12 @@ interface Patient {
   activeAt: Date | null;
 }
 
+interface Seller {
+  id: string;
+  name: string;
+  email: string;
+}
+
 interface TableColumnsProps {
   onActivate: (patientId: string) => void;
   onDelete: (patientId: string) => void;
@@ -46,6 +52,7 @@ interface TableColumnsProps {
   onPrintContract: (patient: Patient) => void;
   sellerId: string;
   clinicId: string;
+  sellers: Seller[];
 }
 
 // Funções de formatação
@@ -74,6 +81,7 @@ export const patientsTableColumns = ({
   onPrintContract,
   sellerId,
   clinicId,
+  sellers,
 }: TableColumnsProps): ColumnDef<Patient>[] => [
   {
     id: "spacer",
@@ -112,6 +120,18 @@ export const patientsTableColumns = ({
         <Badge variant="secondary">
           {cardType === "enterprise" ? "EMPRESA" : "INDIVIDUAL"}
         </Badge>
+      );
+    },
+  },
+  {
+    accessorKey: "seller",
+    header: "Vendedor",
+    cell: ({ row }) => {
+      const seller = row.original.seller;
+      return (
+        <div className="text-sm">
+          {seller?.name || <span className="text-muted-foreground">-</span>}
+        </div>
       );
     },
   },
@@ -184,6 +204,7 @@ export const patientsTableColumns = ({
           onPrintContract={onPrintContract}
           sellerId={sellerId}
           clinicId={clinicId}
+          sellers={sellers}
         />
       );
     },
