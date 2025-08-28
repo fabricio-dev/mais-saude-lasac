@@ -28,6 +28,7 @@ interface Patient {
   sellerId: string | null;
   clinicId: string | null;
   seller?: { name: string } | null;
+  clinic?: { name: string } | null;
   isActive: boolean;
   reactivatedAt: Date | null;
   activeAt: Date | null;
@@ -243,7 +244,8 @@ export default function ContratoComponent({
               : "___/___/______"}
           </div>
           <div className="p-1">
-            <strong>CIDADE DO CONTRATO:</strong> {patient.city.toUpperCase()}
+            <strong>CIDADE DO CONTRATO:</strong>{" "}
+            {patient.clinic?.name.toUpperCase() || "N/A"}
           </div>
         </div>
         <div className="grid grid-cols-2 text-[10px]">

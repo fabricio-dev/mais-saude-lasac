@@ -311,12 +311,28 @@ const PatientsTable = ({
     printWindow.document.close();
   };
 
-  const handlePrintContract = (patient: Patient) => {
+  const handlePrintContract = async (patient: Patient) => {
     try {
+      // Buscar informações da clínica se o patient tiver clinicId
+      const patientWithClinic = { ...patient } as Patient & {
+        clinic?: { name: string };
+      };
+      if (patient.clinicId) {
+        try {
+          const response = await fetch(`/api/clinics/${patient.clinicId}`);
+          if (response.ok) {
+            const clinic = await response.json();
+            patientWithClinic.clinic = { name: clinic.name };
+          }
+        } catch (error) {
+          console.error("Erro ao buscar clínica:", error);
+        }
+      }
+
       // Renderizar o componente React para HTML
       const componentHTML = renderToStaticMarkup(
         <ContratoComponent
-          patient={patient}
+          patient={patientWithClinic}
           numeroContrato={patient.id.slice(-6)}
         />,
       );
