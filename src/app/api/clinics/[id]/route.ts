@@ -9,7 +9,7 @@ export async function GET(
   { params }: { params: { id: string } },
 ) {
   try {
-    const clinicId = params.id;
+    const clinicId = params.id as string;
 
     const clinic = await db
       .select({ name: clinicsTable.name })
