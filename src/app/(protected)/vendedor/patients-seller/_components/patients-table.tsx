@@ -13,10 +13,12 @@ import {
 } from "@tanstack/react-table";
 import { useAction } from "next-safe-action/hooks";
 import { useState } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { toast } from "sonner";
 
 import { activatePatient } from "@/actions/activate-patient";
 import { deletePatient } from "@/actions/delete-patient";
+import ContratoComponent from "@/app/(protected)/_components/contrato-component";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -107,17 +109,17 @@ const PatientsTable = ({
     return new Date(date).toLocaleDateString("pt-BR");
   };
 
-  const formatPhone = (phone: string) => {
-    return phone.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
-  };
+  // const formatPhone = (phone: string) => {
+  //   return phone.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
+  // };
 
-  const formatCpf = (cpf: string) => {
-    return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-  };
+  // const formatCpf = (cpf: string) => {
+  //   return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+  // };
 
-  const formatRg = (rg: string) => {
-    return rg.replace(/(\d{2})(\d{3})(\d{3})(\d{1})/, "$1.$2.$3-$4");
-  };
+  // const formatRg = (rg: string) => {
+  //   return rg.replace(/(\d{2})(\d{3})(\d{3})(\d{1})/, "$1.$2.$3-$4");
+  // };
 
   const handlePrintCard = (patient: Patient) => {
     const printWindow = window.open("", "_blank");
@@ -258,7 +260,7 @@ const PatientsTable = ({
             </div>
             <div class="card-content">
               <div class="patient-name">${patient.name}</div>
-              <div class="cpf">CPF: ${formatCpf(patient.cpfNumber)}</div>
+             
               
               ${
                 dependents.length > 0
@@ -303,195 +305,98 @@ const PatientsTable = ({
   };
 
   const handlePrintContract = (patient: Patient) => {
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
+    try {
+      // Renderizar o componente React para HTML
+      const componentHTML = renderToStaticMarkup(
+        <ContratoComponent
+          patient={patient}
+          numeroContrato={patient.id.slice(-6)}
+        />,
+      );
 
-    const printContent = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Contrato do Paciente - ${patient.name}</title>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              max-width: 800px;
-              margin: 0 auto;
-              padding: 20px;
-              line-height: 1.6;
-            }
-            .header {
-              text-align: center;
-              border-bottom: 2px solid #333;
-              margin-bottom: 30px;
-              padding-bottom: 20px;
-            }
-            .section {
-              margin-bottom: 25px;
-            }
-            .section h3 {
-              background-color: #f5f5f5;
-              padding: 10px;
-              margin: 0 0 15px 0;
-              border-left: 4px solid #333;
-            }
-            .data-row {
-              display: flex;
-              justify-content: space-between;
-              padding: 8px 0;
-              border-bottom: 1px solid #eee;
-            }
-            .label {
-              font-weight: bold;
-              min-width: 150px;
-            }
-            .value {
-              flex: 1;
-              text-align: right;
-            }
-            .badge {
-              display: inline-block;
-              padding: 4px 8px;
-              background-color: #e9ecef;
-              border-radius: 4px;
-              font-size: 12px;
-              margin-right: 5px;
-            }
-            @media print {
-              body { margin: 0; }
-              .no-print { display: none; }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h1>CONTRATO DO PACIENTE</h1>
-            <h2>${patient.name}</h2>
-            <div>
-              <span class="badge">${patient.cardType === "enterprise" ? "EMPRESA" : "INDIVIDUAL"}</span>
-              <span class="badge">${patient.numberCards} cartões</span>
-            </div>
-          </div>
+      const printWindow = window.open(
+        "",
+        "_blank",
+        "width=800,height=600,scrollbars=yes,resizable=yes",
+      );
+      if (!printWindow) return;
 
-          <div class="section">
-            <h3>Informações Pessoais</h3>
-            <div class="data-row">
-              <span class="label">Nome Completo:</span>
-              <span class="value">${patient.name}</span>
-            </div>
-            <div class="data-row">
-              <span class="label">CPF:</span>
-              <span class="value">${formatCpf(patient.cpfNumber)}</span>
-            </div>
-            <div class="data-row">
-              <span class="label">RG:</span>
-              <span class="value">${formatRg(patient.rgNumber)}</span>
-            </div>
-            <div class="data-row">
-              <span class="label">Data de Nascimento:</span>
-              <span class="value">${formatDate(new Date(patient.birthDate))}</span>
-            </div>
-            <div class="data-row">
-              <span class="label">Telefone:</span>
-              <span class="value">${formatPhone(patient.phoneNumber)}</span>
-            </div>
-          </div>
-
-          <div class="section">
-            <h3>Endereço</h3>
-            <div class="data-row">
-              <span class="label">Endereço:</span>
-              <span class="value">${patient.address}, ${patient.homeNumber}</span>
-            </div>
-            <div class="data-row">
-              <span class="label">Cidade:</span>
-              <span class="value">${patient.city}</span>
-            </div>
-            <div class="data-row">
-              <span class="label">Estado:</span>
-              <span class="value">${patient.state}</span>
-            </div>
-          </div>
-
-          <div class="section">
-            <h3>Informações do Contrato</h3>
-            <div class="data-row">
-              <span class="label">Tipo de Cartão:</span>
-              <span class="value">${patient.cardType === "enterprise" ? "EMPRESA" : "INDIVIDUAL"}</span>
-            </div>
-            <div class="data-row">
-              <span class="label">Número de Cartões:</span>
-              <span class="value">${patient.numberCards}</span>
-            </div>
-          
-            ${
-              patient.seller
-                ? `
-            <div class="data-row">
-              <span class="label">Vendedor Responsável:</span>
-              <span class="value">${patient.seller.name}</span>
-            </div>
-            `
-                : ""
-            }
-            ${
-              patient.expirationDate
-                ? `
-            <div class="data-row">
-              <span class="label">Data de Expiração:</span>
-              <span class="value">${formatDate(new Date(patient.expirationDate))}</span>
-            </div>
-            `
-                : ""
-            }
-          </div>
-
-          ${
-            patient.dependents1 ||
-            patient.dependents2 ||
-            patient.dependents3 ||
-            patient.dependents4 ||
-            patient.dependents5 ||
-            patient.dependents6
-              ? `
-          <div class="section">
-            <h3>Dependentes</h3>
-            ${patient.dependents1 ? `<div class="data-row"><span class="label">Dependente 1:</span><span class="value">${patient.dependents1}</span></div>` : ""}
-            ${patient.dependents2 ? `<div class="data-row"><span class="label">Dependente 2:</span><span class="value">${patient.dependents2}</span></div>` : ""}
-            ${patient.dependents3 ? `<div class="data-row"><span class="label">Dependente 3:</span><span class="value">${patient.dependents3}</span></div>` : ""}
-            ${patient.dependents4 ? `<div class="data-row"><span class="label">Dependente 4:</span><span class="value">${patient.dependents4}</span></div>` : ""}
-            ${patient.dependents5 ? `<div class="data-row"><span class="label">Dependente 5:</span><span class="value">${patient.dependents5}</span></div>` : ""}
-            ${patient.dependents6 ? `<div class="data-row"><span class="label">Dependente 6:</span><span class="value">${patient.dependents6}</span></div>` : ""}
-          </div>
-          `
-              : ""
-          }
-
-          <div class="section">
-            <h3>Informações do Sistema</h3>
-            <div class="data-row">
-              <span class="label">Data de Cadastro:</span>
-              <span class="value">${formatDate(new Date(patient.createdAt))}</span>
-            </div>
-            <div class="data-row">
-              <span class="label">Última Atualização:</span>
-              <span class="value">${formatDate(new Date(patient.updatedAt ?? ""))}</span>
-            </div>
-          </div>
-
-          <script>
-            window.onload = function() {
-              window.print();
-              window.onafterprint = function() {
-                window.close();
+      const printContent = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <title>Contrato - ${patient.name}</title>
+            <script src="https://cdn.tailwindcss.com"></script>
+            <style>
+              @media print {
+                body {
+                  margin: 0;
+                  padding: 0;
+                  -webkit-print-color-adjust: exact;
+                  color-adjust: exact;
+                }
+                .no-print {
+                  display: none !important;
+                }
+              }
+            </style>
+          </head>
+          <body>
+            ${componentHTML}
+            <script>
+              window.onload = function() {
+                setTimeout(() => {
+                  window.print();
+                  
+                  // Fechar janela após impressão ou cancelamento
+                  window.onafterprint = function() {
+                    window.close();
+                  };
+                  
+                  // Detectar se a impressão foi cancelada
+                  const checkPrintStatus = () => {
+                    setTimeout(() => {
+                      // Se a janela ainda estiver aberta após 200ms, assume que foi cancelada
+                      if (!window.closed) {
+                        window.close();
+                      }
+                    }, 200);
+                  };
+                  
+                  // Detectar eventos de cancelamento
+                  window.addEventListener('beforeprint', () => {
+                    // Reset do timer quando a impressão inicia
+                  });
+                  
+                  window.addEventListener('afterprint', () => {
+                    window.close();
+                  });
+                  
+                  // Backup: fechar após timeout se não houver interação
+                  checkPrintStatus();
+                  
+                }, 1000);
               };
-            };
-          </script>
-        </body>
-      </html>
-    `;
+              
+              // Fechar janela se o usuário pressionar ESC
+              document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                  window.close();
+                }
+              });
+            </script>
+          </body>
+        </html>
+      `;
 
-    printWindow.document.write(printContent);
-    printWindow.document.close();
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+    } catch (error) {
+      console.error("Erro ao renderizar contrato:", error);
+      // Fallback: abrir em nova aba se houver erro
+      alert("Erro ao gerar contrato. Tente novamente.");
+    }
   };
 
   const columns = patientsTableColumns({
