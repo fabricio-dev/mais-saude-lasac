@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import {
+  CreditCard,
   Facebook,
   FileText,
   Hand,
@@ -10,7 +11,6 @@ import {
   Linkedin,
   Mouse,
   Search,
-  UserPlus,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -19,6 +19,12 @@ import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -144,6 +150,16 @@ export default function Home() {
   const [errors, setErrors] = useState<
     Partial<Record<keyof ConsultaConvenioForm, string>>
   >({});
+
+  // Estados para o diálogo de geração de cartão
+  const [dialogAberto, setDialogAberto] = useState(false);
+  const [cpfCartao, setCpfCartao] = useState("");
+  const [consentimentoCartao, setConsentimentoCartao] = useState(false);
+  const [loadingCartao, setLoadingCartao] = useState(false);
+  const [errorsCartao, setErrorsCartao] = useState<{
+    cpf?: string;
+    consentimento?: string;
+  }>({});
 
   // Função auxiliar para verificar se convênio está ativo
   const isConvenioAtivo = (
@@ -335,22 +351,411 @@ export default function Home() {
     });
   };
 
+  // Função para abrir o diálogo de geração de cartão
+  const abrirDialogoCartao = () => {
+    setDialogAberto(true);
+    setCpfCartao("");
+    setConsentimentoCartao(false);
+    setErrorsCartao({});
+  };
+
+  // Função para fechar o diálogo
+  const fecharDialogoCartao = () => {
+    setDialogAberto(false);
+    setCpfCartao("");
+    setConsentimentoCartao(false);
+    setErrorsCartao({});
+  };
+
+  // Função para formatar CPF
+  const formatCpfCartao = (value: string) => {
+    const numbers = value.replace(/\D/g, "");
+    if (numbers.length <= 3) return numbers;
+    if (numbers.length <= 6)
+      return `${numbers.slice(0, 3)}.${numbers.slice(3)}`;
+    if (numbers.length <= 9)
+      return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6)}`;
+    return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6, 9)}-${numbers.slice(9, 11)}`;
+  };
+
+  // Função para gerar cartão PDF
+  const gerarCartaoPdf = async () => {
+    // Validação
+    const newErrors: { cpf?: string; consentimento?: string } = {};
+
+    if (!cpfCartao.trim()) {
+      newErrors.cpf = "CPF é obrigatório";
+    } else {
+      const numbers = cpfCartao.replace(/\D/g, "");
+      if (numbers.length !== 11) {
+        newErrors.cpf = "CPF deve ter 11 dígitos";
+      }
+    }
+
+    if (!consentimentoCartao) {
+      newErrors.consentimento = "Você deve concordar com os termos";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrorsCartao(newErrors);
+      return;
+    }
+
+    setLoadingCartao(true);
+
+    try {
+      // Buscar paciente no banco
+      const response = await fetch("/api/consultar-pacientes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          termo: cpfCartao.replace(/\D/g, ""),
+        }),
+      });
+
+      const resultado = await response.json();
+
+      if (
+        !resultado.success ||
+        !resultado.data ||
+        resultado.data.length === 0
+      ) {
+        setErrorsCartao({ cpf: "CPF não encontrado no sistema" });
+        return;
+      }
+
+      const paciente = resultado.data[0]; // Pegar o primeiro paciente encontrado
+
+      // Gerar cartão com duas faces
+      gerarCartaoDuasFaces(paciente);
+
+      // Fechar diálogo após sucesso
+      fecharDialogoCartao();
+    } catch (error) {
+      console.error("Erro ao buscar paciente:", error);
+      setErrorsCartao({ cpf: "Erro ao consultar dados. Tente novamente." });
+    } finally {
+      setLoadingCartao(false);
+    }
+  };
+
+  // Função para gerar cartão com duas faces
+  const gerarCartaoDuasFaces = (paciente: PacienteDb) => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+
+    const dependents = [
+      paciente.dependents1,
+      paciente.dependents2,
+      paciente.dependents3,
+      paciente.dependents4,
+      paciente.dependents5,
+      paciente.dependents6,
+    ].filter(Boolean);
+
+    const formatDate = (date: Date) => {
+      return new Date(date).toLocaleDateString("pt-BR");
+    };
+
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Cartão ${paciente.name}</title>
+          <style>
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            
+            body {
+              font-family: 'Arial', 'Helvetica', sans-serif;
+              background-color: #f0f0f0;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              padding: 20px;
+              -webkit-font-smoothing: antialiased;
+              -moz-osx-font-smoothing: grayscale;
+              text-rendering: optimizeLegibility;
+            }
+            
+            .card {
+              width: 85.60mm;
+              height: 53.98mm;
+              background: white;
+              border: 1px solid #d1d5db;
+              border-radius: 10px;
+              margin-bottom: 20px;
+              box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+              position: relative;
+              overflow: hidden;
+              -webkit-print-color-adjust: exact;
+              color-adjust: exact;
+              page-break-inside: avoid;
+            }
+            
+                                    /* Face 1 - Logo */
+            .face1 {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              padding: 0;
+              background: white;
+              color: black;
+              width: 100%;
+              height: 100%;
+              border: none !important;
+            }
+            
+            .logo-container {
+              text-align: center;
+              width: 100%;
+              height: 100%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
+            
+                        .logo-img {
+              width: 85.60mm;
+              height: 53.98mm;
+              object-fit: cover;
+              display: block;
+              border-radius: 10px;
+              border: 1px solid #d1d5db;
+              -webkit-print-color-adjust: exact;
+              color-adjust: exact;
+              image-rendering: -webkit-optimize-contrast;
+              image-rendering: crisp-edges;
+              image-rendering: pixelated;
+              filter: contrast(1.2) brightness(1.1);
+              -webkit-font-smoothing: antialiased;
+              -moz-osx-font-smoothing: grayscale;
+            }
+            
+            .card-title-face1 {
+              font-size: 18px;
+              font-weight: bold;
+              text-transform: uppercase;
+              letter-spacing: 2px;
+            }
+            
+            /* Face 2 - Dados */
+            .face2 {
+              padding: 15px;
+              color: black;
+              font-weight: 500;
+            }
+            
+            .card-header {
+              text-align: center;
+              margin-bottom: 8px;
+              position: relative;
+              z-index: 1;
+            }
+            
+            .card-content {
+              position: relative;
+              z-index: 1;
+            }
+            
+            .patient-name {
+              font-size: 12px;
+              font-weight: bold;
+              margin-bottom: 4px;
+              text-transform: uppercase;
+            }
+            
+            .dependents {
+              font-size: 12px;
+              margin-bottom: 4px;
+            }
+            
+            .dependents-title {
+              font-weight: bold;
+              margin-bottom: 2px;
+            }
+            
+            .dependent-item {
+              margin-bottom: 1px;
+              opacity: 0.9;
+            }
+            
+            .card-footer {
+              position: absolute;
+              bottom: 0;
+              left: 0;
+              right: 0;
+              height: 20px;
+              font-size: 6px;
+              opacity: 0.7;
+            }
+            
+            .logo-face2 {
+              width: 40px;
+              height: 40px;
+              position: absolute;
+              top: 15px;
+              right: 15px;
+              image-rendering: auto;
+              image-rendering: -webkit-optimize-contrast;
+              image-rendering: pixelated;
+              -webkit-print-color-adjust: exact;
+              color-adjust: exact;
+              filter: contrast(1.2);
+              max-width: none;
+              max-height: none;
+            }
+            
+            @media print {
+              body {
+                background-color: white;
+                margin: 0;
+                padding: 0;
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+              }
+              
+              .card {
+                box-shadow: none;
+                margin-bottom: 1cm;
+                page-break-inside: avoid;
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+                border: 1px solid #d1d5db !important;
+              }
+              
+              .face1 {
+                border: none !important;
+              }
+              
+              .logo-img {
+                width: 85.60mm !important;
+                height: 53.98mm !important;
+                object-fit: cover !important;
+                border: 1px solid #d1d5db !important;
+                border-radius: 10px !important;
+                image-rendering: -webkit-optimize-contrast !important;
+                image-rendering: crisp-edges !important;
+                image-rendering: pixelated !important;
+                filter: contrast(1.1) brightness(1.1) !important;
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+              }
+              
+              @page {
+                margin: 1cm;
+                size: A4;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <!-- Face 1 - Logo -->
+          <div class="card face1">
+            <div class="logo-container">
+              <img src="/logo03.svg" alt="Mais Saúde" class="logo-img">
+             
+            </div>
+          </div>
+          
+          <!-- Face 2 - Dados -->
+          <div class="card face2">
+            <div class="card-header"></div>
+            <div class="card-content">
+              <div class="patient-name">TITULAR: ${paciente.name}</div>
+              
+              ${
+                dependents.length > 0
+                  ? `
+                <div class="dependents">
+                  <div class="dependents-title">DEPENDENTES:</div>
+                  ${dependents.map((dep) => `<div class="dependent-item"> ${dep}</div>`).join("")}
+                </div>
+              `
+                  : ""
+              }
+              
+              <img src="/logo.svg" alt="Mais Saúde" class="logo-face2">
+            </div>
+            
+            <div class="card-footer">
+              <div style="position: absolute; bottom: 15px; left: 15px; font-size: 8px; font-weight: bold;">
+                ${paciente.expirationDate ? `VÁLIDO ATÉ: ${formatDate(new Date(paciente.expirationDate))}` : ""}
+              </div>
+              <div style="position: absolute; bottom: 15px; right: 15px;">
+                ${paciente.cardType === "enterprise" ? "EMPRESA" : "INDIVIDUAL"}
+              </div>
+            </div>
+          </div>
+          
+          <script>
+            window.onload = function() {
+              setTimeout(() => {
+                window.print();
+                window.onafterprint = function() {
+                  window.close();
+                };
+              }, 500);
+              
+              // Fechar janela se o usuário cancelar a impressão
+              const checkPrintStatus = () => {
+                setTimeout(() => {
+                  if (!window.matchMedia('print').matches) {
+                    window.close();
+                  }
+                }, 1000);
+              };
+              
+              // Eventos para detectar cancelamento
+              window.addEventListener('beforeprint', () => {
+                console.log('Preparando para imprimir...');
+              });
+              
+              window.addEventListener('afterprint', () => {
+                window.close();
+              });
+              
+              // Verificar se a impressão foi cancelada
+              checkPrintStatus();
+            };
+          </script>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-100 to-purple-200">
       {/* Header com botões */}
-      <header className="absolute top-0 right-0 p-6">
+      <header className="absolute top-0 right-0 p-6 pr-1">
         <div className="flex gap-3">
           <Link href="/convenio">
             <Button
               variant="outline"
               className="bg-emerald-600/90 text-white backdrop-blur-sm hover:bg-emerald-700/90"
             >
-              <UserPlus className="mr-2 h-4 w-4" />
-              Seja um Conveniado
+              Seja Conveniado
             </Button>
           </Link>
 
-          <Link href="/authentication" className="pr-7 pl-2">
+          <Button
+            variant="outline"
+            className="bg-emerald-600/30 text-white backdrop-blur-sm hover:bg-emerald-700/90"
+            onClick={abrirDialogoCartao}
+          >
+            <CreditCard className="h-4 w-4" />
+            Meu Cartão
+          </Button>
+
+          <Link href="/authentication" className="pr-2">
             <Button
               variant="outline"
               className="bg-white/80 backdrop-blur-sm hover:bg-white/90"
@@ -773,6 +1178,100 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* Diálogo para gerar cartão PDF */}
+      <Dialog open={dialogAberto} onOpenChange={setDialogAberto}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Gerar Cartão em PDF
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="cpf-cartao" className="text-sm font-medium">
+                CPF do Titular
+              </Label>
+              <Input
+                id="cpf-cartao"
+                type="text"
+                placeholder="000.000.000-00"
+                value={cpfCartao}
+                onChange={(e) => {
+                  const formatted = formatCpfCartao(e.target.value);
+                  setCpfCartao(formatted);
+                  if (errorsCartao.cpf) {
+                    setErrorsCartao((prev) => ({ ...prev, cpf: undefined }));
+                  }
+                }}
+                className={errorsCartao.cpf ? "border-red-500" : ""}
+                maxLength={14}
+              />
+              {errorsCartao.cpf && (
+                <p className="mt-1 text-sm text-red-600">{errorsCartao.cpf}</p>
+              )}
+            </div>
+
+            <div>
+              <div className="flex items-center space-x-2">
+                <input
+                  id="consentimento-cartao"
+                  type="checkbox"
+                  checked={consentimentoCartao}
+                  onChange={(e) => {
+                    setConsentimentoCartao(e.target.checked);
+                    if (errorsCartao.consentimento) {
+                      setErrorsCartao((prev) => ({
+                        ...prev,
+                        consentimento: undefined,
+                      }));
+                    }
+                  }}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <Label htmlFor="consentimento-cartao" className="text-sm">
+                  Concordo com os termos de uso e política de privacidade
+                </Label>
+              </div>
+              {errorsCartao.consentimento && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errorsCartao.consentimento}
+                </p>
+              )}
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button
+                variant="outline"
+                onClick={fecharDialogoCartao}
+                className="flex-1"
+                disabled={loadingCartao}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={gerarCartaoPdf}
+                disabled={loadingCartao}
+                className="flex-1 bg-blue-600 hover:bg-blue-700"
+              >
+                {loadingCartao ? (
+                  <>
+                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-t-2 border-b-2 border-white"></div>
+                    Gerando...
+                  </>
+                ) : (
+                  <>
+                    <FileText className="mr-2 h-4 w-4" />
+                    Gerar Cartão
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
