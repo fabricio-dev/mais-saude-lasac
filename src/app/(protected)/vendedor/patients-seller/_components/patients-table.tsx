@@ -122,10 +122,10 @@ const PatientsTable = ({
   // };
 
   const handlePrintCard = (patient: Patient) => {
+    // Usar a estrutura do componente PrintCardComponent
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
 
-    // Coletar todos os dependentes não vazios
     const dependents = [
       patient.dependents1,
       patient.dependents2,
@@ -146,40 +146,36 @@ const PatientsTable = ({
               padding: 0;
               box-sizing: border-box;
             }
-            body {
-              font-family: Arial, sans-serif;
-              background-color: #f0f0f0;
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              min-height: 100vh;
-              padding: 20px;
-            }
-            .card {
-              width: 85.60mm;
-              height: 53.98mm;
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-              border-radius: 10px;
-              padding: 8px;
-              color: white;
-              box-shadow: 0 8px 16px rgba(0,0,0,0.3);
-              position: relative;
-              overflow: hidden;
-            }
-            .card::before {
-              content: '';
-              position: absolute;
-              top: -50%;
-              right: -50%;
-              width: 100%;
-              height: 100%;
-              background: rgba(255,255,255,0.1);
-              border-radius: 50%;
-              transform: rotate(45deg);
-            }
+                         body {
+               font-family: 'Arial', 'Helvetica', sans-serif;
+               background-color: #f0f0f0;
+               display: flex;
+               justify-content: center;
+               align-items: center;
+               min-height: 100vh;
+               padding: 20px;
+               -webkit-font-smoothing: antialiased;
+               -moz-osx-font-smoothing: grayscale;
+               text-rendering: optimizeLegibility;
+             }
+                         .card {
+               width: 85.60mm;
+               height: 53.98mm;
+               background: white;
+               border-radius: 10px;
+               padding: 15px;
+               color: black;
+               box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+               position: relative;
+               overflow: hidden;
+               -webkit-print-color-adjust: exact;
+               color-adjust: exact;
+               font-weight: 500;
+             }
+
             .card-header {
               text-align: center;
-              margin-bottom: 6px;
+              margin-bottom: 8px;
               position: relative;
               z-index: 1;
             }
@@ -215,7 +211,7 @@ const PatientsTable = ({
               margin-bottom: 4px;
             }
             .dependents {
-              font-size: 7px;
+              font-size: 12px;
               margin-bottom: 4px;
             }
             .dependents-title {
@@ -232,68 +228,116 @@ const PatientsTable = ({
               margin-top: 4px;
               font-weight: bold;
             }
-            .card-footer {
-              position: absolute;
-              bottom: 8px;
-              right: 8px;
-              font-size: 6px;
-              opacity: 0.7;
-            }
-            @media print {
-              body {
-                background-color: white;
-                margin: 0;
-                padding: 0;
-              }
-              .card {
-                box-shadow: none;
-                margin: 0;
-              }
-            }
+                         .card-footer {
+               position: absolute;
+               bottom: 0;
+               left: 0;
+               right: 0;
+               height: 20px;
+               font-size: 6px;
+               opacity: 0.7;
+             }
+             img {
+               image-rendering: -webkit-optimize-contrast;
+               image-rendering: -moz-crisp-edges;
+               image-rendering: crisp-edges;
+               image-rendering: pixelated;
+               -webkit-print-color-adjust: exact;
+               color-adjust: exact;
+               filter: contrast(1.1) brightness(1.1);
+             }
+                         @media print {
+               body {
+                 background-color: white;
+                 margin: 0;
+                 padding: 0;
+                 -webkit-print-color-adjust: exact;
+                 color-adjust: exact;
+               }
+               .card {
+                 box-shadow: none;
+                 margin: 0;
+                 page-break-inside: avoid;
+                 -webkit-print-color-adjust: exact;
+                 color-adjust: exact;
+               }
+               img {
+                 -webkit-print-color-adjust: exact;
+                 color-adjust: exact;
+                 image-rendering: -webkit-optimize-contrast;
+                 image-rendering: crisp-edges;
+               }
+               @page {
+                 margin: 0.5cm;
+                 size: A4;
+               }
+             }
           </style>
         </head>
-        <body>
-          <div class="card">
-            <div class="card-header">
-              <div class="card-title">MAIS SAÚDE</div>
-              <div class="card-subtitle">Cartão de Saúde</div>
-            </div>
-            <div class="card-content">
-              <div class="patient-name">${patient.name}</div>
+                 <body>
+           <div class="card p-10">
+             <div class="card-header">
+              
+             </div>
+             <div class="card-content">
+               <div class="patient-name"> TITULAR: ${patient.name}</div>
              
+              
               
               ${
                 dependents.length > 0
                   ? `
                 <div class="dependents">
                   <div class="dependents-title">DEPENDENTES:</div>
-                  ${dependents.map((dep) => `<div class="dependent-item">• ${dep}</div>`).join("")}
+                  ${dependents.map((dep) => `<div class="dependent-item"> ${dep}</div>`).join("")}
                 </div>
               `
                   : ""
               }
               
-              ${
-                patient.expirationDate
-                  ? `
-                <div class="expiration">
-                  VÁLIDO ATÉ: ${formatDate(new Date(patient.expirationDate))}
-                </div>
-              `
-                  : ""
-              }
+                                            <img src="/logo.svg" alt="Mais Saúde" style="width: 40px; height: 40px; position: absolute; top: 15px; right: 15px; image-rendering: auto; image-rendering: -webkit-optimize-contrast; image-rendering: pixelated; -webkit-print-color-adjust: exact; color-adjust: exact; filter: contrast(1.2); max-width: none; max-height: none;">
+               
+
             </div>
             <div class="card-footer">
-              ${patient.cardType === "enterprise" ? "EMPRESA" : "INDIVIDUAL"}
+              <div style="position: absolute; bottom: 15px; left: 15px; font-size: 8px; font-weight: bold;">
+                ${patient.expirationDate ? `VÁLIDO ATÉ: ${formatDate(new Date(patient.expirationDate))}` : ""}
+              </div>
+              <div style="position: absolute; bottom: 15px; right: 15px;">
+                ${patient.cardType === "enterprise" ? "EMPRESA" : "INDIVIDUAL"}
+              </div>
             </div>
           </div>
           
           <script>
             window.onload = function() {
-              window.print();
-              window.onafterprint = function() {
-                window.close();
+              setTimeout(() => {
+                window.print();
+                window.onafterprint = function() {
+                  window.close();
+                };
+              }, 500);
+              
+              // Fechar janela se o usuário cancelar a impressão
+              const checkPrintStatus = () => {
+                setTimeout(() => {
+                  if (!window.matchMedia('print').matches) {
+                    window.close();
+                  }
+                }, 1000);
               };
+              
+              // Eventos para detectar cancelamento
+              window.addEventListener('beforeprint', () => {
+                console.log('Preparando para imprimir...');
+              });
+              
+              window.addEventListener('afterprint', () => {
+                window.close();
+              });
+              
+              // Verificar se a impressão foi cancelada
+              checkPrintStatus();
             };
           </script>
         </body>

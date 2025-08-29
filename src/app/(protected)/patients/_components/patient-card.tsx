@@ -1,7 +1,7 @@
 "use client";
 
 import dayjs from "dayjs";
-import { CheckCircle, PrinterIcon } from "lucide-react";
+import { CheckCircle } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -24,6 +24,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog } from "@/components/ui/dialog";
 import { patientsTable } from "@/db/schema";
 
+import PrintCardComponent from "../../_components/print-card-component";
 import UpsertPatientForm from "./upsert-patient-form";
 
 interface PatientCardProps {
@@ -63,200 +64,6 @@ const PatientCard = ({ patient }: PatientCardProps) => {
 
   const formatCpf = (cpf: string) => {
     return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-  };
-
-  const formatRg = (rg: string) => {
-    return rg.replace(/(\d{2})(\d{3})(\d{3})(\d{1})/, "$1.$2.$3-$4");
-  };
-
-  const handlePrint = () => {
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
-
-    const printContent = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Dados do Paciente - ${patient.name}</title>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              max-width: 800px;
-              margin: 0 auto;
-              padding: 20px;
-              line-height: 1.6;
-            }
-            .header {
-              text-align: center;
-              border-bottom: 2px solid #333;
-              margin-bottom: 30px;
-              padding-bottom: 20px;
-            }
-            .section {
-              margin-bottom: 25px;
-            }
-            .section h3 {
-              background-color: #f5f5f5;
-              padding: 10px;
-              margin: 0 0 15px 0;
-              border-left: 4px solid #333;
-            }
-            .data-row {
-              display: flex;
-              justify-content: space-between;
-              padding: 8px 0;
-              border-bottom: 1px solid #eee;
-            }
-            .label {
-              font-weight: bold;
-              min-width: 150px;
-            }
-            .value {
-              flex: 1;
-              text-align: right;
-            }
-            .badge {
-              display: inline-block;
-              padding: 4px 8px;
-              background-color: #e9ecef;
-              border-radius: 4px;
-              font-size: 12px;
-              margin-right: 5px;
-            }
-            @media print {
-              body { margin: 0; }
-              .no-print { display: none; }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h1>DADOS DO PACIENTE</h1>
-            <h2>${patient.name}</h2>
-            <div>
-              <span class="badge">${patient.cardType === "enterprise" ? "EMPRESA" : "INDIVIDUAL"}</span>
-              <span class="badge">${patient.numberCards} cartões</span>
-            </div>
-          </div>
-
-          <div class="section">
-            <h3>Informações Pessoais</h3>
-            <div class="data-row">
-              <span class="label">Nome Completo:</span>
-              <span class="value">${patient.name}</span>
-            </div>
-            <div class="data-row">
-              <span class="label">CPF:</span>
-              <span class="value">${formatCpf(patient.cpfNumber)}</span>
-            </div>
-            <div class="data-row">
-              <span class="label">RG:</span>
-              <span class="value">${formatRg(patient.rgNumber)}</span>
-            </div>
-            <div class="data-row">
-              <span class="label">Data de Nascimento:</span>
-              <span class="value">${formatDate(new Date(patient.birthDate))}</span>
-            </div>
-            <div class="data-row">
-              <span class="label">Telefone:</span>
-              <span class="value">${formatPhone(patient.phoneNumber)}</span>
-            </div>
-          </div>
-
-          <div class="section">
-            <h3>Endereço</h3>
-            <div class="data-row">
-              <span class="label">Endereço:</span>
-              <span class="value">${patient.address}, ${patient.homeNumber}</span>
-            </div>
-            <div class="data-row">
-              <span class="label">Cidade:</span>
-              <span class="value">${patient.city}</span>
-            </div>
-            <div class="data-row">
-              <span class="label">Estado:</span>
-              <span class="value">${patient.state}</span>
-            </div>
-          </div>
-
-          <div class="section">
-            <h3>Informações do Contrato</h3>
-            <div class="data-row">
-              <span class="label">Tipo de Cartão:</span>
-              <span class="value">${patient.cardType === "enterprise" ? "EMPRESA" : "INDIVIDUAL"}</span>
-            </div>
-            <div class="data-row">
-              <span class="label">Número de Cartões:</span>
-              <span class="value">${patient.numberCards}</span>
-            </div>
-           
-            ${
-              patient.seller
-                ? `
-            <div class="data-row">
-              <span class="label">Vendedor Responsável:</span>
-              <span class="value">${patient.seller.name}</span>
-            </div>
-            `
-                : ""
-            }
-            ${
-              patient.expirationDate
-                ? `
-            <div class="data-row">
-              <span class="label">Data de Expiração:</span>
-              <span class="value">${formatDate(new Date(patient.expirationDate))}</span>
-            </div>
-            `
-                : ""
-            }
-          </div>
-
-          ${
-            patient.dependents1 ||
-            patient.dependents2 ||
-            patient.dependents3 ||
-            patient.dependents4 ||
-            patient.dependents5
-              ? `
-          <div class="section">
-            <h3>Dependentes</h3>
-            ${patient.dependents1 ? `<div class="data-row"><span class="label">Dependente 1:</span><span class="value">${patient.dependents1}</span></div>` : ""}
-            ${patient.dependents2 ? `<div class="data-row"><span class="label">Dependente 2:</span><span class="value">${patient.dependents2}</span></div>` : ""}
-            ${patient.dependents3 ? `<div class="data-row"><span class="label">Dependente 3:</span><span class="value">${patient.dependents3}</span></div>` : ""}
-            ${patient.dependents4 ? `<div class="data-row"><span class="label">Dependente 4:</span><span class="value">${patient.dependents4}</span></div>` : ""}
-            ${patient.dependents5 ? `<div class="data-row"><span class="label">Dependente 5:</span><span class="value">${patient.dependents5}</span></div>` : ""}
-          </div>
-          `
-              : ""
-          }
-
-          <div class="section">
-            <h3>Informações do Sistema</h3>
-            <div class="data-row">
-              <span class="label">Data de Cadastro:</span>
-              <span class="value">${formatDate(new Date(patient.createdAt))}</span>
-            </div>
-            <div class="data-row">
-              <span class="label">Última Atualização:</span>
-              <span class="value">${formatDate(new Date(patient.updatedAt ?? ""))}</span>
-            </div>
-          </div>
-
-          <script>
-            window.onload = function() {
-              window.print();
-              window.onafterprint = function() {
-                window.close();
-              };
-            };
-          </script>
-        </body>
-      </html>
-    `;
-
-    printWindow.document.write(printContent);
-    printWindow.document.close();
   };
 
   return (
@@ -364,14 +171,12 @@ const PatientCard = ({ patient }: PatientCardProps) => {
           >
             Ver detalhes
           </Button>
-          <Button
+          <PrintCardComponent
+            patient={patient}
             variant="outline"
-            size="sm"
-            onClick={handlePrint}
+            size="icon"
             className="px-3"
-          >
-            <PrinterIcon className="h-4 w-4" />
-          </Button>
+          />
         </div>
       </CardContent>
 
