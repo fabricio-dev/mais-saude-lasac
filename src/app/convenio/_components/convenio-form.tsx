@@ -93,8 +93,6 @@ interface Clinic {
   name: string;
 }
 
-
-
 const ufs = [
   "PE",
   "CE",
