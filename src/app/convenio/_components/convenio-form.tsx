@@ -235,19 +235,17 @@ export function ConvenioForm() {
         const response = await fetch(
           `/api/public/sellers?clinicId=${clinicId}`,
         );
-        if (response.ok) {
+                if (response.ok) {
           const data = await response.json();
           
-          // Buscar o vendedor com nome "cadastro-externo"
-          const externalSeller = data.find((seller: Seller) => 
-            seller.name.toLowerCase() === "cadastro-externo"
-          );
-          
-          if (externalSeller) {
-            form.setValue("sellerId", externalSeller.id);
+          // A API já filtra por vendedores "cadastro-externo", pegar o primeiro
+          if (data.length > 0) {
+            form.setValue("sellerId", data[0].id);
           } else {
             form.setValue("sellerId", "");
-            toast.error("Vendedor 'cadastro-externo' não encontrado nesta unidade");
+            toast.error(
+              "Vendedor 'cadastro-externo' não encontrado nesta unidade",
+            );
           }
         } else {
           const errorData = await response.json();
@@ -554,8 +552,6 @@ export function ConvenioForm() {
                       </FormItem>
                     )}
                   />
-
-
 
                   <FormField
                     control={form.control}
