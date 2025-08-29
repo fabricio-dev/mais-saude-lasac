@@ -87,12 +87,13 @@ const isValidCPF = (cpf: string): boolean => {
   return digit2 === parseInt(cleanCPF.charAt(10));
 };
 
-// Interfaces para clínicas e vendedores
+// Interface para clínicas
 interface Clinic {
   id: string;
   name: string;
 }
 
+// Interface para vendedores (usado apenas internamente)
 interface Seller {
   id: string;
   name: string;
@@ -133,14 +134,12 @@ export function ConvenioForm() {
   const searchParams = useSearchParams();
   const [checkingCPF, setCheckingCPF] = useState(false);
   const [clinics, setClinics] = useState<Clinic[]>([]);
-  const [sellers, setSellers] = useState<Seller[]>([]);
   const [loadingClinics, setLoadingClinics] = useState(true);
   const [loadingSellers, setLoadingSellers] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
 
-  // IDs padrão ou da URL
+  // ID padrão da URL
   const defaultClinicId = searchParams.get("clinicId") || "";
-  const defaultSellerId = searchParams.get("sellerId") || "";
 
   const form = useForm<z.infer<typeof createPatientSchema>>({
     resolver: zodResolver(createPatientSchema),
@@ -158,7 +157,7 @@ export function ConvenioForm() {
       Enterprise: "",
       numberCards: "1",
       clinicId: defaultClinicId,
-      sellerId: defaultSellerId,
+      sellerId: "",
       observation: "",
       dependents1: "",
       dependents2: "",
@@ -195,7 +194,7 @@ export function ConvenioForm() {
     const fetchClinics = async () => {
       try {
         setLoadingClinics(true);
-        const response = await fetch("/api/clinics");
+        const response = await fetch("/api/admin/clinics");
         if (response.ok) {
           const data = await response.json();
           setClinics(data);
@@ -221,13 +220,13 @@ export function ConvenioForm() {
     fetchClinics();
   }, [defaultClinicId, form]);
 
-  // Carregar vendedores quando a clínica for selecionada
+  // Buscar vendedor "cadastro-externo" quando a clínica for selecionada
   const selectedClinicId = form.watch("clinicId");
 
   useEffect(() => {
-    const fetchSellers = async (clinicId: string) => {
+    const fetchExternalSeller = async (clinicId: string) => {
       if (!clinicId) {
-        setSellers([]);
+        form.setValue("sellerId", "");
         return;
       }
 
@@ -238,17 +237,17 @@ export function ConvenioForm() {
         );
         if (response.ok) {
           const data = await response.json();
-          setSellers(data);
-
-          // Se há um sellerId padrão da URL e pertence à clínica, definir no formulário
-          if (
-            defaultSellerId &&
-            data.some((seller: Seller) => seller.id === defaultSellerId)
-          ) {
-            form.setValue("sellerId", defaultSellerId);
+          
+          // Buscar o vendedor com nome "cadastro-externo"
+          const externalSeller = data.find((seller: Seller) => 
+            seller.name.toLowerCase() === "cadastro-externo"
+          );
+          
+          if (externalSeller) {
+            form.setValue("sellerId", externalSeller.id);
           } else {
-            // Limpar sellerId se mudou de clínica
             form.setValue("sellerId", "");
+            toast.error("Vendedor 'cadastro-externo' não encontrado nesta unidade");
           }
         } else {
           const errorData = await response.json();
@@ -262,8 +261,8 @@ export function ConvenioForm() {
       }
     };
 
-    fetchSellers(selectedClinicId);
-  }, [selectedClinicId, defaultSellerId, form]);
+    fetchExternalSeller(selectedClinicId);
+  }, [selectedClinicId, form]);
 
   return (
     <div className="mx-auto max-w-4xl py-8">
@@ -556,39 +555,7 @@ export function ConvenioForm() {
                     )}
                   />
 
-                  <FormField
-                    control={form.control}
-                    name="sellerId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-emerald-950">
-                          vendedor{" "}
-                          {loadingSellers && (
-                            <Loader2 className="ml-2 inline h-4 w-4 animate-spin" />
-                          )}
-                        </FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value}
-                          disabled={loadingSellers || !selectedClinicId}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione o vendedor" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {sellers.map((seller) => (
-                              <SelectItem key={seller.id} value={seller.id}>
-                                {seller.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+
 
                   <FormField
                     control={form.control}
