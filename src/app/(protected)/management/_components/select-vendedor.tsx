@@ -29,6 +29,7 @@ interface SelectVendedorProps {
   onValueChange: (value: string) => void;
   placeholder?: string;
   clinicId?: string;
+  disabled?: boolean;
 }
 
 const SelectVendedor = ({
@@ -36,6 +37,7 @@ const SelectVendedor = ({
   onValueChange,
   placeholder = "Selecione um vendedor",
   clinicId,
+  disabled = false,
 }: SelectVendedorProps) => {
   const [open, setOpen] = useState(false);
   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
@@ -82,7 +84,7 @@ const SelectVendedor = ({
           role="combobox"
           aria-expanded={open}
           className="w-full justify-between"
-          disabled={loading}
+          disabled={loading || disabled}
         >
           {loading
             ? "Carregando..."

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,7 +19,13 @@ const DistribuicaoVendasChart = ({
   data,
   isLoading = false,
 }: DistribuicaoVendasChartProps) => {
-  if (isLoading) {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (isLoading || !isMounted) {
     return (
       <Card>
         <CardHeader>

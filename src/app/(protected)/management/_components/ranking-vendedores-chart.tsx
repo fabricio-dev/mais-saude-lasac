@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, XAxis, YAxis } from "recharts";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,6 +40,12 @@ const RankingVendedoresChart = ({
   data,
   isLoading = false,
 }: RankingVendedoresChartProps) => {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   // Verificar se há dados válidos
   const hasValidData = data && data.length > 0;
 
@@ -53,7 +60,7 @@ const RankingVendedoresChart = ({
       }))
     : [];
 
-  if (isLoading) {
+  if (isLoading || !isMounted) {
     return (
       <Card>
         <CardHeader>

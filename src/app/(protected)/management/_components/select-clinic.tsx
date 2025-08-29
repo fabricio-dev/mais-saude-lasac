@@ -20,6 +20,7 @@ interface SelectClinicProps {
   onValueChange?: (value: string) => void;
   placeholder?: string;
   onFirstClinicLoaded?: (clinicId: string) => void;
+  disabled?: boolean;
 }
 
 export default function SelectClinic({
@@ -27,6 +28,7 @@ export default function SelectClinic({
   onValueChange,
   placeholder = "Selecione uma unidade",
   onFirstClinicLoaded,
+  disabled = false,
 }: SelectClinicProps) {
   const [clinics, setClinics] = useState<Clinic[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -64,7 +66,11 @@ export default function SelectClinic({
 
   return (
     <div className="w-full">
-      <Select value={value} onValueChange={onValueChange} disabled={isLoading}>
+      <Select
+        value={value}
+        onValueChange={onValueChange}
+        disabled={isLoading || disabled}
+      >
         <SelectTrigger className="w-full">
           <SelectValue
             placeholder={isLoading ? "Carregando..." : placeholder}

@@ -120,6 +120,7 @@ const RelatorioUnidades = ({
   // Função para lidar com mudança de clínica
   const handleClinicChange = (clinicId: string) => {
     setSelectedClinic(clinicId);
+    setIsLoading(true); // Ativar loading imediatamente
 
     try {
       const newSearchParams = new URLSearchParams();
@@ -134,6 +135,7 @@ const RelatorioUnidades = ({
       router.push(`/management?${newSearchParams.toString()}`);
     } catch (error) {
       console.error("Erro ao navegar:", error);
+      setIsLoading(false); // Desativar loading em caso de erro
     }
   };
 
@@ -206,8 +208,11 @@ const RelatorioUnidades = ({
             <SelectClinic
               value={selectedClinic}
               onValueChange={handleClinicChange}
-              placeholder="Selecione uma unidade"
+              placeholder={
+                isLoading ? "Carregando..." : "Selecione uma unidade"
+              }
               onFirstClinicLoaded={handleFirstClinicLoaded}
+              disabled={isLoading}
             />
           </div>
           <div className="w-full sm:w-auto">
@@ -231,8 +236,62 @@ const RelatorioUnidades = ({
 
       {/* Conteúdo do Relatório */}
       <div ref={printRef}>
+        {/* Loader Overlay */}
+        {isLoading && (
+          <div className="relative">
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80 backdrop-blur-sm">
+              <div className="flex flex-col items-center space-y-4">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+                <p className="text-sm font-medium text-gray-600">
+                  Carregando dados da unidade...
+                </p>
+              </div>
+            </div>
+            {/* Skeleton Content */}
+            <div className="space-y-6 print:hidden">
+              {/* Stats Cards Skeleton */}
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {Array.from({ length: 7 }).map((_, i) => (
+                  <div key={i} className="bg-card rounded-lg border p-6">
+                    <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <div className="h-4 w-24 animate-pulse rounded bg-gray-200" />
+                      <div className="h-4 w-4 animate-pulse rounded bg-gray-200" />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-8 w-20 animate-pulse rounded bg-gray-200" />
+                      <div className="h-3 w-32 animate-pulse rounded bg-gray-200" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Chart Skeleton */}
+              <div className="bg-card rounded-lg border">
+                <div className="p-6">
+                  <div className="mb-4 h-6 w-48 animate-pulse rounded bg-gray-200" />
+                  <div className="h-64 w-full animate-pulse rounded bg-gray-200" />
+                </div>
+              </div>
+
+              {/* Pizza Charts Skeleton */}
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                {Array.from({ length: 2 }).map((_, i) => (
+                  <div key={i} className="bg-card rounded-lg border">
+                    <div className="p-6">
+                      <div className="mb-4 h-6 w-32 animate-pulse rounded bg-gray-200" />
+                      <div className="mx-auto h-48 w-48 animate-pulse rounded-full bg-gray-200" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Layout para tela (normal) */}
-        <div className="space-y-6 print:hidden">
+        <div
+          className={`space-y-6 print:hidden ${isLoading ? "opacity-0" : "opacity-100"} transition-opacity duration-300`}
+        >
           {/* Cards de estatísticas - versão web */}
           <div className="print-section">
             <StatsCardsUnidade

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, XAxis, YAxis } from "recharts";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,6 +34,13 @@ const FaturamentoChart = ({
   data,
   isLoading = false,
 }: FaturamentoChartProps) => {
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Garantir que o componente só renderize no cliente após hidratação
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   // Verificar se há dados válidos
   const hasValidData =
     data && data.length > 0 && data.some((item) => item.faturamento > 0);
@@ -48,7 +56,7 @@ const FaturamentoChart = ({
       }))
     : [];
 
-  if (isLoading) {
+  if (isLoading || !isMounted) {
     return (
       <Card>
         <CardHeader>

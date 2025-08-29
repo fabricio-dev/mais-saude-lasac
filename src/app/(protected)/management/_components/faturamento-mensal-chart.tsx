@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -30,7 +31,13 @@ const FaturamentoMensalChart = ({
   vendedorNome,
   isLoading = false,
 }: FaturamentoMensalChartProps) => {
-  if (isLoading) {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (isLoading || !isMounted) {
     return (
       <Card className="h-[500px]">
         <CardHeader>

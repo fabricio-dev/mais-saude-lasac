@@ -39,42 +39,42 @@ export const AdminContent = () => {
     );
   }
 
-  const handleCheckPermission = async () => {
-    try {
-      setIsLoading(true);
-      const result = await authClient.admin.hasPermission({
-        permissions: {
-          user: ["create", "delete"],
-        },
-      });
+  // const handleCheckPermission = async () => {
+  //   try {
+  //     setIsLoading(true);
+  //     const result = await authClient.admin.hasPermission({
+  //       permissions: {
+  //         user: ["create", "delete"],
+  //       },
+  //     });
 
-      toast.success(`Permissões verificadas: ${JSON.stringify(result.data)}`);
-    } catch {
-      toast.error("Erro ao verificar permissões");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  //     toast.success(`Permissões verificadas: ${JSON.stringify(result.data)}`);
+  //   } catch {
+  //     toast.error("Erro ao verificar permissões");
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
-  const handleListUsers = async () => {
-    try {
-      setIsLoading(true);
-      const result = await authClient.admin.listUsers({
-        query: {
-          limit: 10,
-        },
-      });
+  // const handleListUsers = async () => {
+  //   try {
+  //     setIsLoading(true);
+  //     const result = await authClient.admin.listUsers({
+  //       query: {
+  //         limit: 10,
+  //       },
+  //     });
 
-      if (result.data) {
-        toast.success(`Encontrados ${result.data.users.length} usuários`);
-        console.log("Usuários:", result.data.users);
-      }
-    } catch {
-      toast.error("Erro ao listar usuários");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  //     if (result.data) {
+  //       toast.success(`Encontrados ${result.data.users.length} usuários`);
+  //       console.log("Usuários:", result.data.users);
+  //     }
+  //   } catch {
+  //     toast.error("Erro ao listar usuários");
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   const handleChangeUserRole = async () => {
     if (!userEmail) {
@@ -185,7 +185,7 @@ export const AdminContent = () => {
         </CardContent>
       </Card>
 
-      <Card>
+      {/* <Card>
         <CardHeader>
           <CardTitle>Verificar Permissões</CardTitle>
           <CardDescription>
@@ -201,9 +201,9 @@ export const AdminContent = () => {
             {isLoading ? "Verificando..." : "Verificar Minhas Permissões"}
           </Button>
         </CardContent>
-      </Card>
+      </Card> */}
 
-      <Card>
+      {/* <Card>
         <CardHeader>
           <CardTitle>Listar Usuários</CardTitle>
           <CardDescription>
@@ -219,7 +219,7 @@ export const AdminContent = () => {
             {isLoading ? "Carregando..." : "Listar Usuários"}
           </Button>
         </CardContent>
-      </Card>
+      </Card> */}
 
       <Card>
         <CardHeader>

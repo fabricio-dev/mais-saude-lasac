@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,7 +36,14 @@ const ConveniosVencidosRenovadosChart = ({
   data,
   isLoading = false,
 }: ConveniosVencidosRenovadosChartProps) => {
-  if (isLoading) {
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Garantir que o componente só renderize no cliente após hidratação
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (isLoading || !isMounted) {
     return (
       <Card>
         <CardHeader>
