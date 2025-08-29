@@ -19,7 +19,7 @@ export async function GET(request: Request) {
       where: (seller, { eq, and, ilike }) =>
         and(
           eq(seller.clinicId, clinicId),
-          ilike(seller.name, "%Cadastro-externo%"),
+          ilike(seller.name, "%cadastro-externo%"),
         ),
       columns: {
         id: true,

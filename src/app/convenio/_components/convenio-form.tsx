@@ -93,12 +93,7 @@ interface Clinic {
   name: string;
 }
 
-// Interface para vendedores (usado apenas internamente)
-interface Seller {
-  id: string;
-  name: string;
-  clinicId: string;
-}
+
 
 const ufs = [
   "PE",
@@ -135,7 +130,6 @@ export function ConvenioForm() {
   const [checkingCPF, setCheckingCPF] = useState(false);
   const [clinics, setClinics] = useState<Clinic[]>([]);
   const [loadingClinics, setLoadingClinics] = useState(true);
-  const [loadingSellers, setLoadingSellers] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
 
   // ID padrão da URL
@@ -231,20 +225,19 @@ export function ConvenioForm() {
       }
 
       try {
-        setLoadingSellers(true);
         const response = await fetch(
           `/api/public/sellers?clinicId=${clinicId}`,
         );
-                if (response.ok) {
+        if (response.ok) {
           const data = await response.json();
-          
+
           // A API já filtra por vendedores "cadastro-externo", pegar o primeiro
           if (data.length > 0) {
             form.setValue("sellerId", data[0].id);
           } else {
             form.setValue("sellerId", "");
             toast.error(
-              "Vendedor 'cadastro-externo' não encontrado nesta unidade",
+              "Não foi possível realizar o cadastro externo nesta unidade. Por favor, entre em contato com o suporte.",
             );
           }
         } else {
@@ -254,8 +247,6 @@ export function ConvenioForm() {
       } catch (error) {
         console.error("Erro ao carregar vendedores:", error);
         toast.error("Erro ao carregar vendedores");
-      } finally {
-        setLoadingSellers(false);
       }
     };
 
