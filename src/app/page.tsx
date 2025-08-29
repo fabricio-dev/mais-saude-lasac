@@ -1254,7 +1254,7 @@ export default function Home() {
               <Button
                 onClick={gerarCartaoPdf}
                 disabled={loadingCartao}
-                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                className="flex-1 bg-emerald-600 hover:bg-emerald-700"
               >
                 {loadingCartao ? (
                   <>
