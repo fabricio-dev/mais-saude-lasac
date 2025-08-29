@@ -235,7 +235,7 @@ export function ConvenioForm() {
           } else {
             form.setValue("sellerId", "");
             toast.error(
-              "Não foi possível realizar o cadastro externo nesta unidade. Por favor, entre em contato com o suporte.",
+              "Ainda não é possível realizar o cadastro externo nesta unidade. Por favor, entre em contato com o suporte.",
             );
           }
         } else {
@@ -526,7 +526,7 @@ export function ConvenioForm() {
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Selecione a clínica" />
+                              <SelectValue placeholder="Selecione a unidade" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
