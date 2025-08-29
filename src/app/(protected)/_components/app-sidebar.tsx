@@ -192,24 +192,35 @@ export function AppSidebar() {
                         .slice(0, 2)}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex flex-col">
+                  <div className="flex min-w-0 flex-1 flex-col">
                     <div className="flex items-center gap-2">
-                      <p className="tsm">{session.data?.user.name}</p>
+                      <p className="truncate text-sm font-medium">
+                        {session.data?.user.name}
+                      </p>
                       {isAdmin ? (
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge
+                          variant="secondary"
+                          className="flex-shrink-0 text-xs"
+                        >
                           Admin
                         </Badge>
                       ) : isGestor ? (
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge
+                          variant="secondary"
+                          className="flex-shrink-0 text-xs"
+                        >
                           Gestor
                         </Badge>
                       ) : (
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge
+                          variant="secondary"
+                          className="flex-shrink-0 text-xs"
+                        >
                           Vendedor
                         </Badge>
                       )}
                     </div>
-                    <p className="tsm text-muted-foreground">
+                    <p className="text-muted-foreground truncate text-xs">
                       {session.data?.user.email}
                     </p>
                   </div>
