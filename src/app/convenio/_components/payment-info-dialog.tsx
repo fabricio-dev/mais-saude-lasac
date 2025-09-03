@@ -42,7 +42,7 @@ export function PaymentInfoDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className="max-w-md"
-        onInteractOutside={(e) => e.preventDefault()}
+        //onInteractOutside={(e) => e.preventDefault()}
       >
         <DialogHeader>
           <DialogTitle className="text-center text-emerald-900">
@@ -53,7 +53,7 @@ export function PaymentInfoDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-1">
           {/* QR Code PIX */}
           <div className="flex justify-center">
             <Image
@@ -61,34 +61,29 @@ export function PaymentInfoDialog({
               alt="QR Code PIX"
               width={256}
               height={256}
-              className="h-64 w-64"
+              className="h-56 w-56"
             />
           </div>
 
           {/* Chave PIX */}
-          <div className="rounded-lg bg-gray-50 p-4 text-center">
-            <p className="mb-2 text-sm font-medium text-gray-700">
-              Chave PIX (Telefone):
-            </p>
-            <div className="flex items-center justify-center space-x-2">
-              <span className="font-mono text-lg font-bold text-gray-900">
-                87 999252333
-              </span>
+          <div className="rounded-lg bg-gray-50 p-0 text-center">
+            <p className="p-2 text-sm font-medium text-gray-700">
+              Chave PIX (Telefone): 87 999252333
               <Button
                 onClick={handleCopyPixKey}
                 variant="outline"
                 size="sm"
-                className="h-8 w-8 p-0"
+                className="ml-1 h-6 w-6 p-0"
               >
                 📋
               </Button>
-            </div>
+            </p>
           </div>
 
           {/* Instruções */}
-          <div className="space-y-4 text-center">
+          <div className="text-center">
             <p className="text-sm text-gray-600">
-              Após realizar o pagamento, envie o comprovante pelo WhatsApp:
+              Realize o pagamento, envie o comprovante pelo WhatsApp:
             </p>
 
             {/* Botão WhatsApp */}
@@ -101,13 +96,12 @@ export function PaymentInfoDialog({
             </Button>
 
             <p className="text-xs text-gray-500">
-              Após o envio do comprovante, entraremos em contato para confirmar
-              o cadastro.
+              Após o envio do comprovante, agurde a confirmação do cadastro.
             </p>
           </div>
 
           {/* Botão Fechar */}
-          <div className="flex justify-center pt-4">
+          <div className="flex justify-center pt-2">
             <Button
               variant="outline"
               onClick={() => onOpenChange(false)}
