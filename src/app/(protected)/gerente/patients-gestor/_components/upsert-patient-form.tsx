@@ -656,7 +656,14 @@ const UpsertPatientForm = ({
                       field.onChange(value);
                       await simulateLoading(setLoadingSeller);
                     }}
+                    onOpenChange={async (open) => {
+                      if (!open) {
+                        await simulateLoading(setLoadingSeller);
+                        setLoadingSeller(false);
+                      }
+                    }}
                     defaultValue={field.value}
+                    disabled={loadingSeller}
                   >
                     <FormControl>
                       <SelectTrigger>

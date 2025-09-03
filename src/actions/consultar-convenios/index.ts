@@ -8,22 +8,38 @@ export async function consultarPacientes(termo: string) {
     // Remove formatação do CPF (se for CPF)
     const cpfLimpo = termo.replace(/\D/g, "");
 
-    // Consulta no banco usando Drizzle - busca por CPF, nome do titular ou nome dos dependentes
+    // Determina se o termo é um CPF válido (11 dígitos)
+    const isCpfSearch = cpfLimpo.length === 11;
+
+    let whereCondition;
+
+    if (isCpfSearch) {
+      // Busca por CPF: busca exata no campo CPF
+      whereCondition = eq(patientsTable.cpfNumber, cpfLimpo);
+    } else if (termo.trim().length >= 2) {
+      // Busca por nome: busca em todos os campos de nome
+      whereCondition = or(
+        ilike(patientsTable.name, `%${termo.trim()}%`),
+        ilike(patientsTable.dependents1, `%${termo.trim()}%`),
+        ilike(patientsTable.dependents2, `%${termo.trim()}%`),
+        ilike(patientsTable.dependents3, `%${termo.trim()}%`),
+        ilike(patientsTable.dependents4, `%${termo.trim()}%`),
+        ilike(patientsTable.dependents5, `%${termo.trim()}%`),
+        ilike(patientsTable.dependents6, `%${termo.trim()}%`),
+      );
+    } else {
+      // Termo muito curto, retorna array vazio
+      return {
+        success: true,
+        data: [],
+      };
+    }
+
+    // Consulta no banco usando Drizzle
     const pacientesEncontrados = await db
       .select()
       .from(patientsTable)
-      .where(
-        or(
-          eq(patientsTable.cpfNumber, cpfLimpo),
-          ilike(patientsTable.name, `%${termo}%`),
-          ilike(patientsTable.dependents1, `%${termo}%`),
-          ilike(patientsTable.dependents2, `%${termo}%`),
-          ilike(patientsTable.dependents3, `%${termo}%`),
-          ilike(patientsTable.dependents4, `%${termo}%`),
-          ilike(patientsTable.dependents5, `%${termo}%`),
-          ilike(patientsTable.dependents6, `%${termo}%`),
-        ),
-      );
+      .where(whereCondition);
 
     return {
       success: true,

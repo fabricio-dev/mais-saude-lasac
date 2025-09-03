@@ -48,6 +48,7 @@
     "remove": "^0.1.5",
     "sonner": "^2.0.5",
     "tailwind-merge": "^3.3.1",
+    "xlsx": "^0.18.5",
     "zod": "^3.25.67"
   },
   "devDependencies": {
