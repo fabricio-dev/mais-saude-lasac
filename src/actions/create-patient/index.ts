@@ -50,7 +50,7 @@ export const createPatient = actionClient
     // Criar paciente sem vendedor e clínica (será atribuído posteriormente)
     await db.insert(patientsTable).values({
       name,
-      birthDate,
+      birthDate: new Date(birthDate).toISOString().split("T")[0],
       phoneNumber,
       rgNumber,
       cpfNumber: cleanCPF,
