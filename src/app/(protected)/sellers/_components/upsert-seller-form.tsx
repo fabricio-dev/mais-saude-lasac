@@ -151,7 +151,7 @@ const UpsertSellerForm = ({
     });
   };
   return (
-    <DialogContent>
+    <DialogContent className="max-h-[88vh] max-w-4xl overflow-x-hidden overflow-y-auto">
       <DialogHeader>
         <DialogTitle className="text-amber-950">
           {seller ? seller.name : "Adicionar Vendedor"}

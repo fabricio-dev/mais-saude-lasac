@@ -90,10 +90,10 @@ const PatientsSellerPage = async ({
     with: {
       seller: true,
     },
-    orderBy: (patients, { desc, asc }) => [
+    orderBy: (patients, { desc }) => [
       isShowingExpired
-        ? asc(patients.expirationDate)
-        : desc(patients.createdAt),
+        ? desc(patients.expirationDate)
+        : desc(patients.activeAt),
     ],
   });
 
