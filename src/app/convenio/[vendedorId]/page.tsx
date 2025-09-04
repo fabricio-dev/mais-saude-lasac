@@ -194,6 +194,7 @@ export default function ConvenioVendedorPage() {
       dependents4: "",
       dependents5: "",
       dependents6: "",
+      acceptTerms: false,
     },
   });
 
@@ -807,6 +808,40 @@ export default function ConvenioVendedorPage() {
 
                   {/* Observações */}
                   {/* <div></div> */}
+
+                  {/* Termos de Uso */}
+                  <div className="pt-4">
+                    <FormField
+                      control={form.control}
+                      name="acceptTerms"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-y-0 space-x-3">
+                          <FormControl>
+                            <input
+                              type="checkbox"
+                              checked={field.value}
+                              onChange={field.onChange}
+                              className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel className="text-sm text-emerald-950">
+                              Aceito os{" "}
+                              <a
+                                href="/contrato"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-emerald-600 underline hover:text-emerald-800"
+                              >
+                                termos de uso e política de privacidade
+                              </a>
+                            </FormLabel>
+                            <FormMessage />
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
                   {/* Botões de Envio */}
                   <div className="flex flex-col space-y-3 pt-6 sm:flex-row sm:justify-center sm:space-y-0 sm:space-x-4">
