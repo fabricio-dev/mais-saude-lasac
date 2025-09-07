@@ -38,6 +38,7 @@ const SellerCard = ({ seller }: SellerCardProps) => {
 
   const sellerInitials = seller.name
     .split(" ")
+    .slice(0, 2)
     .map((name) => name[0])
     .join("");
 

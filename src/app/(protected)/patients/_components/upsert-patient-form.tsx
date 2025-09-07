@@ -936,7 +936,7 @@ const UpsertPatientForm = ({
               control={form.control}
               name="dependents6"
               render={({ field }) => (
-                <FormItem hidden={true}>
+                <FormItem>
                   <FormLabel className="mt-1 text-amber-950">
                     Dependente 6
                   </FormLabel>
