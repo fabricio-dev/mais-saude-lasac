@@ -12,7 +12,7 @@ import { z } from "zod";
 
 import { createPatient } from "@/actions/create-patient";
 import { createPatientSchema } from "@/actions/create-patient/schema";
-import ContratoDialog from "@/app/(protected)/_components/contrato-dialog";
+import ContratoDialog from "@/app/contrato/_components/contrato-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
