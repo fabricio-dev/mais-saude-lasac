@@ -129,7 +129,7 @@ interface VendedorInfo {
   pixKeyType: string;
 }
 
-const pixEmpresa = "87 999252333";
+const pixEmpresa = "041.347.194-29";
 
 export default function ConvenioVendedorPage() {
   const router = useRouter();
@@ -325,7 +325,7 @@ export default function ConvenioVendedorPage() {
             )}
             <p className="text-white">
               Preencha seus dados para solicitar seu convênio. Ao finalizar seu
-              cadastro, faca o pagamento atraves do PIX e envie o comprovante
+              cadastro, faça o pagamento atraves do PIX e envie o comprovante
               para o vendedor, no numero do whatsapp.
             </p>
           </div>

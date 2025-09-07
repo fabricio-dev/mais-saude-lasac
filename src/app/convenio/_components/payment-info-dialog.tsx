@@ -31,7 +31,7 @@ export function PaymentInfoDialog({
 
   const handleCopyPixKey = async () => {
     try {
-      await navigator.clipboard.writeText("87 999252333");
+      await navigator.clipboard.writeText("041.347.194-29");
       toast.success("Chave PIX copiada!");
     } catch {
       toast.error("Erro ao copiar chave PIX");
@@ -68,7 +68,7 @@ export function PaymentInfoDialog({
           {/* Chave PIX */}
           <div className="rounded-lg bg-gray-50 p-0 text-center">
             <p className="p-2 text-sm font-medium text-gray-700">
-              Chave PIX (Telefone): 87 999252333
+              Chave PIX (CPF/CNPJ): 041.347.194-29
               <Button
                 onClick={handleCopyPixKey}
                 variant="outline"

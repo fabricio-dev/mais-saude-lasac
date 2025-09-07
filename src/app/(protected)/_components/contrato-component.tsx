@@ -174,60 +174,59 @@ export default function ContratoComponent({
         </div>
 
         {/* Dependentes */}
-        <div className="mb-2 rounded border border-gray-400 p-2">
-          <div className="space-y-1 text-xs">
-            <div>
-              <strong>DEPENDENTE 1:</strong>{" "}
-              {patient.dependents1?.toUpperCase() || ""}
+        {(() => {
+          const dependents = [
+            patient.dependents1,
+            patient.dependents2,
+            patient.dependents3,
+            patient.dependents4,
+            patient.dependents5,
+            patient.dependents6,
+          ].filter(Boolean);
+
+          return dependents.length > 0 ? (
+            <div className="mb-2 rounded border border-gray-400 p-2">
+              <div className="space-y-1 text-xs">
+                {dependents.map((dependent, index) => (
+                  <div key={index}>
+                    <strong>DEPENDENTE {index + 1}:</strong>{" "}
+                    {dependent?.toUpperCase()}
+                  </div>
+                ))}
+              </div>
             </div>
-            <div>
-              <strong>DEPENDENTE 2:</strong>{" "}
-              {patient.dependents2?.toUpperCase() || ""}
-            </div>
-            <div>
-              <strong>DEPENDENTE 3:</strong>{" "}
-              {patient.dependents3?.toUpperCase() || ""}
-            </div>
-            <div>
-              <strong>DEPENDENTE 4:</strong>{" "}
-              {patient.dependents4?.toUpperCase() || ""}
-            </div>
-            <div>
-              <strong>DEPENDENTE 5:</strong>{" "}
-              {patient.dependents5?.toUpperCase() || ""}
-            </div>
-          </div>
-        </div>
+          ) : null;
+        })()}
       </div>
 
       {/* Dados pessoais em tabela */}
       <div className="mb-2 rounded border border-gray-400">
         <div className="grid grid-cols-2 text-[10px]">
-          <div className="p-1">
+          <div className="pl-2">
             <strong>DATA DE NASCIMENTO:</strong>{" "}
             {formatDate(new Date(patient.birthDate))}
           </div>
-          <div className="p-1">
+          <div className="pl-2">
             <strong>RG:</strong> {formatRg(patient.rgNumber)}
           </div>
         </div>
         <div className="grid grid-cols-2 text-[10px]">
-          <div className="p-1">
+          <div className="pl-2">
             <strong>TELEFONE:</strong> {formatPhone(patient.phoneNumber)}
           </div>
-          <div className="p-1">
+          <div className="pl-2">
             <strong>CPF:</strong>{" "}
             {patient.cpfNumber ? formatCpf(patient.cpfNumber) : ""}
           </div>
         </div>
-        <div className="p-1 text-[10px]">
+        <div className="pl-2 text-[10px]">
           <strong>ENDEREÇO:</strong> {patient.address.toUpperCase()}
         </div>
         <div className="grid grid-cols-2 text-[10px]">
-          <div className="p-1">
+          <div className="pl-2">
             <strong>BAIRRO:</strong> {patient.homeNumber.toUpperCase()}
           </div>
-          <div className="p-1">
+          <div className="pl-2">
             <strong>CIDADE:</strong> {patient.city.toUpperCase()}{" "}
             {patient.state}
           </div>

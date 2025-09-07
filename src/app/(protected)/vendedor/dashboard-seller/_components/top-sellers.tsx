@@ -21,9 +21,9 @@ export default function TopSellers({
   currentSellerEmail,
 }: TopSellersProps) {
   return (
-    <Card className="mx-auto w-full">
-      <CardContent className="p-6">
-        <div className="mb-6 flex items-center justify-between">
+    <Card className="mx-auto w-full p-2">
+      <CardContent className="p-2">
+        <div className="mb-2 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <UsersIcon className="text-muted-foreground h-6 w-6" />
             <CardTitle className="text-base">Top 7 Vendedores</CardTitle>
@@ -31,7 +31,7 @@ export default function TopSellers({
         </div>
 
         {/* Sellers List */}
-        <div className="space-y-3">
+        <div className="space-y-2">
           {sellers.length === 0 ? (
             <div className="py-8 text-center">
               <p className="text-muted-foreground text-sm">
