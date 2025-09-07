@@ -194,7 +194,7 @@ export const getDashboard = async ({ from, to, session }: Params) => {
       )
       .groupBy(sellersTable.id, clinicsTable.name)
       .orderBy(desc(totalCondition))
-      .limit(10),
+      .limit(7),
     // Top clinicas - reutilizando as mesmas condições SQL globais
     db
       .select({
