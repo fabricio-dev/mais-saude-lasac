@@ -26,7 +26,7 @@ export default function TopSellers({
         <div className="mb-2 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <UsersIcon className="text-muted-foreground h-6 w-6" />
-            <CardTitle className="text-base">Top 7 Vendedores</CardTitle>
+            <CardTitle className="text-base">Top Vendedores</CardTitle>
           </div>
         </div>
 

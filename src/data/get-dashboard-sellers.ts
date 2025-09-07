@@ -192,7 +192,7 @@ export const getDashboardSellers = async ({ from, to, session }: Params) => {
       )
       .groupBy(sellersTable.id, clinicsTable.name)
       .orderBy(desc(totalCondition))
-      .limit(7),
+      .limit(5),
 
     // Pacientes do vendedor logado que estão para expirar
     db.query.patientsTable.findMany({
