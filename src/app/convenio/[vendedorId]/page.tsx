@@ -13,6 +13,7 @@ import { z } from "zod";
 
 import { createPatient } from "@/actions/create-patient";
 import { createPatientSchema } from "@/actions/create-patient/schema";
+import ContratoDialog from "@/app/(protected)/_components/contrato-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -827,14 +828,13 @@ export default function ConvenioVendedorPage() {
                           <div className="space-y-1 leading-none">
                             <FormLabel className="text-sm text-emerald-950">
                               Aceito os{" "}
-                              <a
-                                href="/contrato"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-emerald-600 underline hover:text-emerald-800"
-                              >
-                                termos de uso e política de privacidade
-                              </a>
+                              <ContratoDialog
+                                trigger={
+                                  <button className="text-emerald-600 underline hover:text-emerald-800">
+                                    termos de uso e política de privacidade
+                                  </button>
+                                }
+                              />
                             </FormLabel>
                             <FormMessage />
                           </div>

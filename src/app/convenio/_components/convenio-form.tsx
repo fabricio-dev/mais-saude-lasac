@@ -12,6 +12,7 @@ import { z } from "zod";
 
 import { createPatient } from "@/actions/create-patient";
 import { createPatientSchema } from "@/actions/create-patient/schema";
+import ContratoDialog from "@/app/(protected)/_components/contrato-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -766,27 +767,26 @@ export function ConvenioForm() {
                       privacidade.
                     </p>
                     <div className="mb-3">
-                      <a
-                        href="/contrato"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center text-sm font-medium text-emerald-700 underline hover:text-emerald-900"
-                      >
-                        📋 Visualizar Contrato e Termos de Uso
-                        <svg
-                          className="ml-1 h-3 w-3"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                          />
-                        </svg>
-                      </a>
+                      <ContratoDialog
+                        trigger={
+                          <button className="inline-flex items-center text-sm font-medium text-emerald-700 underline hover:text-emerald-900">
+                            📋 Visualizar Contrato e Termos de Uso
+                            <svg
+                              className="ml-1 h-3 w-3"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                              />
+                            </svg>
+                          </button>
+                        }
+                      />
                     </div>
 
                     <FormField
