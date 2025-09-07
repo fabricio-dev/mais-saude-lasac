@@ -363,7 +363,11 @@ const UpsertPatientForm = ({
         </DialogTitle>
         <DialogDescription className="text-amber-800">
           {patient
-            ? "Edite as informações do paciente"
+            ? `Edite as informações do paciente${
+                patient.updatedAt
+                  ? ` • Última atualização: ${new Date(patient.updatedAt).toLocaleDateString("pt-BR")}`
+                  : ""
+              }`
             : "Adicione um novo paciente ao sistema."}
         </DialogDescription>
       </DialogHeader>
