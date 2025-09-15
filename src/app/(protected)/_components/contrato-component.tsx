@@ -1,5 +1,14 @@
 "use client";
 
+import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
+import { useEffect, useRef } from "react";
+import { useReactToPrint } from "react-to-print";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
 interface Patient {
   id: string;
   name: string;
@@ -27,11 +36,11 @@ interface Patient {
   updatedAt: Date | null;
   sellerId: string | null;
   clinicId: string | null;
+  activeAt: Date | null;
+  reactivatedAt: Date | null;
   seller?: { name: string } | null;
   clinic?: { name: string } | null;
   isActive: boolean;
-  reactivatedAt: Date | null;
-  activeAt: Date | null;
 }
 
 interface ContratoComponentProps {
@@ -39,9 +48,29 @@ interface ContratoComponentProps {
   numeroContrato?: string;
 }
 
+interface PrintableContratoProps {
+  patient: Patient;
+  numeroContrato?: string;
+  onPrintComplete?: () => void;
+}
+
 // Funções de formatação
-const formatDate = (date: Date) => {
-  return new Date(date).toLocaleDateString("pt-BR");
+const formatDate = (date: Date | string) => {
+  if (!date) return "";
+
+  if (date instanceof Date) {
+    // Para Date objects, usar a data UTC (original do banco)
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(date.getUTCDate()).padStart(2, "0");
+    return `${day}/${month}/${year}`;
+  }
+
+  // Para strings, extrair a parte da data
+  const dateStr = date.toString();
+  const dateOnly = dateStr.split("T")[0];
+  const [year, month, day] = dateOnly.split("-");
+  return `${day}/${month}/${year}`;
 };
 
 const formatPhone = (phone: string) => {
@@ -56,6 +85,38 @@ const formatRg = (rg: string) => {
   return rg.replace(/(\d{2})(\d{3})(\d{3})(\d{1})/, "$1.$2.$3-$4");
 };
 
+// Componente wrapper que abre a impressão automaticamente
+export function PrintableContrato({
+  patient,
+  numeroContrato,
+  onPrintComplete,
+}: PrintableContratoProps) {
+  const printRef = useRef<HTMLDivElement>(null);
+
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `Contrato - ${patient.name}`,
+    onAfterPrint: onPrintComplete,
+  });
+
+  useEffect(() => {
+    // Aguardar um pouco para o conteúdo renderizar e depois imprimir
+    const timer = setTimeout(() => {
+      handlePrint();
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [handlePrint]);
+
+  return (
+    <div style={{ position: "absolute", left: "-9999px" }}>
+      <div ref={printRef}>
+        <ContratoComponent patient={patient} numeroContrato={numeroContrato} />
+      </div>
+    </div>
+  );
+}
+
 export default function ContratoComponent({
   patient,
   numeroContrato,
@@ -63,36 +124,32 @@ export default function ContratoComponent({
   return (
     <div className="mx-auto max-w-4xl bg-white p-6 text-sm text-black">
       {/* Cabeçalho */}
-      <div className="mb-6 flex items-start justify-between">
+      <div className="relative mb-2 flex items-start justify-between">
         <div className="flex-1">
-          <div className="mb-2">
-            <span className="text-2xl font-bold text-gray-700">Cartão</span>
-          </div>
-          <div className="mb-1">
-            <span className="text-xl font-bold">+ Saúde</span>
-          </div>
-          <div className="text-sm text-gray-600">Cartão de vantagens</div>
+          <img
+            src="/mais.png"
+            alt="Mais Saúde - Cartão de vantagens"
+            className="h-8 w-auto print:h-4"
+          />
         </div>
 
         <div className="text-right">
-          <div className="mb-2 flex items-center justify-end">
-            <div className="h-20 w-40 print:h-20 print:w-40">
-              <img
-                src="/logo.svg"
-                alt="Logo Lasac"
-                className="h-full w-full object-contain"
-                style={
-                  {
-                    imageRendering: "auto" as const,
-                    maxWidth: "100%",
-                    height: "auto",
-                    filter: "contrast(1.1) saturate(1.1)",
-                  } as React.CSSProperties
-                }
-              />
-            </div>
+          <div className="absolute top-0 right-0">
+            <img
+              src="/lab.svg"
+              alt="Logo Lasac"
+              className="h-20 w-auto object-contain print:h-16"
+              style={
+                {
+                  imageRendering: "auto" as const,
+                  maxWidth: "100%",
+                  height: "50px",
+                  filter: "contrast(1.1) saturate(1.1)",
+                } as React.CSSProperties
+              }
+            />
           </div>
-          <div className="text-sm">
+          <div className="mt-16 text-sm">
             <div className="font-bold">
               NÚMERO: {numeroContrato || "6441.52"}
             </div>
@@ -107,7 +164,10 @@ export default function ContratoComponent({
       </div>
 
       {/* Texto introdutório */}
-      <div className="mb-3 text-xs leading-relaxed">
+      <div
+        className="mb-3 text-justify leading-relaxed"
+        style={{ fontSize: "14px" }}
+      >
         <p>
           Vimos pelo presente termo, formalizar adesão de V. As. junto ao Cartão
           Mais Saúde Lasac a partir da data abaixo citada.
@@ -118,7 +178,10 @@ export default function ContratoComponent({
       </div>
 
       {/* Termos */}
-      <div className="mb-6 text-xs leading-relaxed">
+      <div
+        className="mb-4 text-justify leading-relaxed"
+        style={{ fontSize: "13px" }}
+      >
         <div className="mb-0">
           <strong>1.</strong> Os usuários pagarão uma taxa única de manutenção
           para aquisição do cartão, que terá VALIDADE ANUAL.
@@ -162,14 +225,14 @@ export default function ContratoComponent({
       </div>
 
       {/* Concordância */}
-      <div className="mb-3 text-xs font-bold">
+      <div className="mb-3 text-justify font-bold" style={{ fontSize: "14px" }}>
         DE ACORDO COM TODOS OS TERMOS ACIMA CITADOS, PREENCHO OS DADOS ABAIXO E
         ASSINO:
       </div>
 
       {/* Dados do Titular */}
       <div className="mb-3">
-        <div className="mb-3 text-center text-sm font-bold">
+        <div className="mb-3 font-bold" style={{ fontSize: "14px" }}>
           NOME TITULAR: {patient.name.toUpperCase()}
         </div>
 
@@ -186,7 +249,7 @@ export default function ContratoComponent({
 
           return dependents.length > 0 ? (
             <div className="mb-2 rounded border border-gray-400 p-2">
-              <div className="space-y-1 text-xs">
+              <div className="space-y-1 text-[12px]">
                 {dependents.map((dependent, index) => (
                   <div key={index}>
                     <strong>DEPENDENTE {index + 1}:</strong>{" "}
@@ -200,33 +263,32 @@ export default function ContratoComponent({
       </div>
 
       {/* Dados pessoais em tabela */}
-      <div className="mb-2 rounded border border-gray-400">
+      <div className="rounded border border-gray-400 p-2">
         <div className="grid grid-cols-2 text-[10px]">
-          <div className="pl-2">
-            <strong>DATA DE NASCIMENTO:</strong>{" "}
-            {formatDate(new Date(patient.birthDate))}
+          <div className="pb-1 pl-2">
+            <strong>DATA DE NASCIMENTO:</strong> {formatDate(patient.birthDate)}
           </div>
-          <div className="pl-2">
+          <div className="pb-1 pl-2">
             <strong>RG:</strong> {formatRg(patient.rgNumber)}
           </div>
         </div>
         <div className="grid grid-cols-2 text-[10px]">
-          <div className="pl-2">
+          <div className="pt-1 pb-1 pl-2">
             <strong>TELEFONE:</strong> {formatPhone(patient.phoneNumber)}
           </div>
-          <div className="pl-2">
+          <div className="pt-1 pb-1 pl-2">
             <strong>CPF:</strong>{" "}
             {patient.cpfNumber ? formatCpf(patient.cpfNumber) : ""}
           </div>
         </div>
-        <div className="pl-2 text-[10px]">
+        <div className="pt-1 pb-1 pl-2 text-[10px]">
           <strong>ENDEREÇO:</strong> {patient.address.toUpperCase()}
         </div>
         <div className="grid grid-cols-2 text-[10px]">
-          <div className="pl-2">
+          <div className="pt-1 pb-1 pl-2">
             <strong>BAIRRO:</strong> {patient.homeNumber.toUpperCase()}
           </div>
-          <div className="pl-2">
+          <div className="pt-1 pb-1 pl-2">
             <strong>CIDADE:</strong> {patient.city.toUpperCase()}{" "}
             {patient.state}
           </div>
@@ -234,12 +296,12 @@ export default function ContratoComponent({
       </div>
 
       {/* Dados do contrato */}
-      <div className="mb-2">
+      <div className="mb-2 ml-2">
         <div className="grid grid-cols-2 text-[10px]">
           <div className="p-1">
             <strong>DATA DE VENCIMENTO:</strong>{" "}
             {patient.expirationDate
-              ? formatDate(new Date(patient.expirationDate))
+              ? formatDate(patient.expirationDate)
               : "___/___/______"}
           </div>
           <div className="p-1">
@@ -253,7 +315,14 @@ export default function ContratoComponent({
             {patient.cardType === "enterprise" ? "EMPRESA" : "INDIVIDUAL"}
           </div>
           <div className="p-1">
-            <strong>DATA DO CONTRATO:</strong> {formatDate(new Date())}
+            <strong>DATA DO CONTRATO:</strong>{" "}
+            {formatDate(
+              patient.reactivatedAt
+                ? patient.reactivatedAt
+                : patient.activeAt
+                  ? patient.activeAt
+                  : new Date(),
+            )}
           </div>
         </div>
         <div className="grid grid-cols-2 text-[10px]">
@@ -327,6 +396,10 @@ export default function ContratoComponent({
             max-width: none !important;
             width: auto !important;
             height: auto !important;
+          }
+          img[src="/mais.png"] {
+            height: 50px !important;
+            width: auto !important;
           }
         }
       `}</style>

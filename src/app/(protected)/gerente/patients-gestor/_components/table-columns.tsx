@@ -44,7 +44,6 @@ interface Patient {
 interface TableColumnsProps {
   onActivate: (patientId: string) => void;
   onDelete: (patientId: string) => void;
-  onPrintCard: (patient: Patient) => void;
   onPrintContract: (patient: Patient) => void;
   sellerId: string;
   clinicId: string;
@@ -72,7 +71,6 @@ const isPatientPending = (activeAt: Date | null) => {
 export const patientsTableColumns = ({
   onActivate,
   onDelete,
-  onPrintCard,
   onPrintContract,
   sellerId,
   clinicId,
@@ -199,7 +197,6 @@ export const patientsTableColumns = ({
           isPending={isPending}
           onActivate={onActivate}
           onDelete={onDelete}
-          onPrintCard={onPrintCard}
           onPrintContract={onPrintContract}
           sellerId={sellerId}
           clinicId={clinicId}
