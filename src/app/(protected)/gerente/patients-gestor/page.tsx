@@ -67,12 +67,12 @@ const PatientsGestorPage = async ({
   // Construir as condições de busca - filtrar por clínica do gestor
   const searchTerm = search?.trim();
 
-  let whereCondition = eq(patientsTable.clinicId, gestor.clinicId);
+  let whereCondition;
 
   // Aplicar filtro de vencidos se necessário
   if (isShowingExpired) {
     whereCondition = and(
-      eq(patientsTable.clinicId, gestor.clinicId),
+      //eq(patientsTable.clinicId, gestor.clinicId),
       isNotNull(patientsTable.expirationDate),
       lte(patientsTable.expirationDate, new Date()),
     )!;
@@ -120,12 +120,12 @@ const PatientsGestorPage = async ({
       <PageHeader>
         <PageHeaderContent>
           <PageTitle>
-            {isShowingExpired ? "Pacientes Vencidos" : "Pacientes da Unidade"}
+            {isShowingExpired ? "Convênios Vencidos" : "Convênios "}
           </PageTitle>
           <PageDescription>
             {isShowingExpired
-              ? "Pacientes com data de expiração vencida na sua unidade"
-              : `Gerencie os pacientes da unidade ${gestor.clinic.name}`}
+              ? "Convênios com data de expiração vencida ou pendentes."
+              : `Gerencie os convênios.`}
           </PageDescription>
         </PageHeaderContent>
         <PageActions>

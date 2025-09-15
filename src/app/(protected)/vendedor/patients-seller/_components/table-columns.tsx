@@ -34,6 +34,7 @@ interface Patient {
   sellerId: string | null;
   clinicId: string | null;
   seller?: { name: string } | null;
+  clinic?: { name: string } | null;
   isActive: boolean;
   reactivatedAt: Date | null;
   activeAt: Date | null;
@@ -104,22 +105,19 @@ export const patientsTableColumns = ({
     },
   },
   {
-    accessorKey: "cardType",
-    header: "Tipo de Cartão",
+    accessorKey: "seller.name",
+    header: "Vendedor",
     cell: ({ row }) => {
-      const cardType = row.getValue("cardType") as string;
-      return (
-        <Badge variant="secondary">
-          {cardType === "enterprise" ? "EMPRESA" : "INDIVIDUAL"}
-        </Badge>
-      );
+      const seller = row.original.seller;
+      return <div className="text-sm">{seller?.name || "Sem vendedor"}</div>;
     },
   },
   {
-    accessorKey: "numberCards",
-    header: "Qtd. Cartões",
+    accessorKey: "clinic.name",
+    header: "Unidade",
     cell: ({ row }) => {
-      return <div className="text-sm">{row.getValue("numberCards")}</div>;
+      const clinic = row.original.clinic;
+      return <div className="text-sm">{clinic?.name || "Sem clínica"}</div>;
     },
   },
   {

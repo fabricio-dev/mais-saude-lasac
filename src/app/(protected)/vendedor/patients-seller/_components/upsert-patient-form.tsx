@@ -209,8 +209,8 @@ const UpsertPatientForm = ({
   sellerId,
   clinicId,
 }: UpsertPatientFormProps) => {
-  const [seller, setSeller] = useState<Seller | null>(null);
-  const [clinic, setClinic] = useState<Clinic | null>(null);
+  const [sellers, setSellers] = useState<Seller[]>([]);
+  const [clinics, setClinics] = useState<Clinic[]>([]);
   const [checkingCPF, setCheckingCPF] = useState(false);
   const [loadingState, setLoadingState] = useState(false);
   const [loadingCardType, setLoadingCardType] = useState(false);
@@ -225,6 +225,50 @@ const UpsertPatientForm = ({
     setLoading(true);
     await new Promise((resolve) => setTimeout(resolve, delay));
     setLoading(false);
+  };
+
+  // Função para carregar vendedores de uma clínica específica
+  const loadSellersByClinic = async (
+    clinicId: string,
+    preserveSelection = false,
+  ) => {
+    if (!clinicId) {
+      setSellers([]);
+      return;
+    }
+
+    setLoadingSeller(true);
+    try {
+      const response = await fetch(`/api/admin/sellers?clinicId=${clinicId}`);
+      if (response.ok) {
+        const sellersData = await response.json();
+        setSellers(sellersData || []);
+
+        // Se estamos preservando a seleção e o vendedor atual não está na lista, limpar
+        if (preserveSelection) {
+          const currentSellerId = form.getValues("sellerId");
+          const sellerExists = sellersData.find(
+            (s: Seller) => s.id === currentSellerId,
+          );
+          if (!sellerExists && currentSellerId) {
+            // Vendedor atual não está na nova clínica, mas não limpar automaticamente
+            // Deixar o usuário decidir
+          }
+        }
+      } else {
+        console.error(
+          "Erro na resposta:",
+          response.status,
+          response.statusText,
+        );
+        setSellers([]);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar vendedores:", error);
+      setSellers([]);
+    } finally {
+      setLoadingSeller(false);
+    }
   };
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -246,7 +290,7 @@ const UpsertPatientForm = ({
       cardType: patient?.cardType ?? "personal",
       Enterprise: patient?.Enterprise ?? "",
       numberCards: patient?.numberCards?.toString() ?? "",
-      sellerId: patient?.sellerId ?? sellerId,
+      sellerId: patient?.sellerId ?? sellerId, //esta pegando do form nao mais do vendedor
       clinicId: patient?.clinicId ?? clinicId,
       observation: patient?.observation ?? "",
       dependents1: patient?.dependents1 ?? "",
@@ -302,24 +346,17 @@ const UpsertPatientForm = ({
 
     const loadData = async () => {
       try {
-        // Carregar dados do vendedor específico
-        const sellersResponse = await fetch("/api/sellers");
-        if (sellersResponse.ok) {
-          const sellersData = await sellersResponse.json();
-          const currentSeller = sellersData.find(
-            (s: Seller) => s.id === sellerId,
-          );
-          setSeller(currentSeller || null);
-        }
-
-        // Carregar dados da clínica específica
-        const clinicsResponse = await fetch("/api/clinics");
+        // Carregar todas as clínicas do administrador
+        const clinicsResponse = await fetch("/api/admin/clinics");
         if (clinicsResponse.ok) {
           const clinicsData = await clinicsResponse.json();
-          const currentClinic = clinicsData.find(
-            (c: Clinic) => c.id === clinicId,
-          );
-          setClinic(currentClinic || null);
+          setClinics(clinicsData || []);
+        }
+
+        // Se já temos uma clinicId (editando paciente), carregar vendedores dessa clínica
+        const currentClinicId = patient?.clinicId ?? clinicId;
+        if (currentClinicId) {
+          await loadSellersByClinic(currentClinicId, true); // preservar seleção
         }
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
@@ -560,7 +597,7 @@ const UpsertPatientForm = ({
                         setLoadingState(false);
                       }
                     }}
-                    defaultValue={field.value}
+                    value={field.value}
                     disabled={loadingState}
                   >
                     <FormControl>
@@ -600,7 +637,7 @@ const UpsertPatientForm = ({
                         setLoadingCardType(false);
                       }
                     }}
-                    defaultValue={field.value}
+                    value={field.value}
                     disabled={loadingCardType}
                   >
                     <FormControl>
@@ -651,12 +688,57 @@ const UpsertPatientForm = ({
                 </FormItem>
               )}
             />
-
+            <FormField
+              control={form.control}
+              name="clinicId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-amber-950">
+                    Clínica{" "}
+                    {loadingClinic && (
+                      <Loader2 className="ml-2 inline h-4 w-4 animate-spin" />
+                    )}
+                  </FormLabel>
+                  <Select
+                    onValueChange={async (value) => {
+                      field.onChange(value);
+                      // Limpar vendedor selecionado quando trocar de clínica
+                      form.setValue("sellerId", "");
+                      // Carregar vendedores da nova clínica
+                      await loadSellersByClinic(value);
+                      await simulateLoading(setLoadingClinic);
+                    }}
+                    onOpenChange={async (open) => {
+                      if (!open) {
+                        await simulateLoading(setLoadingClinic);
+                        setLoadingClinic(false);
+                      }
+                    }}
+                    value={field.value}
+                    disabled={loadingClinic}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione uma clínica" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {clinics.map((clinic) => (
+                        <SelectItem key={clinic.id} value={clinic.id}>
+                          {clinic.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="sellerId"
               render={({ field }) => (
-                <FormItem hidden={true}>
+                <FormItem>
                   <FormLabel className="text-amber-950">
                     Vendedor{" "}
                     {loadingSeller && (
@@ -668,52 +750,39 @@ const UpsertPatientForm = ({
                       field.onChange(value);
                       await simulateLoading(setLoadingSeller);
                     }}
-                    defaultValue={field.value}
-                    disabled={true || loadingSeller}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Vendedor" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {seller && (
-                        <SelectItem value={seller.id}>{seller.name}</SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="clinicId"
-              render={({ field }) => (
-                <FormItem hidden={true}>
-                  <FormLabel className="text-amber-950">
-                    Clínica{" "}
-                    {loadingClinic && (
-                      <Loader2 className="ml-2 inline h-4 w-4 animate-spin" />
-                    )}
-                  </FormLabel>
-                  <Select
-                    onValueChange={async (value) => {
-                      field.onChange(value);
-                      await simulateLoading(setLoadingClinic);
+                    onOpenChange={async (open) => {
+                      if (!open) {
+                        await simulateLoading(setLoadingSeller);
+                        setLoadingSeller(false);
+                      }
                     }}
-                    defaultValue={field.value}
-                    disabled={true || loadingClinic}
+                    value={field.value}
+                    disabled={loadingSeller || sellers.length === 0}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Clínica" />
+                        <SelectValue
+                          placeholder={
+                            loadingSeller
+                              ? "Carregando vendedores..."
+                              : sellers.length === 0
+                                ? "Selecione uma clínica primeiro"
+                                : "Selecione um vendedor"
+                          }
+                        />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {clinic && (
-                        <SelectItem value={clinic.id}>{clinic.name}</SelectItem>
+                      {sellers.length === 0 ? (
+                        <div className="text-muted-foreground px-2 py-1.5 text-sm">
+                          Nenhum vendedor encontrado para esta clínica
+                        </div>
+                      ) : (
+                        sellers.map((seller) => (
+                          <SelectItem key={seller.id} value={seller.id}>
+                            {seller.name}
+                          </SelectItem>
+                        ))
                       )}
                     </SelectContent>
                   </Select>

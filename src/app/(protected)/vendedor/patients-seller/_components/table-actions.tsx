@@ -158,10 +158,10 @@ export default function TableActions({
             <AlertDialogTrigger asChild>
               <DropdownMenuItem
                 onSelect={(e) => e.preventDefault()}
-                className={`cursor-pointer ${isPending ? "text-green-600" : "text-muted-foreground"}`}
+                className={`cursor-pointer ${isExpired ? "text-green-600" : "text-muted-foreground"}`}
               >
                 <CheckCircle
-                  className={`mr-2 h-4 w-4 ${isPending ? "text-green-600" : "text-muted-foreground"}`}
+                  className={`mr-2 h-4 w-4 ${isExpired ? "text-green-600" : "text-muted-foreground"}`}
                 />
                 {isPending ? "Ativar" : "Renovar"}
               </DropdownMenuItem>

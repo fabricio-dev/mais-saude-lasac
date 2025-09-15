@@ -60,12 +60,12 @@ const PatientsSellerPage = async ({
   // Construir as condições de busca
   const searchTerm = search?.trim();
 
-  let whereCondition = eq(patientsTable.sellerId, seller.id);
+  let whereCondition;
 
-  // Aplicar filtro de vencidos se necessário
+  // Aplicar filtro de vencidos se necessário se necessario listar somente os vencidos dele descomente o eq
   if (isShowingExpired) {
     whereCondition = and(
-      eq(patientsTable.sellerId, seller.id),
+      //eq(patientsTable.sellerId, seller.id),
       isNotNull(patientsTable.expirationDate),
       lte(patientsTable.expirationDate, new Date()),
     )!;
@@ -84,18 +84,57 @@ const PatientsSellerPage = async ({
     whereCondition = and(whereCondition, searchConditions)!;
   }
 
-  // Buscar pacientes do vendedor
-  const patients = await db.query.patientsTable.findMany({
+  // Buscar todos os pacientes
+  const allPatients = await db.query.patientsTable.findMany({
     where: whereCondition,
     with: {
       seller: true,
+      clinic: true,
     },
     orderBy: (patients, { desc }) => [
-      isShowingExpired
-        ? desc(patients.expirationDate)
-        : desc(patients.activeAt),
+      isShowingExpired ? desc(patients.activeAt) : desc(patients.updatedAt),
     ],
   });
+
+  // Separar por vendedor: logado vs outros
+  const loggedSellerPatients = allPatients.filter(
+    (patient) => patient.sellerId === seller.id,
+  );
+  const otherSellersPatients = allPatients.filter(
+    (patient) => patient.sellerId !== seller.id,
+  );
+
+  // Função para ordenar pacientes vencidos (activeAt nulo primeiro)
+  const sortExpiredPatients = (patients: typeof allPatients) => {
+    if (!isShowingExpired) return patients;
+
+    return patients.sort((a, b) => {
+      // Se um tem activeAt nulo e outro não, nulo vem primeiro
+      if (!a.activeAt && b.activeAt) return -1;
+      if (a.activeAt && !b.activeAt) return 1;
+
+      // Se ambos são nulos ou ambos têm valor, ordenar por updatedAt desc
+      if (!a.activeAt && !b.activeAt) {
+        return (
+          new Date(b.updatedAt || 0).getTime() -
+          new Date(a.updatedAt || 0).getTime()
+        );
+      }
+
+      // Se ambos têm activeAt, ordenar por activeAt desc
+      return (
+        new Date(b.activeAt || 0).getTime() -
+        new Date(a.activeAt || 0).getTime()
+      );
+    });
+  };
+
+  // Aplicar ordenação especial para vencidos e combinar
+  const sortedLoggedPatients = sortExpiredPatients(loggedSellerPatients);
+  const sortedOtherPatients = sortExpiredPatients(otherSellersPatients);
+
+  // Combinar: vendedor logado primeiro, depois outros
+  const patients = [...sortedLoggedPatients, ...sortedOtherPatients];
 
   return (
     <PageContainer>

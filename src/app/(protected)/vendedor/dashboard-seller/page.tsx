@@ -105,7 +105,9 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
             <CardHeader>
               <div className="flex items-center gap-3">
                 <Calendar className="text-sm" />
-                <CardTitle className="text-base">Convenios a vencer</CardTitle>
+                <CardTitle className="text-base">
+                  Seus convênios a vencer
+                </CardTitle>
               </div>
             </CardHeader>
             <CardContent>
