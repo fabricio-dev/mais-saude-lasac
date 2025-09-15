@@ -13,7 +13,6 @@ import {
 } from "@tanstack/react-table";
 import { useAction } from "next-safe-action/hooks";
 import { useState } from "react";
-import { renderToStaticMarkup } from "react-dom/server";
 import { toast } from "sonner";
 
 import { activatePatient } from "@/actions/activate-patient";
@@ -28,7 +27,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import ContratoComponent from "../../_components/contrato-component";
+import { PrintableContrato } from "../../_components/contrato-component";
 import { patientsTableColumns } from "./table-columns";
 
 interface Patient {
@@ -117,6 +116,10 @@ export default function PatientsTable({ patients }: PatientsTableProps) {
   //   return rg.replace(/(\d{2})(\d{3})(\d{3})(\d{1})/, "$1.$2.$3-$4");
   // };
 
+  const [patientToPrint, setPatientToPrint] = useState<
+    (Patient & { clinic?: { name: string } }) | null
+  >(null);
+
   const handlePrintContract = async (patient: Patient) => {
     try {
       // Buscar informações da clínica se o patient tiver clinicId
@@ -135,96 +138,9 @@ export default function PatientsTable({ patients }: PatientsTableProps) {
         }
       }
 
-      // Renderizar o componente React para HTML
-      const componentHTML = renderToStaticMarkup(
-        <ContratoComponent
-          patient={patientWithClinic}
-          numeroContrato={patient.id.slice(-6)}
-        />,
-      );
-
-      const printWindow = window.open(
-        "",
-        "_blank",
-        "width=800,height=600,scrollbars=yes,resizable=yes",
-      );
-      if (!printWindow) return;
-
-      const printContent = `
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <meta charset="utf-8">
-            <title>Contrato - ${patient.name}</title>
-            <script src="https://cdn.tailwindcss.com"></script>
-            <style>
-              @media print {
-                body {
-                  margin: 0;
-                  padding: 0;
-                  -webkit-print-color-adjust: exact;
-                  color-adjust: exact;
-                }
-                .no-print {
-                  display: none !important;
-                }
-              }
-            </style>
-          </head>
-          <body>
-            ${componentHTML}
-            <script>
-              window.onload = function() {
-                setTimeout(() => {
-                  window.print();
-                  
-                  // Fechar janela após impressão ou cancelamento
-                  window.onafterprint = function() {
-                    window.close();
-                  };
-                  
-                  // Detectar se a impressão foi cancelada
-                  const checkPrintStatus = () => {
-                    setTimeout(() => {
-                      // Se a janela ainda estiver aberta após 2 segundos, assume que foi cancelada
-                      if (!window.closed) {
-                        window.close();
-                      }
-                    }, 200);
-                  };
-                  
-                  // Detectar eventos de cancelamento
-                  window.addEventListener('beforeprint', () => {
-                    // Reset do timer quando a impressão inicia
-                  });
-                  
-                  window.addEventListener('afterprint', () => {
-                    window.close();
-                  });
-                  
-                  // Backup: fechar após timeout se não houver interação
-                  checkPrintStatus();
-                  
-                }, 1000);
-              };
-              
-              // Fechar janela se o usuário pressionar ESC
-              document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') {
-                  window.close();
-                }
-              });
-            </script>
-          </body>
-        </html>
-      `;
-
-      printWindow.document.write(printContent);
-      printWindow.document.close();
+      setPatientToPrint(patientWithClinic);
     } catch (error) {
-      console.error("Erro ao renderizar contrato:", error);
-      // Fallback: abrir em nova aba se houver erro
-      alert("Erro ao gerar contrato. Tente novamente.");
+      console.error("Erro ao preparar contrato:", error);
     }
   };
 
@@ -515,6 +431,15 @@ export default function PatientsTable({ patients }: PatientsTableProps) {
           </Button>
         </div>
       </div>
+
+      {/* Componente para impressão de contrato */}
+      {patientToPrint && (
+        <PrintableContrato
+          patient={patientToPrint}
+          numeroContrato={patientToPrint.id.slice(-6)}
+          onPrintComplete={() => setPatientToPrint(null)}
+        />
+      )}
     </div>
   );
 }

@@ -8,6 +8,7 @@ import {
   Trash2,
 } from "lucide-react";
 
+import PrintCardComponent from "@/app/(protected)/_components/print-card-component";
 import UpsertPatientForm from "@/app/(protected)/vendedor/patients-seller/_components/upsert-patient-form";
 import {
   AlertDialog,
@@ -76,7 +77,6 @@ interface TableActionsProps {
   isPending: boolean;
   onActivate: (patientId: string) => void;
   onDelete: (patientId: string) => void;
-  onPrintCard: (patient: Patient) => void;
   onPrintContract: (patient: Patient) => void;
   sellerId: string;
   clinicId: string;
@@ -88,7 +88,6 @@ export default function TableActions({
   isPending,
   onActivate,
   onDelete,
-  onPrintCard,
   onPrintContract,
   sellerId,
   clinicId,
@@ -136,12 +135,19 @@ export default function TableActions({
               Imprimir
             </DropdownMenuSubTrigger>
             <DropdownMenuSubContent>
-              <DropdownMenuItem
-                onClick={() => onPrintCard(patient)}
-                className="cursor-pointer"
-              >
-                <PrinterIcon className="mr-2 h-4 w-4" />
-                Imprimir Cartão
+              <DropdownMenuItem asChild>
+                <div className="cursor-pointer">
+                  <PrintCardComponent
+                    patient={{
+                      ...patient,
+                      birthDate: patient.birthDate.toISOString().split("T")[0],
+                      seller: patient.seller || null,
+                    }}
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto w-full justify-start p-0 font-normal"
+                  />
+                </div>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => onPrintContract(patient)}

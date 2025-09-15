@@ -9,12 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function ContratoPage() {
   const handlePrint = () => {
-    // Abrir janela de impressão sem barra de menu
-    const printWindow = window.open(
-      "",
-      "_blank",
-      "toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=800,height=600",
-    );
+    // Abrir nova guia para impressão
+    const printWindow = window.open("", "_blank");
     if (!printWindow) return;
 
     const contractHTML = `
