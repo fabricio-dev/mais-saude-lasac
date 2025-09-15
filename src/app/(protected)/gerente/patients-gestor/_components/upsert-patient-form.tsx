@@ -703,7 +703,7 @@ const UpsertPatientForm = ({
               control={form.control}
               name="clinicId"
               render={({ field }) => (
-                <FormItem hidden={true}>
+                <FormItem>
                   <FormLabel className="text-amber-950">
                     Clínica{" "}
                     {loadingClinic && (
@@ -716,7 +716,7 @@ const UpsertPatientForm = ({
                       await simulateLoading(setLoadingClinic);
                     }}
                     defaultValue={field.value}
-                    disabled={true || loadingClinic}
+                    disabled={loadingClinic}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -832,7 +832,7 @@ const UpsertPatientForm = ({
               control={form.control}
               name="dependents6"
               render={({ field }) => (
-                <FormItem hidden={true}>
+                <FormItem>
                   <FormLabel className="mt-1 text-amber-950">
                     Dependente 6
                   </FormLabel>
