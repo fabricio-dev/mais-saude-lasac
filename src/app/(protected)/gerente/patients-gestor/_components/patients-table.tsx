@@ -64,23 +64,12 @@ interface Patient {
   activeAt: Date | null;
 }
 
-interface Seller {
-  id: string;
-  name: string;
-  email: string;
-}
-
 interface PatientsTableProps {
   patients: Patient[];
   gestorClinicId: string;
-  sellers: Seller[];
 }
 
-const PatientsTable = ({
-  patients,
-  gestorClinicId,
-  sellers,
-}: PatientsTableProps) => {
+const PatientsTable = ({ patients, gestorClinicId }: PatientsTableProps) => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -473,7 +462,6 @@ const PatientsTable = ({
     onPrintContract: handlePrintContract,
     sellerId: "", // Não é necessário para o gestor
     clinicId: gestorClinicId,
-    sellers: sellers,
   });
 
   const table = useReactTable({

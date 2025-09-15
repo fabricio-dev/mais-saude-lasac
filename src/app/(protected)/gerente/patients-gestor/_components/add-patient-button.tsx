@@ -4,28 +4,16 @@ import { DialogTrigger } from "@radix-ui/react-dialog";
 import { Plus } from "lucide-react";
 import { useState } from "react";
 
+import UpsertPatientForm from "@/app/(protected)/vendedor/patients-seller/_components/upsert-patient-form";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
-
-import UpsertPatientForm from "./upsert-patient-form";
-
-interface Seller {
-  id: string;
-  name: string;
-  email: string;
-}
 
 interface AddPatientButtonProps {
   sellerId: string;
   clinicId: string;
-  sellers: Seller[];
 }
 
-const AddPatientButton = ({
-  sellerId,
-  clinicId,
-  sellers,
-}: AddPatientButtonProps) => {
+const AddPatientButton = ({ sellerId, clinicId }: AddPatientButtonProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -41,7 +29,6 @@ const AddPatientButton = ({
         onSuccess={() => setIsOpen(false)}
         sellerId={sellerId}
         clinicId={clinicId}
-        sellers={sellers}
       />
     </Dialog>
   );

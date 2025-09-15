@@ -68,6 +68,7 @@ export const upsertPatientSchema = z
     sellerId: z.string().uuid({ message: "Vendedor é obrigatório" }),
     clinicId: z.string().uuid({ message: "Clínica é obrigatória" }),
     observation: z.string().optional(),
+    expirationDate: z.string().optional(),
     dependents1: z.string().optional(),
     dependents2: z.string().optional(),
     dependents3: z.string().optional(),

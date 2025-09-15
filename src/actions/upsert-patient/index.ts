@@ -18,16 +18,21 @@ export const upsertPatient = actionClient
       throw new Error("Usuário não encontrado");
     }
 
-    // Calcular a data de expiração como um ano após a data atual (apenas para novos pacientes)
-    const expirationDate = dayjs().add(1, "year").toDate();
+    // Usar a data de vencimento fornecida pelo usuário ou calcular como um ano após a data atual
+    const expirationDate = parsedInput.expirationDate
+      ? dayjs(parsedInput.expirationDate).toDate()
+      : dayjs().add(1, "year").toDate();
 
-    // Se é uma edição (tem ID), não sobrescrever a data de expiração
     if (parsedInput.id) {
+      // Edição - atualizar incluindo a data de vencimento se fornecida
       await db
         .insert(patientsTable)
         .values({
           ...parsedInput,
           birthDate: new Date(parsedInput.birthDate).toISOString(),
+          expirationDate: parsedInput.expirationDate
+            ? dayjs(parsedInput.expirationDate).toDate()
+            : undefined,
           clinicId: parsedInput.clinicId,
         })
         .onConflictDoUpdate({
@@ -35,10 +40,13 @@ export const upsertPatient = actionClient
           set: {
             ...parsedInput,
             birthDate: new Date(parsedInput.birthDate).toISOString(),
+            expirationDate: parsedInput.expirationDate
+              ? dayjs(parsedInput.expirationDate).toDate()
+              : undefined,
           },
         });
     } else {
-      // Se é uma criação (sem ID), definir a data de expiração
+      // Criação - definir a data de expiração
       await db.insert(patientsTable).values({
         ...parsedInput,
         birthDate: new Date(parsedInput.birthDate).toISOString(),

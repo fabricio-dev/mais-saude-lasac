@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import dayjs from "dayjs";
 import { Check, ChevronDown, Loader2 } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
 import { useEffect, useState } from "react";
@@ -147,6 +148,7 @@ const formSchema = z
     sellerId: z.string().uuid({ message: "Vendedor é obrigatório" }),
     clinicId: z.string().uuid({ message: "Clínica é obrigatória" }),
     observation: z.string().optional(),
+    expirationDate: z.string().optional(),
     dependents1: z.string().optional(),
     dependents2: z.string().optional(),
     dependents3: z.string().optional(),
@@ -252,6 +254,9 @@ const UpsertPatientForm = ({
       sellerId: patient?.sellerId ?? "",
       clinicId: patient?.clinicId ?? "", // mudei para o id para testar
       observation: patient?.observation ?? "",
+      expirationDate: patient?.expirationDate
+        ? dayjs(patient.expirationDate).format("YYYY-MM-DD")
+        : "",
       dependents1: patient?.dependents1 ?? "",
       dependents2: patient?.dependents2 ?? "",
       dependents3: patient?.dependents3 ?? "",
@@ -283,6 +288,9 @@ const UpsertPatientForm = ({
         sellerId: patient?.sellerId ?? "",
         clinicId: patient?.clinicId ?? "",
         observation: patient?.observation ?? "",
+        expirationDate: patient?.expirationDate
+          ? dayjs(patient.expirationDate).format("YYYY-MM-DD")
+          : "",
         dependents1: patient?.dependents1 ?? "",
         dependents2: patient?.dependents2 ?? "",
         dependents3: patient?.dependents3 ?? "",
@@ -375,6 +383,7 @@ const UpsertPatientForm = ({
       clinicId: values.clinicId, // mudei para o id para testar
       Enterprise: values.Enterprise,
       observation: values.observation,
+      expirationDate: values.expirationDate,
     });
   };
 
@@ -673,6 +682,22 @@ const UpsertPatientForm = ({
                   </FormLabel>
                   <FormControl>
                     <Input type="number" min="1" placeholder="1" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="expirationDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-amber-950">
+                    Data de Vencimento
+                  </FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -1,6 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import dayjs from "dayjs";
 
 import { Badge } from "@/components/ui/badge";
 
@@ -51,7 +52,7 @@ interface TableColumnsProps {
 
 // Funções de formatação
 const formatDate = (date: Date) => {
-  return new Date(date).toLocaleDateString("pt-BR");
+  return dayjs(date).format("DD/MM/YYYY");
 };
 
 const formatPhone = (phone: string) => {

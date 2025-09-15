@@ -1,6 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import dayjs from "dayjs";
 
 import { Badge } from "@/components/ui/badge";
 
@@ -34,6 +35,7 @@ interface Patient {
   sellerId: string | null;
   clinicId: string | null;
   seller?: { name: string } | null;
+  clinic?: { name: string } | null;
   isActive: boolean;
   reactivatedAt: Date | null;
   activeAt: Date | null;
@@ -48,7 +50,7 @@ interface TableColumnsProps {
 
 // Funções de formatação
 const formatDate = (date: Date) => {
-  return new Date(date).toLocaleDateString("pt-BR");
+  return dayjs(date).format("DD/MM/YYYY");
 };
 
 const formatPhone = (phone: string) => {
@@ -97,6 +99,18 @@ export const patientsTableColumns = ({
     cell: ({ row }) => {
       const seller = row.original.seller;
       return <div className="text-sm">{seller?.name || "Não atribuído"}</div>;
+    },
+  },
+  {
+    accessorKey: "clinic",
+    header: "Unidade",
+    cell: ({ row }) => {
+      const clinic = row.original.clinic;
+      return (
+        <div className="text-sm">
+          {clinic?.name || <span className="text-muted-foreground">-</span>}
+        </div>
+      );
     },
   },
   {
@@ -207,7 +221,18 @@ export const patientsTableColumnsSimple: ColumnDef<Patient>[] = [
       return <div className="text-sm">{seller?.name || "Não atribuído"}</div>;
     },
   },
-
+  {
+    accessorKey: "clinic",
+    header: "Unidade",
+    cell: ({ row }) => {
+      const clinic = row.original.clinic;
+      return (
+        <div className="text-sm">
+          {clinic?.name || <span className="text-muted-foreground">-</span>}
+        </div>
+      );
+    },
+  },
   {
     accessorKey: "expirationDate",
     header: "Data de Expiração",

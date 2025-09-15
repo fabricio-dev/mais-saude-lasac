@@ -103,11 +103,10 @@ const PatientsPage = async ({ searchParams }: PatientsPageProps) => {
     where: whereCondition,
     with: {
       seller: true,
+      clinic: true,
     },
     orderBy: (patients, { desc }) => [
-      isShowingExpired
-        ? desc(patients.expirationDate)
-        : desc(patients.activeAt),
+      isShowingExpired ? desc(patients.activeAt) : desc(patients.updatedAt),
     ],
   });
 

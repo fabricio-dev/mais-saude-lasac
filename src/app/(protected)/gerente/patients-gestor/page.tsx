@@ -91,29 +91,57 @@ const PatientsGestorPage = async ({
     whereCondition = and(whereCondition, searchConditions)!;
   }
 
-  // Buscar pacientes da clínica do gestor
-  const patients = await db.query.patientsTable.findMany({
+  // Buscar todos os pacientes
+  const allPatients = await db.query.patientsTable.findMany({
     where: whereCondition,
     with: {
       seller: true,
+      clinic: true,
     },
     orderBy: (patients, { desc }) => [
-      isShowingExpired
-        ? desc(patients.expirationDate)
-        : desc(patients.activeAt),
+      isShowingExpired ? desc(patients.activeAt) : desc(patients.updatedAt),
     ],
   });
 
-  // Buscar vendedores da clínica do gestor
-  const sellers = await db.query.sellersTable.findMany({
-    where: eq(sellersTable.clinicId, gestor.clinicId),
-    columns: {
-      id: true,
-      name: true,
-      email: true,
-    },
-    orderBy: (sellers, { asc }) => [asc(sellers.name)],
-  });
+  // Separar por clínica: clínica do gestor primeiro, depois outras
+  const gestorClinicPatients = allPatients.filter(
+    (patient) => patient.clinicId === gestor.clinicId,
+  );
+  const otherClinicsPatients = allPatients.filter(
+    (patient) => patient.clinicId !== gestor.clinicId,
+  );
+
+  // Função para ordenar pacientes vencidos (activeAt nulo primeiro)
+  const sortExpiredPatients = (patients: typeof allPatients) => {
+    if (!isShowingExpired) return patients;
+
+    return patients.sort((a, b) => {
+      // Se um tem activeAt nulo e outro não, nulo vem primeiro
+      if (!a.activeAt && b.activeAt) return -1;
+      if (a.activeAt && !b.activeAt) return 1;
+
+      // Se ambos são nulos ou ambos têm valor, ordenar por updatedAt desc
+      if (!a.activeAt && !b.activeAt) {
+        return (
+          new Date(b.updatedAt || 0).getTime() -
+          new Date(a.updatedAt || 0).getTime()
+        );
+      }
+
+      // Se ambos têm activeAt, ordenar por activeAt desc
+      return (
+        new Date(b.activeAt || 0).getTime() -
+        new Date(a.activeAt || 0).getTime()
+      );
+    });
+  };
+
+  // Aplicar ordenação especial para vencidos e combinar
+  const sortedGestorPatients = sortExpiredPatients(gestorClinicPatients);
+  const sortedOtherPatients = sortExpiredPatients(otherClinicsPatients);
+
+  // Combinar: clínica do gestor primeiro, depois outras
+  const patients = [...sortedGestorPatients, ...sortedOtherPatients];
 
   return (
     <PageContainer>
@@ -135,7 +163,6 @@ const PatientsGestorPage = async ({
             <AddPatientButton
               sellerId={gestor.id}
               clinicId={gestor.clinicId!}
-              sellers={sellers}
             />
           </div>
         </PageActions>
@@ -155,7 +182,6 @@ const PatientsGestorPage = async ({
                 birthDate: new Date(patient.birthDate),
               }))}
               gestorClinicId={gestor.clinicId!}
-              sellers={sellers}
             />
           </div>
         </div>

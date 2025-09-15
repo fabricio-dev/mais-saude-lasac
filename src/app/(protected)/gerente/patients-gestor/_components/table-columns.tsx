@@ -1,6 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import dayjs from "dayjs";
 
 import { Badge } from "@/components/ui/badge";
 
@@ -34,15 +35,10 @@ interface Patient {
   sellerId: string | null;
   clinicId: string | null;
   seller?: { name: string } | null;
+  clinic?: { name: string } | null;
   isActive: boolean;
   reactivatedAt: Date | null;
   activeAt: Date | null;
-}
-
-interface Seller {
-  id: string;
-  name: string;
-  email: string;
 }
 
 interface TableColumnsProps {
@@ -52,12 +48,11 @@ interface TableColumnsProps {
   onPrintContract: (patient: Patient) => void;
   sellerId: string;
   clinicId: string;
-  sellers: Seller[];
 }
 
 // Funções de formatação
 const formatDate = (date: Date) => {
-  return new Date(date).toLocaleDateString("pt-BR");
+  return dayjs(date).format("DD/MM/YYYY");
 };
 
 const formatPhone = (phone: string) => {
@@ -81,7 +76,6 @@ export const patientsTableColumns = ({
   onPrintContract,
   sellerId,
   clinicId,
-  sellers,
 }: TableColumnsProps): ColumnDef<Patient>[] => [
   {
     id: "spacer",
@@ -136,10 +130,15 @@ export const patientsTableColumns = ({
     },
   },
   {
-    accessorKey: "numberCards",
-    header: "Qtd. Cartões",
+    accessorKey: "clinic",
+    header: "Unidade",
     cell: ({ row }) => {
-      return <div className="text-sm">{row.getValue("numberCards")}</div>;
+      const clinic = row.original.clinic;
+      return (
+        <div className="text-sm">
+          {clinic?.name || <span className="text-muted-foreground">-</span>}
+        </div>
+      );
     },
   },
   {
@@ -204,7 +203,6 @@ export const patientsTableColumns = ({
           onPrintContract={onPrintContract}
           sellerId={sellerId}
           clinicId={clinicId}
-          sellers={sellers}
         />
       );
     },

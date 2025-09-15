@@ -49,9 +49,25 @@ export const activatePatient = actionClient
       if (!patient.clinicId || !clinicIds.includes(patient.clinicId)) {
         throw new Error("Você não tem permissão para ativar este paciente");
       }
+    } else if (session.user.role === "gestor") {
+      // Para gestores: verificar se o paciente pertence à clínica do gestor
+      const gestor = await db
+        .select()
+        .from(sellersTable)
+        .where(eq(sellersTable.email, session.user.email))
+        .limit(1);
+
+      if (!gestor[0]) {
+        throw new Error("Gestor não encontrado");
+      }
+
+      if (!patient.clinicId || patient.clinicId !== gestor[0].clinicId) {
+        throw new Error(
+          "Você não tem permissão para ativar este paciente - ele pertence a outra unidade",
+        );
+      }
     } else {
-      // como o gerente vai ser um vendedor, ele vai poder ativar o convenio de qualquer paciente da clinica  ver se esse if suporta ele
-      // Para vendedores (role "user"): verificar se o paciente pertence à clínica do vendedor
+      // Para vendedores (role "user"): verificar se o paciente pertence ao vendedor
       const seller = await db
         .select()
         .from(sellersTable)
@@ -68,7 +84,7 @@ export const activatePatient = actionClient
         patient.sellerId !== seller[0].id
       ) {
         throw new Error(
-          "Você não tem permissão para ativar este paciente ele pertence a outra unidade ou a outro vendedor",
+          "Você precisa editar o vendedor do convênio para depois ativá-lo",
         );
       }
     }
