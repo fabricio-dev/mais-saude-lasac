@@ -5,8 +5,6 @@ import { Manrope } from "next/font/google";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Toaster } from "sonner";
 
-import { LegacySupportScript } from "@/components/legacy-support-script";
-
 const manrope = Manrope({
   variable: "--font-manrope",
   subsets: ["latin"],
@@ -25,9 +23,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <head>
-        <LegacySupportScript />
-      </head>
       <body className={`${manrope.variable} antialiased`}>
         <NuqsAdapter>{children}</NuqsAdapter>
 

@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { initLegacySupport, isLegacyBrowser } from "@/lib/legacy-polyfills";
 
 // Interface para os dados do paciente retornados do banco
 interface PacienteDb {
@@ -140,18 +139,12 @@ interface Convenio {
   dependentes?: string[];
 }
 
-/**
- * Página principal com suporte completo para navegadores legados
- * Inclui fallbacks CSS inline para compatibilidade com IE11, Chrome <60, Firefox <55, Safari <12
- * Detecta automaticamente navegadores antigos e aplica estilos apropriados
- */
 export default function Home() {
   const [cpf, setCpf] = useState("");
   const [loading, setLoading] = useState(false);
   const [convenios, setConvenios] = useState<Convenio[]>([]);
   const [semResultados, setSemResultados] = useState(false);
   const [consentimento, setConsentimento] = useState(false);
-  const [isLegacy, setIsLegacy] = useState(false);
 
   const [flippedCards, setFlippedCards] = useState<Set<number>>(new Set());
   const [errors, setErrors] = useState<
@@ -167,21 +160,6 @@ export default function Home() {
     cpf?: string;
     consentimento?: string;
   }>({});
-
-  // Inicializar suporte legado
-  useEffect(() => {
-    const legacy = isLegacyBrowser();
-    setIsLegacy(legacy);
-
-    if (legacy) {
-      initLegacySupport();
-      // Adicionar classe CSS para navegadores legados
-      document.documentElement.classList.add("legacy-browser");
-      console.log(
-        "Navegador legado detectado. Aplicando fallbacks de compatibilidade.",
-      );
-    }
-  }, []);
 
   // Função auxiliar para verificar se convênio está ativo
   const isConvenioAtivo = (
@@ -755,61 +733,14 @@ export default function Home() {
   };
 
   return (
-    <div
-      className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-100 to-purple-200"
-      style={
-        isLegacy
-          ? {
-              minHeight: "100vh",
-              background:
-                "linear-gradient(135deg, #eff6ff 0%, #e0e7ff 50%, #f3e8ff 100%)",
-              fontFamily:
-                '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-            }
-          : {}
-      }
-    >
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-100 to-purple-200">
       {/* Header com botões */}
-      <header
-        className="absolute top-0 right-0 p-6 pr-1"
-        style={
-          isLegacy
-            ? {
-                position: "absolute",
-                top: "0",
-                right: "0",
-                padding: "24px 4px 24px 24px",
-              }
-            : {}
-        }
-      >
-        <div
-          className="flex gap-3"
-          style={
-            isLegacy
-              ? {
-                  display: "flex",
-                  gap: "12px",
-                }
-              : {}
-          }
-        >
+      <header className="absolute top-0 right-0 p-6 pr-1">
+        <div className="flex gap-3">
           <Link href="/convenio">
             <Button
               variant="outline"
               className="bg-emerald-600/90 text-white backdrop-blur-sm hover:bg-emerald-700/90"
-              style={
-                isLegacy
-                  ? {
-                      backgroundColor: "#059669",
-                      color: "white",
-                      border: "1px solid #047857",
-                      borderRadius: "6px",
-                      padding: "8px 16px",
-                      textDecoration: "none",
-                    }
-                  : {}
-              }
             >
               Seja Conveniado
             </Button>
@@ -819,20 +750,6 @@ export default function Home() {
             variant="outline"
             className="bg-emerald-600/30 text-white backdrop-blur-sm hover:bg-emerald-700/90"
             onClick={abrirDialogoCartao}
-            style={
-              isLegacy
-                ? {
-                    backgroundColor: "rgba(5, 150, 105, 0.5)",
-                    color: "white",
-                    border: "1px solid #047857",
-                    borderRadius: "6px",
-                    padding: "8px 16px",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                  }
-                : {}
-            }
           >
             <CreditCard className="h-4 w-4" />
             Meu Cartão
@@ -842,18 +759,6 @@ export default function Home() {
             <Button
               variant="outline"
               className="bg-white/80 backdrop-blur-sm hover:bg-white/90"
-              style={
-                isLegacy
-                  ? {
-                      backgroundColor: "rgba(255, 255, 255, 0.9)",
-                      color: "#374151",
-                      border: "1px solid #d1d5db",
-                      borderRadius: "6px",
-                      padding: "8px 16px",
-                      textDecoration: "none",
-                    }
-                  : {}
-              }
             >
               Entrar
             </Button>
@@ -862,28 +767,8 @@ export default function Home() {
       </header>
 
       {/* Seção principal */}
-      <div
-        className="bg-gradient-to-r from-indigo-600 to-emerald-500 px-4 py-12"
-        style={
-          isLegacy
-            ? {
-                background: "linear-gradient(90deg, #4f46e5 0%, #059669 100%)",
-                padding: "48px 16px",
-              }
-            : {}
-        }
-      >
-        <div
-          className="mx-auto max-w-4xl"
-          style={
-            isLegacy
-              ? {
-                  margin: "0 auto",
-                  maxWidth: "896px",
-                }
-              : {}
-          }
-        >
+      <div className="bg-gradient-to-r from-indigo-600 to-emerald-500 px-4 py-12">
+        <div className="mx-auto max-w-4xl">
           <motion.div
             initial={{ opacity: 0, y: -30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -915,29 +800,8 @@ export default function Home() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <Card
-              className="shadow-xl"
-              style={
-                isLegacy
-                  ? {
-                      backgroundColor: "white",
-                      borderRadius: "12px",
-                      border: "1px solid #e5e7eb",
-                      boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-                    }
-                  : {}
-              }
-            >
-              <CardContent
-                className="p-6"
-                style={
-                  isLegacy
-                    ? {
-                        padding: "24px",
-                      }
-                    : {}
-                }
-              >
+            <Card className="shadow-xl">
+              <CardContent className="p-6">
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div>
                     <Label
@@ -956,21 +820,6 @@ export default function Home() {
                         onChange={handleCpfChange}
                         className={`pr-10 ${errors.cpf ? "border-red-500" : ""}`}
                         maxLength={60}
-                        style={
-                          isLegacy
-                            ? {
-                                paddingRight: "40px",
-                                border: errors.cpf
-                                  ? "1px solid #ef4444"
-                                  : "1px solid #d1d5db",
-                                borderRadius: "6px",
-                                padding: "8px 40px 8px 12px",
-                                fontSize: "14px",
-                                width: "100%",
-                                boxSizing: "border-box",
-                              }
-                            : {}
-                        }
                       />
                       <div className="absolute inset-y-0 right-0 flex items-center pr-3">
                         <IdCard className="h-4 w-4 text-gray-400" />
@@ -1011,25 +860,6 @@ export default function Home() {
                     type="submit"
                     disabled={loading}
                     className="w-full bg-indigo-600 hover:bg-indigo-700"
-                    style={
-                      isLegacy
-                        ? {
-                            width: "100%",
-                            backgroundColor: loading ? "#94a3b8" : "#4f46e5",
-                            color: "white",
-                            border: "none",
-                            borderRadius: "6px",
-                            padding: "12px 16px",
-                            fontSize: "14px",
-                            fontWeight: "500",
-                            cursor: loading ? "not-allowed" : "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: "8px",
-                          }
-                        : {}
-                    }
                   >
                     <Search className="mr-2 h-4 w-4" />
                     {loading ? "Consultando..." : "Consultar Benefícios"}
@@ -1046,16 +876,7 @@ export default function Home() {
                     <h2 className="mb-4 text-xl font-semibold text-gray-800">
                       Convênios encontrados
                     </h2>
-                    <div
-                      className="grid grid-cols-1 gap-8 lg:grid-cols-2"
-                      style={
-                        isLegacy
-                          ? {
-                              display: "block",
-                            }
-                          : {}
-                      }
-                    >
+                    <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
                       {convenios.map((conv, i) => (
                         <motion.div
                           key={i}
@@ -1063,19 +884,7 @@ export default function Home() {
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.4, delay: i * 0.1 }}
                           className="group relative mx-auto aspect-[1.586/1] w-full max-w-lg cursor-pointer transition-transform active:scale-95 md:active:scale-100"
-                          style={
-                            isLegacy
-                              ? {
-                                  position: "relative",
-                                  margin: "0 auto 32px auto",
-                                  width: "100%",
-                                  maxWidth: "512px",
-                                  cursor: "pointer",
-                                  aspectRatio: "1.586/1",
-                                  height: "auto",
-                                }
-                              : { perspective: "1000px" }
-                          }
+                          style={{ perspective: "1000px" }}
                           onClick={() => handleCardClick(i)}
                         >
                           <div
@@ -1096,36 +905,15 @@ export default function Home() {
                                   ? "hidden md:block"
                                   : "block"
                               }`}
-                              style={
-                                isLegacy
-                                  ? {
-                                      position: "absolute",
-                                      top: "0",
-                                      left: "0",
-                                      right: "0",
-                                      bottom: "0",
-                                      borderRadius: "12px",
-                                      boxShadow:
-                                        "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
-                                      backgroundImage: `url('/logo03.svg')`,
-                                      backgroundPosition: "center",
-                                      backgroundRepeat: "no-repeat",
-                                      backgroundSize: "cover",
-                                      backgroundColor: "#f8fafc",
-                                      display: flippedCards.has(i)
-                                        ? "none"
-                                        : "block",
-                                    }
-                                  : {
-                                      backfaceVisibility: "hidden",
-                                      WebkitBackfaceVisibility: "hidden",
-                                      backgroundImage: `url('/logo03.svg')`,
-                                      backgroundPosition: "center",
-                                      backgroundRepeat: "no-repeat",
-                                      backgroundSize: "cover",
-                                      backgroundColor: "#f8fafc",
-                                    }
-                              }
+                              style={{
+                                backfaceVisibility: "hidden",
+                                WebkitBackfaceVisibility: "hidden",
+                                backgroundImage: `url('/logo03.svg')`,
+                                backgroundPosition: "center",
+                                backgroundRepeat: "no-repeat",
+                                backgroundSize: "cover",
+                                backgroundColor: "#f8fafc",
+                              }}
                             >
                               {/* Overlay para controlar a transparência do logo */}
                               <div className="absolute inset-0 rounded-xl border border-gray-200 bg-white/90"></div>
@@ -1174,30 +962,11 @@ export default function Home() {
                                   ? "block"
                                   : "hidden md:block"
                               }`}
-                              style={
-                                isLegacy
-                                  ? {
-                                      position: "absolute",
-                                      top: "0",
-                                      left: "0",
-                                      right: "0",
-                                      bottom: "0",
-                                      borderRadius: "12px",
-                                      border: "1px solid #9ca3af",
-                                      backgroundColor: "white",
-                                      boxShadow:
-                                        "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
-                                      padding: "24px",
-                                      display: flippedCards.has(i)
-                                        ? "block"
-                                        : "none",
-                                    }
-                                  : {
-                                      backfaceVisibility: "hidden",
-                                      WebkitBackfaceVisibility: "hidden",
-                                      transform: "rotateY(180deg)",
-                                    }
-                              }
+                              style={{
+                                backfaceVisibility: "hidden",
+                                WebkitBackfaceVisibility: "hidden",
+                                transform: "rotateY(180deg)",
+                              }}
                             >
                               <div className="flex h-full flex-col justify-between">
                                 <div>
@@ -1289,18 +1058,7 @@ export default function Home() {
       </div>
 
       {/* Seção "Como funciona" */}
-      <div
-        className="mx-auto max-w-4xl px-4 py-12"
-        style={
-          isLegacy
-            ? {
-                margin: "0 auto",
-                maxWidth: "896px",
-                padding: "48px 16px",
-              }
-            : {}
-        }
-      >
+      <div className="mx-auto max-w-4xl px-4 py-12">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -1316,45 +1074,14 @@ export default function Home() {
           </p>
         </motion.div>
 
-        <div
-          className="grid gap-8 md:grid-cols-3"
-          style={
-            isLegacy
-              ? {
-                  display: "block",
-                }
-              : {}
-          }
-        >
+        <div className="grid gap-8 md:grid-cols-3">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.5 }}
             className="rounded-lg bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
-            style={
-              isLegacy
-                ? {
-                    borderRadius: "8px",
-                    backgroundColor: "white",
-                    padding: "24px",
-                    boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
-                    marginBottom: "32px",
-                  }
-                : {}
-            }
           >
-            <div
-              className="mb-4 text-2xl text-indigo-600"
-              style={
-                isLegacy
-                  ? {
-                      marginBottom: "16px",
-                      fontSize: "24px",
-                      color: "#4f46e5",
-                    }
-                  : {}
-              }
-            >
+            <div className="mb-4 text-2xl text-indigo-600">
               <IdCard className="h-8 w-8" />
             </div>
             <h3 className="mb-2 font-semibold text-gray-800">
@@ -1371,30 +1098,8 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.6 }}
             className="rounded-lg bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
-            style={
-              isLegacy
-                ? {
-                    borderRadius: "8px",
-                    backgroundColor: "white",
-                    padding: "24px",
-                    boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
-                    marginBottom: "32px",
-                  }
-                : {}
-            }
           >
-            <div
-              className="mb-4 text-2xl text-indigo-600"
-              style={
-                isLegacy
-                  ? {
-                      marginBottom: "16px",
-                      fontSize: "24px",
-                      color: "#4f46e5",
-                    }
-                  : {}
-              }
-            >
+            <div className="mb-4 text-2xl text-indigo-600">
               <Search className="h-8 w-8" />
             </div>
             <h3 className="mb-2 font-semibold text-gray-800">
@@ -1410,30 +1115,8 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.7 }}
             className="rounded-lg bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
-            style={
-              isLegacy
-                ? {
-                    borderRadius: "8px",
-                    backgroundColor: "white",
-                    padding: "24px",
-                    boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
-                    marginBottom: "32px",
-                  }
-                : {}
-            }
           >
-            <div
-              className="mb-4 text-2xl text-indigo-600"
-              style={
-                isLegacy
-                  ? {
-                      marginBottom: "16px",
-                      fontSize: "24px",
-                      color: "#4f46e5",
-                    }
-                  : {}
-              }
-            >
+            <div className="mb-4 text-2xl text-indigo-600">
               <FileText className="h-8 w-8" />
             </div>
             <h3 className="mb-2 font-semibold text-gray-800">
@@ -1447,30 +1130,8 @@ export default function Home() {
       </div>
 
       {/* Footer */}
-      <footer
-        className="bg-gray-800 py-8 text-white"
-        style={
-          isLegacy
-            ? {
-                backgroundColor: "#1f2937",
-                padding: "32px 0",
-                color: "white",
-              }
-            : {}
-        }
-      >
-        <div
-          className="mx-auto max-w-4xl px-4"
-          style={
-            isLegacy
-              ? {
-                  margin: "0 auto",
-                  maxWidth: "896px",
-                  padding: "0 16px",
-                }
-              : {}
-          }
-        >
+      <footer className="bg-gray-800 py-8 text-white">
+        <div className="mx-auto max-w-4xl px-4">
           <div className="flex flex-col items-center justify-center">
             <div className="mb-4 flex items-center justify-center gap-4">
               <a
@@ -1592,19 +1253,6 @@ export default function Home() {
                 onClick={fecharDialogoCartao}
                 className="flex-1"
                 disabled={loadingCartao}
-                style={
-                  isLegacy
-                    ? {
-                        flex: "1",
-                        backgroundColor: "transparent",
-                        color: "#374151",
-                        border: "1px solid #d1d5db",
-                        borderRadius: "6px",
-                        padding: "8px 16px",
-                        cursor: loadingCartao ? "not-allowed" : "pointer",
-                      }
-                    : {}
-                }
               >
                 Cancelar
               </Button>
@@ -1612,23 +1260,6 @@ export default function Home() {
                 onClick={gerarCartaoPdf}
                 disabled={loadingCartao}
                 className="flex-1 bg-emerald-600 hover:bg-emerald-700"
-                style={
-                  isLegacy
-                    ? {
-                        flex: "1",
-                        backgroundColor: loadingCartao ? "#94a3b8" : "#059669",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "6px",
-                        padding: "8px 16px",
-                        cursor: loadingCartao ? "not-allowed" : "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: "8px",
-                      }
-                    : {}
-                }
               >
                 {loadingCartao ? (
                   <>
