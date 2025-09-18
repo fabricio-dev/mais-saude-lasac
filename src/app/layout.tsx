@@ -5,9 +5,12 @@ import { Manrope } from "next/font/google";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Toaster } from "sonner";
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 import { LegacySupportScript } from "@/components/legacy-support-script";
 >>>>>>> parent of b0a0b54 (teste de  fallbacks 2)
+=======
+>>>>>>> parent of 0e28c2e (teste de css  fallbacks)
 
 const manrope = Manrope({
   variable: "--font-manrope",
