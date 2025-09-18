@@ -79,7 +79,7 @@ const PatientsTable = ({ patients, gestorClinicId }: PatientsTableProps) => {
     },
     onError: () => {
       toast.error(
-        "Erro ao ativar ou renovar paciente, verifique se o o convenio pertence a sua unidade e tente novamente",
+        "Erro ao ativar ou renovar paciente, verifique se o convenio pertence a sua unidade e tente novamente",
       );
     },
   });
