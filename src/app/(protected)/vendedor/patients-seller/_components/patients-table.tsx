@@ -80,10 +80,12 @@ const PatientsTable = ({
 
   const activatePatientAction = useAction(activatePatient, {
     onSuccess: () => {
-      toast.success("Paciente ativado com sucesso!");
+      toast.success("Paciente ativado ou renovado com sucesso!");
     },
-    onError: (error) => {
-      toast.error(error.error.serverError || "Erro ao ativar paciente");
+    onError: () => {
+      toast.error(
+        "Erro ao ativar ou renovar paciente, verifique se o convenio pertence a você e tente novamente",
+      );
     },
   });
 
