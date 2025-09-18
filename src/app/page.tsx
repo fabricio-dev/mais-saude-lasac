@@ -269,7 +269,7 @@ export default function Home() {
                 ? new Date(paciente.expirationDate).toLocaleDateString("pt-BR")
                 : "Não informado",
               validadeOriginal: paciente.expirationDate, // Manter data original para comparação
-              tipo: `${paciente.cardType === "enterprise" ? "Empresarial" : "Individual"} - ${paciente.numberCards} cartão(s)`,
+              tipo: `${paciente.cardType === "enterprise" ? "Empresa" : "Individual"}`,
               dependentes: dependentes.length > 0 ? dependentes : undefined,
             };
           },
@@ -443,7 +443,7 @@ export default function Home() {
 
   // Função para gerar cartão com duas faces
   const gerarCartaoDuasFaces = (paciente: PacienteDb) => {
-    const printWindow = window.open("", "_blank");
+    const printWindow = window.open("", "");
     if (!printWindow) return;
 
     const dependents = [
@@ -680,7 +680,7 @@ export default function Home() {
                   : ""
               }
               
-              <img src="/logo.svg" alt="Mais Saúde" class="logo-face2">
+              <img src="/lab.svg" alt="Mais Saúde" class="logo-face2">
             </div>
             
             <div class="card-footer">
@@ -957,7 +957,7 @@ export default function Home() {
 
                             {/* Face traseira - Informações */}
                             <div
-                              className={`absolute inset-0 rounded-xl border border-gray-200 bg-white p-2 pl-4 shadow-lg md:p-3 md:pl-8 ${
+                              className={`absolute inset-0 rounded-xl border border-gray-400 bg-white shadow-lg md:p-3 md:pl-6 ${
                                 flippedCards.has(i)
                                   ? "block"
                                   : "hidden md:block"
@@ -970,25 +970,30 @@ export default function Home() {
                             >
                               <div className="flex h-full flex-col justify-between">
                                 <div>
-                                  <h3 className="mb-1 text-base font-semibold text-gray-800 md:mb-2 md:text-lg">
+                                  <h3 className="mb-1 text-base font-semibold text-gray-800 md:mb-0 md:text-lg">
                                     {conv.nome}
                                   </h3>
 
-                                  <div className="mb-1 space-y-1 md:mb-2 md:space-y-2">
-                                    <p className="text-sm text-gray-600 md:text-base">
-                                      <span className="font-medium">Tipo:</span>{" "}
-                                      {conv.tipo}
-                                    </p>
-
-                                    {conv.tipo === "Empresarial" &&
-                                      conv.empresa && (
+                                  <div className="mb-0 space-y-1 md:mb-0 md:space-y-2">
+                                    <div className="text-sm text-gray-600 md:text-base">
+                                      {(conv.tipo === "Empresa" &&
+                                        conv.empresa && (
+                                          <p className="text-sm text-gray-600 md:text-base">
+                                            <span className="font-medium">
+                                              Tipo:
+                                            </span>{" "}
+                                            {conv.tipo} {": "}
+                                            {conv.empresa}
+                                          </p>
+                                        )) || (
                                         <p className="text-sm text-gray-600 md:text-base">
                                           <span className="font-medium">
-                                            Empresa:
+                                            Tipo:
                                           </span>{" "}
-                                          {conv.empresa}
+                                          {conv.tipo}
                                         </p>
                                       )}
+                                    </div>
                                   </div>
 
                                   {conv.dependentes &&
@@ -1002,7 +1007,7 @@ export default function Home() {
                                             (dependente, idx) => (
                                               <div
                                                 key={idx}
-                                                className="flex items-center text-sm text-gray-600 md:text-base"
+                                                className="flex items-center text-sm text-gray-600 md:text-sm"
                                               >
                                                 <span className="mr-1">•</span>
                                                 <span className="truncate">
