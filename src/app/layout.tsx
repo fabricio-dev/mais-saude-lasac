@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { Manrope } from "next/font/google";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Toaster } from "sonner";
+
 import { LegacySupportScript } from "@/components/legacy-support-script";
 
 const manrope = Manrope({
