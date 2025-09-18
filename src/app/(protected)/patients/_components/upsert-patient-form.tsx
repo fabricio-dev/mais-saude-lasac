@@ -148,7 +148,22 @@ const formSchema = z
     sellerId: z.string().uuid({ message: "Vendedor é obrigatório" }),
     clinicId: z.string().uuid({ message: "Clínica é obrigatória" }),
     observation: z.string().optional(),
-    expirationDate: z.string().optional(),
+    expirationDate: z
+      .string()
+      .optional()
+      .refine(
+        (value) => {
+          if (!value) return true;
+          if (!dayjs(value).isValid()) return false;
+          return (
+            dayjs(value).isAfter(dayjs(), "day") ||
+            dayjs(value).isSame(dayjs(), "day")
+          );
+        },
+        {
+          message: "Data de vencimento nao pode ser uma data passada",
+        },
+      ),
     dependents1: z.string().optional(),
     dependents2: z.string().optional(),
     dependents3: z.string().optional(),
