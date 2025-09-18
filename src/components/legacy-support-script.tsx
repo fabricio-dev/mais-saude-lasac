@@ -10,7 +10,7 @@ export function LegacySupportScript() {
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
       {/* Script inline para detectar navegador legado e aplicar polyfills */}
-      <Script id="legacy-support" strategy="beforeInteractive">
+      <Script id="legacy-support" strategy="afterInteractive">
         {`
           (function() {
             // Detecta navegadores legados
