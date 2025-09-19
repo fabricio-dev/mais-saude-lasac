@@ -733,7 +733,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-emerald-500 from-blue-50 via-indigo-100 to-purple-200">
+    <div className="min-h-screen bg-emerald-500">
       {/* Header com botões */}
       <header className="absolute top-0 right-0 p-6 pr-1">
         <div className="flex gap-3">
@@ -767,7 +767,7 @@ export default function Home() {
       </header>
 
       {/* Seção principal */}
-      <div className="bg-emerald-500 from-indigo-600 to-emerald-500 px-4 py-12">
+      <div className="bg-gradient-to-r from-indigo-600 to-emerald-500 px-4 py-12">
         <div className="mx-auto max-w-4xl">
           <motion.div
             initial={{ opacity: 0, y: -30 }}

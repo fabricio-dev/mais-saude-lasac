@@ -120,3 +120,247 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Fallbacks para navegadores legados */
+@layer utilities {
+  /* Fallbacks para CSS Variables - aplicados quando a classe .no-css-variables está presente */
+  .no-css-variables {
+    /* Background colors */
+    background-color: #ffffff !important;
+    color: #1f2937 !important;
+  }
+
+  .no-css-variables .bg-emerald-500 {
+    background-color: #10b981 !important;
+  }
+
+  .no-css-variables .bg-emerald-600 {
+    background-color: #059669 !important;
+  }
+
+  .no-css-variables .bg-emerald-700 {
+    background-color: #047857 !important;
+  }
+
+  .no-css-variables .bg-indigo-600 {
+    background-color: #4f46e5 !important;
+  }
+
+  .no-css-variables .bg-indigo-700 {
+    background-color: #4338ca !important;
+  }
+
+  .no-css-variables .bg-white {
+    background-color: #ffffff !important;
+  }
+
+  .no-css-variables .bg-gray-800 {
+    background-color: #1f2937 !important;
+  }
+
+  .no-css-variables .bg-gray-100 {
+    background-color: #f3f4f6 !important;
+  }
+
+  .no-css-variables .bg-green-100 {
+    background-color: #dcfce7 !important;
+  }
+
+  .no-css-variables .bg-red-100 {
+    background-color: #fee2e2 !important;
+  }
+
+  /* Text colors */
+  .no-css-variables .text-white {
+    color: #ffffff !important;
+  }
+
+  .no-css-variables .text-gray-800 {
+    color: #1f2937 !important;
+  }
+
+  .no-css-variables .text-gray-600 {
+    color: #4b5563 !important;
+  }
+
+  .no-css-variables .text-gray-700 {
+    color: #374151 !important;
+  }
+
+  .no-css-variables .text-green-800 {
+    color: #166534 !important;
+  }
+
+  .no-css-variables .text-red-800 {
+    color: #991b1b !important;
+  }
+
+  .no-css-variables .text-red-600 {
+    color: #dc2626 !important;
+  }
+
+  .no-css-variables .text-indigo-600 {
+    color: #4f46e5 !important;
+  }
+
+  /* Border colors */
+  .no-css-variables .border-gray-200 {
+    border-color: #e5e7eb !important;
+  }
+
+  .no-css-variables .border-gray-300 {
+    border-color: #d1d5db !important;
+  }
+
+  .no-css-variables .border-red-500 {
+    border-color: #ef4444 !important;
+  }
+
+  /* Hover states */
+  .no-css-variables .hover\:bg-emerald-700:hover {
+    background-color: #047857 !important;
+  }
+
+  .no-css-variables .hover\:bg-indigo-700:hover {
+    background-color: #4338ca !important;
+  }
+
+  .no-css-variables .hover\:bg-white\/90:hover {
+    background-color: rgba(255, 255, 255, 0.9) !important;
+  }
+
+  /* Card and component styles */
+  .no-css-variables .shadow-xl {
+    box-shadow:
+      0 20px 25px -5px rgba(0, 0, 0, 0.1),
+      0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+  }
+
+  .no-css-variables .shadow-lg {
+    box-shadow:
+      0 10px 15px -3px rgba(0, 0, 0, 0.1),
+      0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+  }
+
+  /* Gradient fallbacks */
+  .no-css-variables .bg-gradient-to-br {
+    background: #10b981 !important; /* emerald-500 fallback */
+  }
+
+  .no-css-variables .from-indigo-600 {
+    background: #4f46e5 !important;
+  }
+
+  .no-css-variables .to-emerald-500 {
+    background: #10b981 !important;
+  }
+}
+
+/* Fallbacks para Flexbox - aplicados quando a classe .no-flexbox está presente */
+.no-flexbox .flex {
+  display: block !important;
+}
+
+.no-flexbox .flex-col > * {
+  display: block !important;
+  width: 100% !important;
+}
+
+.no-flexbox .flex-row > * {
+  display: inline-block !important;
+  vertical-align: top !important;
+}
+
+.no-flexbox .items-center {
+  text-align: center !important;
+}
+
+.no-flexbox .justify-center {
+  text-align: center !important;
+}
+
+.no-flexbox .justify-between > *:first-child {
+  float: left !important;
+}
+
+.no-flexbox .justify-between > *:last-child {
+  float: right !important;
+}
+
+/* Fallbacks para Grid - aplicados quando a classe .no-grid está presente */
+.no-grid .grid {
+  display: block !important;
+}
+
+.no-grid .grid-cols-1 > * {
+  display: block !important;
+  width: 100% !important;
+  margin-bottom: 1rem !important;
+}
+
+.no-grid .grid-cols-2 > * {
+  display: inline-block !important;
+  width: 48% !important;
+  margin-right: 2% !important;
+  margin-bottom: 1rem !important;
+  vertical-align: top !important;
+}
+
+.no-grid .grid-cols-3 > * {
+  display: inline-block !important;
+  width: 31% !important;
+  margin-right: 2% !important;
+  margin-bottom: 1rem !important;
+  vertical-align: top !important;
+}
+
+/* Clearfix para floats */
+.no-flexbox .justify-between::after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+/* Fallbacks específicos para Internet Explorer */
+.internet-explorer {
+  /* Remove transforms que podem causar problemas no IE */
+  transform: none !important;
+  transition: none !important;
+}
+
+.internet-explorer .rounded-xl {
+  border-radius: 12px !important;
+}
+
+.internet-explorer .rounded-lg {
+  border-radius: 8px !important;
+}
+
+.internet-explorer .rounded {
+  border-radius: 4px !important;
+}
+
+/* Fallbacks para Windows 7 */
+.windows-7 {
+  /* Fontes mais seguras para Windows 7 */
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif !important;
+}
+
+.windows-7 .font-bold {
+  font-weight: bold !important;
+}
+
+.windows-7 .font-semibold {
+  font-weight: 600 !important;
+}
+
+.windows-7 .font-medium {
+  font-weight: 500 !important;
+}
+
+/* Aviso para navegadores legados */
+#legacy-browser-warning {
+  font-family: Arial, sans-serif !important;
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+}
