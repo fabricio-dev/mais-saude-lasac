@@ -38,7 +38,6 @@ export function detectBrowserInfo(): BrowserInfo {
   }
 
   const userAgent = navigator.userAgent;
-  const platform = navigator.platform;
 
   // Detectar Windows 7
   const isWindows7 = /Windows NT 6\.1/.test(userAgent);
@@ -249,7 +248,12 @@ export function loadPolyfills(): Promise<void> {
         loadedCount++;
         if (loadedCount === totalPolyfills) {
           // Inicializar CSS Variables polyfill se carregado
-          if (!browserInfo.supportsCSSVariables && (window as any).cssVars) {
+          if (
+            !browserInfo.supportsCSSVariables &&
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (window as any).cssVars
+          ) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (window as any).cssVars({
               watch: true,
               preserveStatic: false,
