@@ -9,6 +9,7 @@ import {
   IdCard,
   Instagram,
   Linkedin,
+  Menu,
   Mouse,
   Search,
 } from "lucide-react";
@@ -25,6 +26,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -733,37 +740,45 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-emerald-500">
-      {/* Header com botões */}
-      <header className="absolute top-0 right-0 p-6 pr-1">
-        <div className="flex gap-3">
-          <Link href="/convenio">
+    <div className="min-h-screen overflow-x-hidden bg-emerald-500">
+      {/* Header com menu */}
+      <header className="absolute top-0 right-0 z-50 p-4 sm:p-6">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
+              size="sm"
               className="bg-emerald-600/90 text-white backdrop-blur-sm hover:bg-emerald-700/90"
             >
-              Seja Conveniado
+              <Menu className="mr-2 h-4 w-4" />
+              Menu
             </Button>
-          </Link>
-
-          <Button
-            variant="outline"
-            className="bg-emerald-600/30 text-white backdrop-blur-sm hover:bg-emerald-700/90"
-            onClick={abrirDialogoCartao}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="end"
+            className="w-44"
+            sideOffset={8}
+            avoidCollisions={true}
+            collisionPadding={16}
           >
-            <CreditCard className="h-4 w-4" />
-            Meu Cartão
-          </Button>
-
-          <Link href="/authentication" className="pr-2">
-            <Button
-              variant="outline"
-              className="bg-white/80 backdrop-blur-sm hover:bg-white/90"
-            >
-              Entrar
-            </Button>
-          </Link>
-        </div>
+            <DropdownMenuItem asChild>
+              <Link href="/convenio" className="flex w-full items-center">
+                <IdCard className="mr-2 h-4 w-4" />
+                Seja Conveniado
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={abrirDialogoCartao}>
+              <CreditCard className="mr-2 h-4 w-4" />
+              Meu Cartão
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/authentication" className="flex w-full items-center">
+                <Search className="mr-2 h-4 w-4" />
+                Entrar no Sistema
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </header>
 
       {/* Seção principal */}

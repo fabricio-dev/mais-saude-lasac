@@ -31,6 +31,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { usePermissions } from "@/hooks/use-permissions";
 import { authClient } from "@/lib/auth-client";
@@ -120,6 +121,7 @@ export function AppSidebar() {
   const router = useRouter();
   const session = authClient.useSession();
   const pathname = usePathname();
+  const { isMobile, setOpenMobile } = useSidebar();
   // const { isAdmin, userRole } = usePermissions(); mudei par o de baixo
   const { isAdmin, isGestor } = usePermissions();
 
@@ -147,15 +149,22 @@ export function AppSidebar() {
     });
   };
 
+  const handleMenuItemClick = () => {
+    // Fechar sidebar em mobile quando um item do menu for clicado
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
+
   return (
-    <Sidebar>
+    <Sidebar collapsible="icon">
       <SidebarHeader className="border-b p-3">
         <Image
           src="/logo.svg"
           alt="Mais Saude Lasac Logo"
           width={200}
           height={150}
-          className="h-full w-full"
+          className="h-aut0 w-full object-contain"
         />
       </SidebarHeader>
       <SidebarContent>
@@ -166,7 +175,7 @@ export function AppSidebar() {
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={pathname === item.url}>
-                    <Link href={item.url}>
+                    <Link href={item.url} onClick={handleMenuItemClick}>
                       <item.icon />
                       <span>{item.title}</span>
                     </Link>
@@ -192,34 +201,25 @@ export function AppSidebar() {
                         .slice(0, 2)}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex min-w-0 flex-1 flex-col">
-                    <div className="flex items-center gap-2">
-                      <p className="truncate text-sm font-medium">
-                        {session.data?.user.name}
-                      </p>
+                  <div className="flex min-w-0 flex-1 flex-col gap-0">
+                    <div>
                       {isAdmin ? (
-                        <Badge
-                          variant="secondary"
-                          className="flex-shrink-0 text-xs"
-                        >
+                        <Badge variant="secondary" className="text-xs">
                           Admin
                         </Badge>
                       ) : isGestor ? (
-                        <Badge
-                          variant="secondary"
-                          className="flex-shrink-0 text-xs"
-                        >
+                        <Badge variant="secondary" className="text-xs">
                           Gestor
                         </Badge>
                       ) : (
-                        <Badge
-                          variant="secondary"
-                          className="flex-shrink-0 text-xs"
-                        >
+                        <Badge variant="secondary" className="text-xs">
                           Vendedor
                         </Badge>
                       )}
                     </div>
+                    <p className="truncate text-xs font-medium">
+                      {session.data?.user.name}
+                    </p>
                     <p className="text-muted-foreground truncate text-xs">
                       {session.data?.user.email}
                     </p>

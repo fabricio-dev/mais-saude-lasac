@@ -103,19 +103,19 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
           totalSellers={totalSellers.total}
           totalClinics={totalClinics.total}
         />
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2.25fr_1fr]">
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[2.25fr_1fr]">
           <ConveniosChart dailyConveniosData={dailyConveniosData} />
           <TopSellers sellers={topSellers} />
         </div>
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2.25fr_1fr]">
-          <Card>
-            <CardHeader>
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[2.25fr_1fr]">
+          <Card className="gap-3">
+            <CardHeader className="pb-3">
               <div className="flex items-center gap-3">
-                <Calendar className="text-sm" />
+                <Calendar className="h-4 w-4" />
                 <CardTitle className="text-base">Convenios a vencer</CardTitle>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-0">
               <DataTable
                 columns={patientsTableColumnsSimple}
                 data={patientsToExpire.map(
