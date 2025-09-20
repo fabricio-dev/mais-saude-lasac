@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 
 import { Button } from "@/components/ui/button";
-import { PageContainer } from "@/components/ui/page-container";
+import { PublicPageContainer } from "@/components/ui/page-container";
 
 import { ConvenioForm } from "./_components/convenio-form";
 
@@ -41,7 +41,7 @@ export default function ConvenioPage() {
         </div>
       </header>
 
-      <PageContainer>
+      <PublicPageContainer>
         <Suspense
           fallback={
             <div className="flex justify-center py-8">Carregando...</div>
@@ -49,7 +49,7 @@ export default function ConvenioPage() {
         >
           <ConvenioForm />
         </Suspense>
-      </PageContainer>
+      </PublicPageContainer>
     </div>
   );
 }

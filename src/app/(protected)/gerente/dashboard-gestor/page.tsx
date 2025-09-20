@@ -103,7 +103,7 @@ async function DashboardGestor({ searchParams }: DashboardGestorPageProps) {
           totalSellers={totalSellers.total}
           gestorClinic={gestorClinic}
         />
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2.25fr_1fr]">
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[2.25fr_1fr]">
           <ConveniosChart dailyConveniosData={dailyConveniosData} />
           <TopSellers sellers={topSellers} />
         </div>
@@ -111,11 +111,11 @@ async function DashboardGestor({ searchParams }: DashboardGestorPageProps) {
           <Card>
             <CardHeader>
               <div className="flex items-center gap-3">
-                <Calendar className="text-sm" />
+                <Calendar className="h-4 w-4" />
                 <CardTitle className="text-base">Convênios a vencer</CardTitle>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-3 sm:p-6">
               <DataTable
                 columns={patientsTableColumnsSimple}
                 data={patientsToExpire.map(

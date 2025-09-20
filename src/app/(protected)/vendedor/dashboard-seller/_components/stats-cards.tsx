@@ -32,7 +32,7 @@ const StatsCards = ({
   ];
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
       {stats.map((stat) => {
         const Icon = stat.icon;
         return (
@@ -46,7 +46,7 @@ const StatsCards = ({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
+              <div className="text-xl font-bold sm:text-2xl">{stat.value}</div>
             </CardContent>
           </Card>
         );

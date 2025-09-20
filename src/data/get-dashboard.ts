@@ -237,7 +237,7 @@ export const getDashboard = async ({ from, to, session }: Params) => {
         clinic: true,
       },
       orderBy: asc(patientsTable.expirationDate),
-      limit: 15,
+      limit: 7,
     }),
     // TODO: Implementa a query para os convenios diários dentre um intervalo de 21 dias
     Promise.all([
