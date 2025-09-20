@@ -159,6 +159,11 @@ export function showBrowserUpdateWarning(): void {
 
   if (!browserInfo.isLegacyBrowser) return;
 
+  // Verificar se o aviso já existe
+  if (document.getElementById("legacy-browser-warning")) {
+    return;
+  }
+
   // Criar elemento de aviso
   const warningDiv = document.createElement("div");
   warningDiv.id = "legacy-browser-warning";
@@ -176,6 +181,12 @@ export function showBrowserUpdateWarning(): void {
     font-weight: bold;
     z-index: 9999;
     border-bottom: 2px solid #f59e0b;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    height: auto;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   `;
 
   let message = "";
@@ -191,15 +202,21 @@ export function showBrowserUpdateWarning(): void {
   }
 
   warningDiv.innerHTML = `
-    ${message}
-    <button onclick="this.parentElement.style.display='none'" style="margin-left: 10px; background: #92400e; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">×</button>
+    <span style="flex: 1;">${message}</span>
+    <button onclick="this.parentElement.style.display='none'; document.body.style.paddingTop='0px';" style="margin-left: 10px; background: #92400e; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 16px; line-height: 1;">×</button>
   `;
 
   // Inserir no início do body
   document.body.insertBefore(warningDiv, document.body.firstChild);
 
-  // Ajustar margin-top do body para compensar o aviso
-  document.body.style.marginTop = "50px";
+  // Aguardar o elemento ser renderizado e ajustar padding
+  setTimeout(() => {
+    const warningHeight = warningDiv.offsetHeight || 50;
+    document.body.style.paddingTop = `${warningHeight}px`;
+
+    // Garantir que não há margem superior no body
+    document.body.style.marginTop = "0px";
+  }, 10);
 }
 
 /**
