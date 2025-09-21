@@ -62,11 +62,33 @@ const PrintCardComponent = ({
           <style>
             {`
               @media print {
+                * {
+                  visibility: hidden;
+                }
+                
+                .print-container, .print-container * {
+                  visibility: visible;
+                }
+                
+                .print-container {
+                  position: absolute;
+                  left: 0;
+                  top: 0;
+                  width: 100%;
+                  height: 100%;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                }
+                
                 @page {
                   margin: 0;
-                  size: landscape;
-                  width: 85.60mm;
-                  height: 53.98mm;
+                  size: 85.60mm 53.98mm;
+                }
+                
+                body {
+                  margin: 0;
+                  padding: 0;
                 }
                 
                 .print-card {
@@ -80,8 +102,12 @@ const PrintCardComponent = ({
                   overflow: hidden;
                   -webkit-print-color-adjust: exact;
                   color-adjust: exact;
+                  print-color-adjust: exact;
                   font-weight: 500;
                   font-family: 'Arial', 'Helvetica', sans-serif;
+                  box-sizing: border-box;
+                  margin: 0;
+                  display: block;
                 }
                 
                 .print-patient-name {
@@ -114,7 +140,15 @@ const PrintCardComponent = ({
                   right: 15px;
                   -webkit-print-color-adjust: exact;
                   color-adjust: exact;
-                  filter: contrast(1.2);
+                  print-color-adjust: exact;
+                  image-rendering: -webkit-optimize-contrast;
+                  image-rendering: -moz-crisp-edges;
+                  image-rendering: crisp-edges;
+                  image-rendering: high-quality;
+                  max-width: none;
+                  object-fit: contain;
+                  opacity: 1;
+                  filter: none;
                 }
                 
                 .print-expiration {
@@ -135,30 +169,32 @@ const PrintCardComponent = ({
             `}
           </style>
 
-          <div className="print-card">
-            <div className="print-patient-name">TITULAR: {patient.name}</div>
+          <div className="print-container">
+            <div className="print-card">
+              <div className="print-patient-name">TITULAR: {patient.name}</div>
 
-            {dependents.length > 0 && (
-              <div className="print-dependents">
-                <div className="print-dependents-title">DEPENDENTES:</div>
-                {dependents.map((dep, index) => (
-                  <div key={index} className="print-dependent-item">
-                    {dep}
-                  </div>
-                ))}
+              {dependents.length > 0 && (
+                <div className="print-dependents">
+                  <div className="print-dependents-title">DEPENDENTES:</div>
+                  {dependents.map((dep, index) => (
+                    <div key={index} className="print-dependent-item">
+                      {dep}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <img src="/lab.png" alt="Mais Saúde" className="print-logo" />
+
+              <div className="print-expiration">
+                {patient.expirationDate
+                  ? `VÁLIDO ATÉ: ${formatDate(new Date(patient.expirationDate))}`
+                  : ""}
               </div>
-            )}
 
-            <img src="/lab.svg" alt="Mais Saúde" className="print-logo" />
-
-            <div className="print-expiration">
-              {patient.expirationDate
-                ? `VÁLIDO ATÉ: ${formatDate(new Date(patient.expirationDate))}`
-                : ""}
-            </div>
-
-            <div className="print-card-type">
-              {patient.cardType === "enterprise" ? "EMPRESA" : "INDIVIDUAL"}
+              <div className="print-card-type">
+                {patient.cardType === "enterprise" ? "EMPRESA" : "INDIVIDUAL"}
+              </div>
             </div>
           </div>
         </div>
