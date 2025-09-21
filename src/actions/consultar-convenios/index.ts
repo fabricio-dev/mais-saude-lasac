@@ -39,7 +39,8 @@ export async function consultarPacientes(termo: string) {
     const pacientesEncontrados = await db
       .select()
       .from(patientsTable)
-      .where(whereCondition);
+      .where(whereCondition)
+      .limit(12);
 
     return {
       success: true,
