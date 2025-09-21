@@ -703,7 +703,7 @@ function ConvenioLegacy() {
               <ArrowLeft
                 style={{ width: "16px", height: "16px", marginRight: "8px" }}
               />
-              Voltar aa
+              Voltar
             </Link>
             <div className="logo-section">
               <Image

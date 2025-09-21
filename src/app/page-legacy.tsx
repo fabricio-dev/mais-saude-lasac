@@ -1033,8 +1033,9 @@ function HomeLegacy() {
 
         .dependente-item {
           font-size: 0.625rem; /* Menor para caber no cartão */
-          color: #6b7280;
+          color: #1f2937;
           margin-bottom: 2px;
+          font-weight: bold;
           text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
         }
 

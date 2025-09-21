@@ -163,6 +163,9 @@ export default function Home() {
     Partial<Record<keyof ConsultaConvenioForm, string>>
   >({});
 
+  // Estado para detectar Firefox
+  const [isFirefox, setIsFirefox] = useState(false);
+
   // Detectar navegadores antigos
   useEffect(() => {
     const detectLegacyBrowser = () => {
@@ -191,7 +194,13 @@ export default function Home() {
       return isOldChrome || isOldFirefox || isOldSafari || isIE || isOldEdge;
     };
 
+    // Detectar Firefox moderno
+    const detectFirefox = () => {
+      return /Firefox/.test(navigator.userAgent) && !detectLegacyBrowser();
+    };
+
     setIsLegacyBrowser(detectLegacyBrowser());
+    setIsFirefox(detectFirefox());
   }, []);
 
   // Estados para o diálogo de geração de cartão
@@ -944,31 +953,50 @@ export default function Home() {
                           onClick={() => handleCardClick(i)}
                         >
                           <div
-                            className={`relative h-full w-full transition-transform duration-700 ${
-                              flippedCards.has(i)
-                                ? "[transform:rotateY(180deg)] md:[transform:rotateY(180deg)]"
-                                : "md:group-hover:[transform:rotateY(180deg)]"
+                            className={`relative h-full w-full ${
+                              isFirefox
+                                ? ""
+                                : `transition-transform duration-700 ${
+                                    flippedCards.has(i)
+                                      ? "[transform:rotateY(180deg)] md:[transform:rotateY(180deg)]"
+                                      : "md:group-hover:[transform:rotateY(180deg)]"
+                                  }`
                             }`}
                             style={{
-                              transformStyle: "preserve-3d",
-                              WebkitTransformStyle: "preserve-3d",
+                              transformStyle: isFirefox
+                                ? undefined
+                                : "preserve-3d",
+                              WebkitTransformStyle: isFirefox
+                                ? undefined
+                                : "preserve-3d",
+                              MozTransformStyle: isFirefox
+                                ? undefined
+                                : "preserve-3d",
                             }}
                           >
                             {/* Face frontal - Logo */}
                             <div
                               className={`absolute inset-0 rounded-xl shadow-lg ${
-                                flippedCards.has(i)
-                                  ? "hidden md:block"
-                                  : "block"
+                                isFirefox
+                                  ? flippedCards.has(i)
+                                    ? "pointer-events-none opacity-0 md:pointer-events-none md:opacity-0"
+                                    : "opacity-100 md:opacity-100 md:group-hover:opacity-0"
+                                  : flippedCards.has(i)
+                                    ? "hidden md:block"
+                                    : "block"
                               }`}
                               style={{
                                 backfaceVisibility: "hidden",
                                 WebkitBackfaceVisibility: "hidden",
+                                MozBackfaceVisibility: "hidden",
                                 backgroundImage: `url('/logo03.svg')`,
                                 backgroundPosition: "center",
                                 backgroundRepeat: "no-repeat",
                                 backgroundSize: "cover",
                                 backgroundColor: "#f8fafc",
+                                transition: isFirefox
+                                  ? "opacity 0.3s ease-in-out"
+                                  : undefined,
                               }}
                             >
                               {/* Overlay para controlar a transparência do logo */}
@@ -1014,14 +1042,30 @@ export default function Home() {
                             {/* Face traseira - Informações */}
                             <div
                               className={`absolute inset-0 rounded-xl border border-gray-400 bg-white shadow-lg md:p-3 md:pl-6 ${
-                                flippedCards.has(i)
-                                  ? "block"
-                                  : "hidden md:block"
+                                isFirefox
+                                  ? flippedCards.has(i)
+                                    ? "opacity-100"
+                                    : "pointer-events-none opacity-0 md:pointer-events-none md:opacity-0 md:group-hover:pointer-events-auto md:group-hover:opacity-100"
+                                  : flippedCards.has(i)
+                                    ? "block"
+                                    : "hidden md:block"
                               }`}
                               style={{
                                 backfaceVisibility: "hidden",
                                 WebkitBackfaceVisibility: "hidden",
-                                transform: "rotateY(180deg)",
+                                MozBackfaceVisibility: "hidden",
+                                transform: isFirefox
+                                  ? undefined
+                                  : "rotateY(180deg)",
+                                WebkitTransform: isFirefox
+                                  ? undefined
+                                  : "rotateY(180deg)",
+                                MozTransform: isFirefox
+                                  ? undefined
+                                  : "rotateY(180deg)",
+                                transition: isFirefox
+                                  ? "opacity 0.3s ease-in-out"
+                                  : undefined,
                               }}
                             >
                               <div className="flex h-full flex-col justify-between">
