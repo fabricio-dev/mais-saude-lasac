@@ -110,7 +110,7 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
                 </CardTitle>
               </div>
             </CardHeader>
-            <CardContent className="p-3 sm:p-6">
+            <CardContent className="pt-0">
               <DataTable
                 columns={patientsTableColumnsSimple}
                 data={patientsToExpire.map(
