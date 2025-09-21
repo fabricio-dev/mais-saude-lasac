@@ -48,15 +48,26 @@ export function detectBrowserInfo(): BrowserInfo {
   // Detectar versões antigas do Chrome
   const chromeMatch = userAgent.match(/Chrome\/(\d+)/);
   const chromeVersion = chromeMatch ? parseInt(chromeMatch[1]) : 0;
-  const isOldChrome = chromeVersion > 0 && chromeVersion < 80;
+  const isOldChrome = chromeVersion > 0 && chromeVersion < 110;
 
   // Detectar versões antigas do Firefox
   const firefoxMatch = userAgent.match(/Firefox\/(\d+)/);
   const firefoxVersion = firefoxMatch ? parseInt(firefoxMatch[1]) : 0;
-  const isOldFirefox = firefoxVersion > 0 && firefoxVersion < 75;
+  const isOldFirefox = firefoxVersion > 0 && firefoxVersion < 100;
+
+  // Detectar versões antigas do Safari
+  const safariMatch = userAgent.match(/Version\/(\d+)/);
+  const safariVersion = safariMatch ? parseInt(safariMatch[1]) : 0;
+  const isOldSafari =
+    safariVersion > 0 &&
+    safariVersion < 15 &&
+    userAgent.includes("Safari") &&
+    !userAgent.includes("Chrome");
 
   // Detectar Edge antigo
-  const isOldEdge = /Edge\/(\d+)/.test(userAgent);
+  const edgeMatch = userAgent.match(/Edge\/(\d+)/);
+  const edgeVersion = edgeMatch ? parseInt(edgeMatch[1]) : 0;
+  const isOldEdge = edgeVersion > 0 && edgeVersion < 90;
 
   // Determinar se é navegador legado
   const isLegacyBrowser =
@@ -64,6 +75,7 @@ export function detectBrowserInfo(): BrowserInfo {
     isInternetExplorer ||
     isOldChrome ||
     isOldFirefox ||
+    isOldSafari ||
     isOldEdge;
 
   // Testar suporte a CSS Variables
@@ -198,7 +210,7 @@ export function showBrowserUpdateWarning(): void {
       "⚠️ Internet Explorer não é mais suportado. Use Chrome, Firefox ou Edge para melhor experiência.";
   } else {
     message =
-      "⚠️ Seu navegador está desatualizado. Atualize para a versão mais recente para melhor experiência.";
+      "⚠️ Seu navegador está desatualizado. Para uma melhor experiência, atualize seu navegador ou sistema operacional.";
   }
 
   warningDiv.innerHTML = `
@@ -217,6 +229,17 @@ export function showBrowserUpdateWarning(): void {
     // Garantir que não há margem superior no body
     document.body.style.marginTop = "0px";
   }, 10);
+}
+
+/**
+ * Verifica se o navegador é compatível com recursos modernos
+ * Retorna true se é compatível, false se é legado
+ */
+export function checkBrowserCompatibility(): boolean {
+  if (typeof window === "undefined") return true; // SSR assume compatibilidade
+
+  const browserInfo = detectBrowserInfo();
+  return !browserInfo.isLegacyBrowser;
 }
 
 /**

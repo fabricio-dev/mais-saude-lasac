@@ -1,25 +1,18 @@
 "use client";
 
-import { motion } from "framer-motion";
-import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
-
-// Import da versão legacy dinamicamente
-const HomeLegacy = dynamic(() => import("./page-legacy"), { ssr: false });
 import {
   CreditCard,
   Facebook,
   FileText,
-  Hand,
   IdCard,
   Instagram,
   Linkedin,
   Menu,
-  Mouse,
   Search,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -143,56 +136,21 @@ type ConsultaConvenioForm = z.infer<typeof consultaConvenioSchema>;
 interface Convenio {
   nome: string;
   empresa: string;
-
   validade: string;
   validadeOriginal?: Date | null;
   tipo: string;
   dependentes?: string[];
 }
 
-export default function Home() {
-  const [isLegacyBrowser, setIsLegacyBrowser] = useState(false);
+function HomeLegacy() {
   const [cpf, setCpf] = useState("");
   const [loading, setLoading] = useState(false);
   const [convenios, setConvenios] = useState<Convenio[]>([]);
   const [semResultados, setSemResultados] = useState(false);
   const [consentimento, setConsentimento] = useState(false);
-
-  const [flippedCards, setFlippedCards] = useState<Set<number>>(new Set());
   const [errors, setErrors] = useState<
     Partial<Record<keyof ConsultaConvenioForm, string>>
   >({});
-
-  // Detectar navegadores antigos
-  useEffect(() => {
-    const detectLegacyBrowser = () => {
-      const userAgent = navigator.userAgent;
-
-      // Detectar Windows 7 - força uso da versão legacy
-      const isWindows7 = /Windows NT 6\.1/.test(userAgent);
-      if (isWindows7) {
-        return true;
-      }
-
-      const isOldChrome =
-        /Chrome\/([0-9]+)/.test(userAgent) &&
-        parseInt(userAgent.match(/Chrome\/([0-9]+)/)![1]) < 110;
-      const isOldFirefox =
-        /Firefox\/([0-9]+)/.test(userAgent) &&
-        parseInt(userAgent.match(/Firefox\/([0-9]+)/)![1]) < 100;
-      const isOldSafari =
-        /Version\/([0-9]+)/.test(userAgent) &&
-        parseInt(userAgent.match(/Version\/([0-9]+)/)![1]) < 15;
-      const isIE = /MSIE|Trident/.test(userAgent);
-      const isOldEdge =
-        /Edge\/([0-9]+)/.test(userAgent) &&
-        parseInt(userAgent.match(/Edge\/([0-9]+)/)![1]) < 90;
-
-      return isOldChrome || isOldFirefox || isOldSafari || isIE || isOldEdge;
-    };
-
-    setIsLegacyBrowser(detectLegacyBrowser());
-  }, []);
 
   // Estados para o diálogo de geração de cartão
   const [dialogAberto, setDialogAberto] = useState(false);
@@ -240,10 +198,10 @@ export default function Home() {
   const getStatusClassName = (
     validadeOriginal: Date | null | undefined,
   ): string => {
-    if (!validadeOriginal) return "bg-gray-100 text-gray-800";
+    if (!validadeOriginal) return "status-indefinido";
     return isConvenioAtivo(validadeOriginal)
-      ? "bg-green-100 text-green-800"
-      : "bg-red-100 text-red-800";
+      ? "status-ativo"
+      : "status-vencido";
   };
 
   // Função para aplicar máscara de CPF (apenas se for CPF)
@@ -378,22 +336,6 @@ export default function Home() {
     }
   };
 
-  const handleCardClick = (cardIndex: number) => {
-    console.log("Card clicked:", cardIndex);
-    setFlippedCards((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(cardIndex)) {
-        newSet.delete(cardIndex);
-        console.log("Card unflipped:", cardIndex);
-      } else {
-        newSet.add(cardIndex);
-        console.log("Card flipped:", cardIndex);
-      }
-      console.log("New flipped cards:", Array.from(newSet));
-      return newSet;
-    });
-  };
-
   // Função para abrir o diálogo de geração de cartão
   const abrirDialogoCartao = () => {
     setDialogAberto(true);
@@ -515,15 +457,12 @@ export default function Home() {
             }
             
             body {
-              font-family: 'Arial', 'Helvetica', sans-serif;
+              font-family: Arial, Helvetica, sans-serif;
               background-color: #f0f0f0;
               display: flex;
               flex-direction: column;
               align-items: center;
               padding: 20px;
-              -webkit-font-smoothing: antialiased;
-              -moz-osx-font-smoothing: grayscale;
-              text-rendering: optimizeLegibility;
             }
             
             .card {
@@ -536,22 +475,19 @@ export default function Home() {
               box-shadow: 0 8px 16px rgba(0,0,0,0.3);
               position: relative;
               overflow: hidden;
-              -webkit-print-color-adjust: exact;
-              color-adjust: exact;
               page-break-inside: avoid;
             }
             
-                                    /* Face 1 - Logo */
+            /* Face 1 - Logo */
             .face1 {
+              margin-top: 50px;
               display: flex;
               align-items: center;
               justify-content: center;
               padding: 0;
               background: white;
               color: black;
-              width: 100%;
-              height: 100%;
-              border: none !important;
+              border: none;
             }
             
             .logo-container {
@@ -563,28 +499,13 @@ export default function Home() {
               justify-content: center;
             }
             
-                        .logo-img {
+            .logo-img {
               width: 85.60mm;
               height: 53.98mm;
               object-fit: cover;
               display: block;
               border-radius: 10px;
               border: 1px solid #d1d5db;
-              -webkit-print-color-adjust: exact;
-              color-adjust: exact;
-              image-rendering: -webkit-optimize-contrast;
-              image-rendering: crisp-edges;
-              image-rendering: pixelated;
-              filter: contrast(1.2) brightness(1.1);
-              -webkit-font-smoothing: antialiased;
-              -moz-osx-font-smoothing: grayscale;
-            }
-            
-            .card-title-face1 {
-              font-size: 18px;
-              font-weight: bold;
-              text-transform: uppercase;
-              letter-spacing: 2px;
             }
             
             /* Face 2 - Dados */
@@ -644,14 +565,6 @@ export default function Home() {
               position: absolute;
               top: 15px;
               right: 15px;
-              image-rendering: auto;
-              image-rendering: -webkit-optimize-contrast;
-              image-rendering: pixelated;
-              -webkit-print-color-adjust: exact;
-              color-adjust: exact;
-              filter: contrast(1.2);
-              max-width: none;
-              max-height: none;
             }
             
             @media print {
@@ -659,35 +572,21 @@ export default function Home() {
                 background-color: white;
                 margin: 0;
                 padding: 0;
-                -webkit-print-color-adjust: exact;
-                color-adjust: exact;
               }
               
               .card {
                 box-shadow: none;
                 margin-bottom: 1cm;
                 page-break-inside: avoid;
-                -webkit-print-color-adjust: exact;
-                color-adjust: exact;
-                border: 1px solid #d1d5db !important;
-              }
-              
-              .face1 {
-                border: none !important;
+                border: 1px solid #d1d5db;
               }
               
               .logo-img {
-                width: 85.60mm !important;
-                height: 53.98mm !important;
-                object-fit: cover !important;
-                border: 1px solid #d1d5db !important;
-                border-radius: 10px !important;
-                image-rendering: -webkit-optimize-contrast !important;
-                image-rendering: crisp-edges !important;
-                image-rendering: pixelated !important;
-                filter: contrast(1.1) brightness(1.1) !important;
-                -webkit-print-color-adjust: exact !important;
-                color-adjust: exact !important;
+                width: 85.60mm;
+                height: 53.98mm;
+                object-fit: cover;
+                border: 1px solid #d1d5db;
+                border-radius: 10px;
               }
               
               @page {
@@ -702,7 +601,6 @@ export default function Home() {
           <div class="card face1">
             <div class="logo-container">
               <img src="/logo03.svg" alt="Mais Saúde" class="logo-img">
-             
             </div>
           </div>
           
@@ -738,7 +636,7 @@ export default function Home() {
           
           <script>
             window.onload = function() {
-              setTimeout(() => {
+              setTimeout(function() {
                 window.print();
                 window.onafterprint = function() {
                   window.close();
@@ -746,8 +644,8 @@ export default function Home() {
               }, 500);
               
               // Fechar janela se o usuário cancelar a impressão
-              const checkPrintStatus = () => {
-                setTimeout(() => {
+              var checkPrintStatus = function() {
+                setTimeout(function() {
                   if (!window.matchMedia('print').matches) {
                     window.close();
                   }
@@ -755,11 +653,11 @@ export default function Home() {
               };
               
               // Eventos para detectar cancelamento
-              window.addEventListener('beforeprint', () => {
+              window.addEventListener('beforeprint', function() {
                 console.log('Preparando para imprimir...');
               });
               
-              window.addEventListener('afterprint', () => {
+              window.addEventListener('afterprint', function() {
                 window.close();
               });
               
@@ -775,15 +673,707 @@ export default function Home() {
     printWindow.document.close();
   };
 
-  // Se for navegador antigo, usar versão legacy
-  if (isLegacyBrowser) {
-    return <HomeLegacy />;
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-100 to-purple-200">
+    <div className="legacy-page">
+      <style jsx global>{`
+        /* Estilos específicos para navegadores antigos */
+
+        /* Reset básico */
+        * {
+          box-sizing: border-box;
+        }
+
+        .legacy-page {
+          min-height: 100vh;
+          background: #10b981;
+          font-family: Arial, Helvetica, sans-serif;
+        }
+
+        /* Header */
+        .header {
+          position: absolute;
+          top: 0;
+          right: 0;
+          z-index: 50;
+          padding: 16px 24px;
+        }
+
+        /* Main section com gradiente compatível */
+        .main-section {
+          background: #4f46e5; /* Fallback */
+          background: -webkit-linear-gradient(
+            left,
+            #4f46e5,
+            #10b981
+          ); /* Safari 5.1-6 */
+          background: -o-linear-gradient(
+            left,
+            #4f46e5,
+            #10b981
+          ); /* Opera 11.1-12 */
+          background: -moz-linear-gradient(
+            left,
+            #4f46e5,
+            #10b981
+          ); /* Firefox 3.6-15 */
+          background: linear-gradient(to right, #4f46e5, #10b981); /* Moderno */
+          padding: 48px 16px;
+        }
+
+        .container {
+          max-width: 64rem;
+          margin: 0 auto;
+          padding-left: 16px;
+          padding-right: 16px;
+        }
+
+        .header-content {
+          margin-bottom: 32px;
+          text-align: center;
+          padding-top: 40px;
+        }
+
+        .logo-wrapper {
+          margin-bottom: 16px;
+          text-align: center;
+        }
+
+        .logo-box {
+          display: inline-block;
+          height: 128px;
+          width: 192px;
+          text-align: center;
+          vertical-align: middle;
+          line-height: 128px;
+        }
+
+        .main-title {
+          margin-bottom: 8px;
+          font-size: 1.875rem;
+          font-weight: bold;
+          color: white;
+        }
+
+        .main-subtitle {
+          color: rgba(255, 255, 255, 0.9);
+        }
+
+        /* Form styles */
+        .form-section {
+          margin-top: 32px;
+        }
+
+        .form-content {
+          padding: 24px;
+          background: white;
+          border-radius: 8px;
+          -webkit-box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+          -moz-box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .form-space {
+          display: block;
+        }
+
+        .form-space > * {
+          margin-bottom: 24px;
+        }
+
+        .input-group {
+          display: block;
+        }
+
+        .input-label {
+          margin-bottom: 4px;
+          display: block;
+          font-size: 0.875rem;
+          font-weight: 500;
+          color: #374151;
+        }
+
+        .input-wrapper {
+          position: relative;
+        }
+
+        .input-field {
+          width: 100%;
+          padding: 8px 40px 8px 12px;
+          border: 1px solid #d1d5db;
+          border-radius: 6px;
+          font-size: 1rem;
+          -webkit-box-sizing: border-box;
+          -moz-box-sizing: border-box;
+          box-sizing: border-box;
+        }
+
+        .input-field:focus {
+          outline: none;
+          border-color: #4f46e5;
+          -webkit-box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+          -moz-box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+          box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .input-field.error {
+          border-color: #ef4444;
+        }
+
+        .input-icon {
+          position: absolute;
+          right: 12px;
+          top: 50%;
+          margin-top: -8px;
+          color: #9ca3af;
+        }
+
+        .error-message {
+          margin-top: 4px;
+          font-size: 0.875rem;
+          color: #ef4444;
+        }
+
+        .checkbox-group {
+          display: block;
+        }
+
+        .checkbox-input {
+          height: 16px;
+          width: 16px;
+          border-radius: 4px;
+          border: 1px solid #d1d5db;
+          color: #4f46e5;
+          vertical-align: middle;
+          margin-right: 8px;
+        }
+
+        .checkbox-label {
+          display: inline;
+          font-size: 0.875rem;
+          color: #374151;
+          vertical-align: middle;
+        }
+
+        .submit-button {
+          width: 100%;
+          background: #4f46e5;
+          color: white;
+          padding: 12px 16px;
+          border: none;
+          border-radius: 6px;
+          font-weight: 500;
+          cursor: pointer;
+          text-align: center;
+          font-size: 16px;
+          -webkit-transition: background 0.3s;
+          -moz-transition: background 0.3s;
+          -o-transition: background 0.3s;
+          transition: background 0.3s;
+        }
+
+        .submit-button:hover {
+          background: #4338ca;
+        }
+
+        .submit-button:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        /* Results */
+        .results-section {
+          margin-top: 32px;
+        }
+
+        .results-title {
+          margin-bottom: 16px;
+          font-size: 1.25rem;
+          font-weight: 600;
+          color: #1f2937;
+        }
+
+        /* Grid com fallback para float */
+        .convenios-grid {
+          width: 100%;
+        }
+
+        .convenios-grid::after {
+          content: "";
+          display: table;
+          clear: both;
+        }
+
+        @media (min-width: 1024px) {
+          .convenios-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 32px;
+          }
+
+          .convenios-grid .convenio-card {
+            float: none;
+            width: 102.72mm;
+            margin-right: 0;
+          }
+        }
+
+        @media (max-width: 1023px) {
+          .convenios-grid {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+          }
+        }
+
+        .convenio-card {
+          width: 102.72mm; /* Largura de cartão de crédito + 20% */
+          height: 64.78mm; /* Altura de cartão de crédito + 20% */
+          margin: 0 auto 32px auto;
+          background: white;
+          background-image: url("/logo01.svg");
+          background-repeat: no-repeat;
+          background-position: center;
+          background-size: 60% auto;
+          background-blend-mode: overlay;
+          border: 1px solid #d1d5db;
+          border-radius: 12px;
+          padding: 16px;
+          -webkit-box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+          -moz-box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+          position: relative;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+        }
+
+        .convenio-header {
+          margin-bottom: 8px;
+          position: relative;
+          z-index: 2;
+        }
+
+        .convenio-name {
+          font-size: 0.775rem; /* Reduzido para caber no cartão */
+          font-weight: 600;
+          color: #1f2937;
+          margin-bottom: 4px;
+          text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+        }
+
+        .convenio-info {
+          font-size: 0.75rem; /* Reduzido para caber no cartão */
+          color: #6b7280;
+          margin-bottom: 2px;
+          text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+        }
+
+        .convenio-info strong {
+          font-weight: 500;
+        }
+
+        /* Status badges */
+        .status-ativo {
+          background: #dcfce7;
+          color: #166534;
+          padding: 2px 6px;
+          border-radius: 4px;
+          font-size: 0.625rem; /* Menor para caber no cartão */
+          font-weight: 500;
+          display: inline-block;
+          margin: 4px 0;
+          text-shadow: none;
+          position: relative;
+          z-index: 2;
+        }
+
+        .status-vencido {
+          background: #fecaca;
+          color: #991b1b;
+          padding: 2px 6px;
+          border-radius: 4px;
+          font-size: 0.625rem; /* Menor para caber no cartão */
+          font-weight: 500;
+          display: inline-block;
+          margin: 4px 0;
+          text-shadow: none;
+          position: relative;
+          z-index: 2;
+        }
+
+        .status-indefinido {
+          background: #f3f4f6;
+          color: #1f2937;
+          padding: 2px 6px;
+          border-radius: 4px;
+          font-size: 0.625rem; /* Menor para caber no cartão */
+          font-weight: 500;
+          display: inline-block;
+          margin: 4px 0;
+          text-shadow: none;
+          position: relative;
+          z-index: 2;
+        }
+
+        .dependentes-section {
+          margin-top: 0px;
+          position: relative;
+          z-index: 2;
+        }
+
+        .dependentes-title {
+          font-size: 0.75rem; /* Menor para caber no cartão */
+          font-weight: 500;
+          color: #374151;
+          margin-bottom: 4px;
+          text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+        }
+
+        .dependente-item {
+          font-size: 0.625rem; /* Menor para caber no cartão */
+          color: #6b7280;
+          margin-bottom: 2px;
+          text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+        }
+
+        .dependente-bullet {
+          margin-right: 4px;
+        }
+
+        /* Loading */
+        .loading-section {
+          padding: 32px 0;
+          text-align: center;
+        }
+
+        .loading-spinner {
+          margin: 0 auto 16px;
+          height: 48px;
+          width: 48px;
+          border: 2px solid #e5e7eb;
+          border-top: 2px solid #4f46e5;
+          border-radius: 50%;
+          -webkit-animation: spin 1s linear infinite;
+          -moz-animation: spin 1s linear infinite;
+          animation: spin 1s linear infinite;
+        }
+
+        @-webkit-keyframes spin {
+          0% {
+            -webkit-transform: rotate(0deg);
+          }
+          100% {
+            -webkit-transform: rotate(360deg);
+          }
+        }
+
+        @-moz-keyframes spin {
+          0% {
+            -moz-transform: rotate(0deg);
+          }
+          100% {
+            -moz-transform: rotate(360deg);
+          }
+        }
+
+        @keyframes spin {
+          0% {
+            transform: rotate(0deg);
+          }
+          100% {
+            transform: rotate(360deg);
+          }
+        }
+
+        .loading-text {
+          color: #6b7280;
+        }
+
+        /* No results */
+        .no-results {
+          padding: 32px 0;
+          text-align: center;
+        }
+
+        .no-results-icon {
+          margin: 0 auto 16px;
+          height: 64px;
+          width: 64px;
+          color: #9ca3af;
+        }
+
+        .no-results-title {
+          margin-bottom: 4px;
+          font-size: 1.125rem;
+          font-weight: 500;
+          color: #374151;
+        }
+
+        .no-results-text {
+          color: #6b7280;
+        }
+
+        /* How it works */
+        .how-it-works {
+          max-width: 64rem;
+          margin: 0 auto;
+          padding: 48px 16px;
+          background: #eff6ff; /* Fallback - blue-50 */
+          background: -webkit-linear-gradient(
+            to bottom right,
+            #eff6ff,
+            #e0e7ff,
+            #e9d5ff
+          ); /* Safari 5.1-6 */
+          background: -o-linear-gradient(
+            to bottom right,
+            #eff6ff,
+            #e0e7ff,
+            #e9d5ff
+          ); /* Opera 11.1-12 */
+          background: -moz-linear-gradient(
+            to bottom right,
+            #eff6ff,
+            #e0e7ff,
+            #e9d5ff
+          ); /* Firefox 3.6-15 */
+          background: linear-gradient(
+            to bottom right,
+            #eff6ff,
+            #e0e7ff,
+            #e9d5ff
+          ); /* Moderno */
+        }
+
+        .how-it-works-header {
+          margin-bottom: 32px;
+          text-align: center;
+        }
+
+        .how-it-works-title {
+          margin-bottom: 8px;
+          font-size: 1.5rem;
+          font-weight: bold;
+          color: #1f2937;
+        }
+
+        .how-it-works-subtitle {
+          max-width: 32rem;
+          margin: 0 auto;
+          color: #6b7280;
+        }
+
+        .features-grid {
+          width: 100%;
+        }
+
+        .features-grid::after {
+          content: "";
+          display: table;
+          clear: both;
+        }
+
+        @media (min-width: 768px) {
+          .features-grid .feature-card {
+            float: left;
+            width: 31.33%;
+            margin-right: 3%;
+          }
+
+          .features-grid .feature-card:nth-child(3n) {
+            margin-right: 0;
+          }
+        }
+
+        .feature-card {
+          border-radius: 8px;
+          background: white;
+          padding: 24px;
+          margin-bottom: 32px;
+          -webkit-box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+          -moz-box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+          box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+          -webkit-transition: box-shadow 0.3s;
+          -moz-transition: box-shadow 0.3s;
+          -o-transition: box-shadow 0.3s;
+          transition: box-shadow 0.3s;
+        }
+
+        .feature-card:hover {
+          -webkit-box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+          -moz-box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature-icon {
+          margin-bottom: 16px;
+          font-size: 1.5rem;
+          color: #4f46e5;
+        }
+
+        .feature-title {
+          margin-bottom: 8px;
+          font-weight: 600;
+          color: #1f2937;
+        }
+
+        .feature-description {
+          color: #6b7280;
+        }
+
+        /* Footer */
+        .footer {
+          background: #1f2937;
+          padding: 32px 0;
+          color: white;
+        }
+
+        .footer-container {
+          max-width: 64rem;
+          margin: 0 auto;
+          padding: 0 16px;
+        }
+
+        .footer-content {
+          text-align: center;
+        }
+
+        .social-links {
+          margin-bottom: 16px;
+          text-align: center;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 16px;
+        }
+
+        .social-links a {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .social-link {
+          -webkit-transition: color 0.3s;
+          -moz-transition: color 0.3s;
+          -o-transition: color 0.3s;
+          transition: color 0.3s;
+          color: white;
+          text-decoration: none;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .social-link:hover {
+          color: #a78bfa;
+        }
+
+        .footer-divider {
+          margin-top: 24px;
+          border-top: 1px solid #374151;
+          padding-top: 24px;
+          text-align: center;
+          font-size: 0.875rem;
+          color: #9ca3af;
+        }
+
+        .footer-links {
+          margin-top: 8px;
+        }
+
+        .footer-link {
+          -webkit-transition: color 0.3s;
+          -moz-transition: color 0.3s;
+          -o-transition: color 0.3s;
+          transition: color 0.3s;
+          color: #9ca3af;
+          text-decoration: none;
+        }
+
+        .footer-link:hover {
+          color: #a78bfa;
+        }
+
+        /* Dialog PDF */
+        .dialog-pdf {
+          max-width: 28rem !important; /* 448px - equivalente a sm:max-w-md */
+          width: 100% !important;
+          border: none !important;
+          border-radius: 8px !important;
+          box-shadow:
+            0 10px 15px -3px rgba(0, 0, 0, 0.1),
+            0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+        }
+
+        @media (max-width: 640px) {
+          .dialog-pdf {
+            max-width: calc(100% - 2rem) !important;
+            margin: 0 1rem !important;
+          }
+        }
+
+        /* Botão Emerald */
+        .btn-emerald {
+          background-color: #059669 !important; /* bg-emerald-600 */
+          color: white !important;
+          border: none !important;
+          -webkit-transition: background-color 0.3s !important;
+          -moz-transition: background-color 0.3s !important;
+          -o-transition: background-color 0.3s !important;
+          transition: background-color 0.3s !important;
+        }
+
+        .btn-emerald:hover {
+          background-color: #047857 !important; /* bg-emerald-700 */
+        }
+
+        .btn-emerald:disabled {
+          background-color: #6b7280 !important; /* bg-gray-500 */
+          cursor: not-allowed !important;
+        }
+
+        /* Menu Dropdown */
+        .w-44.bg-white {
+          border: none !important;
+          border-radius: 6px !important;
+          box-shadow:
+            0 10px 15px -3px rgba(0, 0, 0, 0.1),
+            0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+        }
+
+        /* Hover nos itens do menu */
+        [data-slot="dropdown-menu-item"] {
+          -webkit-transition:
+            background-color 0.2s,
+            color 0.2s !important;
+          -moz-transition:
+            background-color 0.2s,
+            color 0.2s !important;
+          -o-transition:
+            background-color 0.2s,
+            color 0.2s !important;
+          transition:
+            background-color 0.2s,
+            color 0.2s !important;
+          cursor: pointer !important;
+          border-radius: 4px !important;
+        }
+
+        [data-slot="dropdown-menu-item"]:hover {
+          background-color: #f3f4f6 !important; /* bg-gray-100 */
+          color: #1f2937 !important; /* text-gray-800 */
+        }
+
+        [data-slot="dropdown-menu-item"]:active {
+          background-color: #e5e7eb !important; /* bg-gray-200 */
+        }
+      `}</style>
+
       {/* Header com menu */}
-      <header className="absolute top-0 right-0 z-50 p-4 sm:p-6">
+      <header className="header">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -797,7 +1387,7 @@ export default function Home() {
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="end"
-            className="w-44"
+            className="w-44 bg-white"
             sideOffset={8}
             avoidCollisions={true}
             collisionPadding={16}
@@ -823,16 +1413,11 @@ export default function Home() {
       </header>
 
       {/* Seção principal */}
-      <div className="bg-gradient-to-r from-indigo-600 to-emerald-500 px-4 py-12">
-        <div className="mx-auto max-w-4xl">
-          <motion.div
-            initial={{ opacity: 0, y: -30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="mb-8 text-center"
-          >
-            <div className="mb-4 flex justify-center pt-10">
-              <div className="flex h-32 w-48 items-center justify-center rounded-lg">
+      <div className="main-section">
+        <div className="container">
+          <div className="header-content">
+            <div className="logo-wrapper">
+              <div className="logo-box">
                 <Image
                   src="/logo03.svg"
                   alt="Mais Saúde Lasac Logo"
@@ -842,31 +1427,22 @@ export default function Home() {
                 />
               </div>
             </div>
-            <h1 className="mb-2 text-3xl font-bold text-white">
-              Consulta de Benefícios
-            </h1>
-            <p className="text-white/90">
+            <h1 className="main-title">Consulta de Benefícios</h1>
+            <p className="main-subtitle">
               Verifique seus convênios e benefícios utilizando CPF, nome do
               titular ou nome de dependente
             </p>
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            <Card className="shadow-xl">
-              <CardContent className="p-6">
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div>
-                    <Label
-                      htmlFor="cpf"
-                      className="mb-1 block text-sm font-medium text-gray-700"
-                    >
+          <div className="form-section">
+            <Card className="border-0 shadow-xl">
+              <CardContent className="form-content">
+                <form onSubmit={handleSubmit} className="form-space">
+                  <div className="input-group">
+                    <Label htmlFor="cpf" className="input-label pb-2">
                       CPF, Nome do Titular ou Dependente
                     </Label>
-                    <div className="relative">
+                    <div className="input-wrapper">
                       <Input
                         type="text"
                         id="cpf"
@@ -874,20 +1450,20 @@ export default function Home() {
                         placeholder="123.456.789-09 ou Maria Silva"
                         value={cpf}
                         onChange={handleCpfChange}
-                        className={`pr-10 ${errors.cpf ? "border-red-500" : ""}`}
+                        className={`input-field ${errors.cpf ? "error" : ""}`}
                         maxLength={60}
                       />
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                        <IdCard className="h-4 w-4 text-gray-400" />
+                      <div className="input-icon">
+                        <IdCard className="h-4 w-4" />
                       </div>
                     </div>
                     {errors.cpf && (
-                      <p className="mt-1 text-sm text-red-600">{errors.cpf}</p>
+                      <p className="error-message">{errors.cpf}</p>
                     )}
                   </div>
 
-                  <div>
-                    <div className="flex items-center">
+                  <div className="input-group">
+                    <div className="checkbox-group">
                       <input
                         id="consentimento"
                         name="consentimento"
@@ -896,343 +1472,193 @@ export default function Home() {
                         onChange={(e) =>
                           handleConsentimentoChange(e.target.checked)
                         }
-                        className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                        className="checkbox-input"
                       />
-                      <label
-                        htmlFor="consentimento"
-                        className="ml-2 block text-sm text-gray-700"
-                      >
+                      <label htmlFor="consentimento" className="checkbox-label">
                         Concordo com os termos de uso e política de privacidade
                       </label>
                     </div>
                     {errors.consentimento && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {errors.consentimento}
-                      </p>
+                      <p className="error-message">{errors.consentimento}</p>
                     )}
                   </div>
 
                   <Button
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-indigo-600 hover:bg-indigo-700"
+                    className="submit-button"
                   >
-                    <Search className="mr-2 h-4 w-4" />
+                    <Search className="h-4 w-4" />
                     {loading ? "Consultando..." : "Consultar Benefícios"}
                   </Button>
                 </form>
 
                 {/* Resultados */}
                 {convenios.length > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mt-8"
-                  >
-                    <h2 className="mb-4 text-xl font-semibold text-gray-800">
-                      Convênios encontrados
-                    </h2>
-                    <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+                  <div className="results-section">
+                    <h2 className="results-title">Convênios encontrados</h2>
+                    <div className="convenios-grid">
                       {convenios.map((conv, i) => (
-                        <motion.div
-                          key={i}
-                          initial={{ opacity: 0, y: 15 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.4, delay: i * 0.1 }}
-                          className="group relative mx-auto aspect-[1.586/1] w-full max-w-lg cursor-pointer transition-transform active:scale-95 md:active:scale-100"
-                          style={{ perspective: "1000px" }}
-                          onClick={() => handleCardClick(i)}
-                        >
-                          <div
-                            className={`relative h-full w-full transition-transform duration-700 ${
-                              flippedCards.has(i)
-                                ? "[transform:rotateY(180deg)] md:[transform:rotateY(180deg)]"
-                                : "md:group-hover:[transform:rotateY(180deg)]"
-                            }`}
-                            style={{
-                              transformStyle: "preserve-3d",
-                              WebkitTransformStyle: "preserve-3d",
-                            }}
-                          >
-                            {/* Face frontal - Logo */}
-                            <div
-                              className={`absolute inset-0 rounded-xl shadow-lg ${
-                                flippedCards.has(i)
-                                  ? "hidden md:block"
-                                  : "block"
-                              }`}
-                              style={{
-                                backfaceVisibility: "hidden",
-                                WebkitBackfaceVisibility: "hidden",
-                                backgroundImage: `url('/logo03.svg')`,
-                                backgroundPosition: "center",
-                                backgroundRepeat: "no-repeat",
-                                backgroundSize: "cover",
-                                backgroundColor: "#f8fafc",
-                              }}
-                            >
-                              {/* Overlay para controlar a transparência do logo */}
-                              <div className="absolute inset-0 rounded-xl border border-gray-200 bg-white/90"></div>
+                        <div key={i} className="convenio-card">
+                          <div className="convenio-header">
+                            <h3 className="convenio-name">{conv.nome}</h3>
 
-                              <div className="relative z-10 flex h-full flex-col justify-between p-2">
-                                <div className="text-center">
-                                  <div className="inline-block rounded-lg px-2 py-1 md:px-4 md:py-2">
-                                    <h3 className="pt-2 text-lg font-bold text-gray-800 md:pt-4 md:text-xl">
-                                      {conv.nome}
-                                    </h3>
-                                  </div>
-                                </div>
-
-                                <div className="space-y-2 md:space-y-4">
-                                  <span
-                                    className={`block rounded px-2 py-1 text-center text-xs font-medium md:px-3 md:py-2 md:text-sm ${getStatusClassName(conv.validadeOriginal)}`}
-                                  >
-                                    <p className="text-xs md:text-sm">
-                                      Status:{" "}
-                                      {getStatusConvenio(conv.validadeOriginal)}
-                                    </p>
-
-                                    <p className="text-xs font-medium text-gray-600 md:text-sm">
-                                      Vencimento: {conv.validade}
-                                    </p>
-                                  </span>
-
-                                  <p className="mt-2 rounded-lg px-2 py-1 text-center text-xs font-bold text-gray-600 md:mt-3 md:px-4 md:py-2 md:text-sm">
-                                    <span className="hidden items-center justify-center gap-1 md:flex">
-                                      <Mouse className="h-4 w-4" />
-                                      Passe o mouse para ver mais detalhes
-                                    </span>
-                                    <span className="flex items-center justify-center gap-1 md:hidden">
-                                      <Hand className="h-3 w-3" />
-                                      Toque para ver mais detalhes
-                                    </span>
-                                  </p>
-                                </div>
-                              </div>
+                            <div className="convenio-info">
+                              {conv.tipo === "Empresa" && conv.empresa ? (
+                                <p>
+                                  <strong>Tipo:</strong> {conv.tipo}:{" "}
+                                  {conv.empresa}
+                                </p>
+                              ) : (
+                                <p>
+                                  <strong>Tipo:</strong> {conv.tipo}
+                                </p>
+                              )}
                             </div>
 
-                            {/* Face traseira - Informações */}
                             <div
-                              className={`absolute inset-0 rounded-xl border border-gray-400 bg-white shadow-lg md:p-3 md:pl-6 ${
-                                flippedCards.has(i)
-                                  ? "block"
-                                  : "hidden md:block"
-                              }`}
-                              style={{
-                                backfaceVisibility: "hidden",
-                                WebkitBackfaceVisibility: "hidden",
-                                transform: "rotateY(180deg)",
-                              }}
+                              className={getStatusClassName(
+                                conv.validadeOriginal,
+                              )}
                             >
-                              <div className="flex h-full flex-col justify-between">
-                                <div>
-                                  <h3 className="mb-1 text-base font-semibold text-gray-800 md:mb-0 md:text-lg">
-                                    {conv.nome}
-                                  </h3>
-
-                                  <div className="mb-0 space-y-1 md:mb-0 md:space-y-2">
-                                    <div className="text-sm text-gray-600 md:text-base">
-                                      {(conv.tipo === "Empresa" &&
-                                        conv.empresa && (
-                                          <p className="text-sm text-gray-600 md:text-base">
-                                            <span className="font-medium">
-                                              Tipo:
-                                            </span>{" "}
-                                            {conv.tipo} {": "}
-                                            {conv.empresa}
-                                          </p>
-                                        )) || (
-                                        <p className="text-sm text-gray-600 md:text-base">
-                                          <span className="font-medium">
-                                            Tipo:
-                                          </span>{" "}
-                                          {conv.tipo}
-                                        </p>
-                                      )}
-                                    </div>
-                                  </div>
-
-                                  {conv.dependentes &&
-                                    conv.dependentes.length > 0 && (
-                                      <div className="mb-1 gap-1 md:mb-2 md:gap-2">
-                                        <p className="text-sm font-medium text-gray-700 md:text-base">
-                                          Dependentes:
-                                        </p>
-                                        <div>
-                                          {conv.dependentes.map(
-                                            (dependente, idx) => (
-                                              <div
-                                                key={idx}
-                                                className="flex items-center text-sm text-gray-600 md:text-sm"
-                                              >
-                                                <span className="mr-1">•</span>
-                                                <span className="truncate">
-                                                  {dependente}
-                                                </span>
-                                              </div>
-                                            ),
-                                          )}
-                                        </div>
-                                      </div>
-                                    )}
-                                </div>
-                              </div>
+                              Status: {getStatusConvenio(conv.validadeOriginal)}
+                              <br />
+                              Vencimento: {conv.validade}
                             </div>
                           </div>
-                        </motion.div>
+
+                          {conv.dependentes && conv.dependentes.length > 0 && (
+                            <div className="dependentes-section">
+                              <p className="dependentes-title">Dependentes:</p>
+                              <div>
+                                {conv.dependentes.map((dependente, idx) => (
+                                  <div key={idx} className="dependente-item">
+                                    <span className="dependente-bullet">•</span>
+                                    <span>{dependente}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       ))}
                     </div>
-                  </motion.div>
+                  </div>
                 )}
 
                 {/* Loading */}
                 {loading && (
-                  <div className="py-8 text-center">
-                    <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-indigo-500"></div>
-                    <p className="text-gray-600">Buscando informações...</p>
+                  <div className="loading-section">
+                    <div className="loading-spinner"></div>
+                    <p className="loading-text">Buscando informações...</p>
                   </div>
                 )}
 
                 {/* Sem resultados */}
                 {semResultados && !loading && (
-                  <div className="py-8 text-center">
-                    <div className="mx-auto mb-4">
-                      <Search className="h-16 w-16 text-gray-400" />
+                  <div className="no-results">
+                    <div className="no-results-icon">
+                      <Search className="h-16 w-16" />
                     </div>
-                    <h3 className="mb-1 text-lg font-medium text-gray-700">
+                    <h3 className="no-results-title">
                       Nenhum convênio encontrado
                     </h3>
-                    <p className="text-gray-500">
+                    <p className="no-results-text">
                       Não encontramos benefícios associados a este CPF ou nome.
                     </p>
                   </div>
                 )}
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
         </div>
       </div>
 
       {/* Seção "Como funciona" */}
-      <div className="mx-auto max-w-4xl px-4 py-12">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-          className="mb-8 text-center"
-        >
-          <h2 className="mb-2 text-2xl font-bold text-gray-800">
-            Como funciona?
-          </h2>
-          <p className="mx-auto max-w-2xl text-gray-600">
+      <div className="how-it-works">
+        <div className="how-it-works-header">
+          <h2 className="how-it-works-title">Como funciona?</h2>
+          <p className="how-it-works-subtitle">
             Nosso sistema opera em parceria com diversas instituições para
             garantir a melhor experiência para nossos clientes.
           </p>
-        </motion.div>
+        </div>
 
-        <div className="grid gap-8 md:grid-cols-3">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.5 }}
-            className="rounded-lg bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
-          >
-            <div className="mb-4 text-2xl text-indigo-600">
+        <div className="features-grid">
+          <div className="feature-card">
+            <div className="feature-icon">
               <IdCard className="h-8 w-8" />
             </div>
-            <h3 className="mb-2 font-semibold text-gray-800">
-              Informe seu CPF, Nome ou Nome do Dependente
-            </h3>
-            <p className="text-gray-600">
-              Digite seu CPF no formato correto, seu nome completo ou o nome de
-              um dependente para realizar a consulta.
+            <h3 className="feature-title">Consulta Dinâmica</h3>
+            <p className="feature-description">
+              Digite seu CPF, seu nome completo ou o nome de um dependente.
             </p>
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-            className="rounded-lg bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
-          >
-            <div className="mb-4 text-2xl text-indigo-600">
+          <div className="feature-card">
+            <div className="feature-icon">
               <Search className="h-8 w-8" />
             </div>
-            <h3 className="mb-2 font-semibold text-gray-800">
-              Consulta integrada
-            </h3>
-            <p className="text-gray-600">
+            <h3 className="feature-title">Consulta integrada</h3>
+            <p className="feature-description">
               Nossa plataforma buscará em todas as instituições conveniadas.
             </p>
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.7 }}
-            className="rounded-lg bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
-          >
-            <div className="mb-4 text-2xl text-indigo-600">
+          <div className="feature-card">
+            <div className="feature-icon">
               <FileText className="h-8 w-8" />
             </div>
-            <h3 className="mb-2 font-semibold text-gray-800">
-              Resultados completos
-            </h3>
-            <p className="text-gray-600">
+            <h3 className="feature-title">Resultados completos</h3>
+            <p className="feature-description">
               Veja todos seus benefícios com detalhes de cobertura e validade.
             </p>
-          </motion.div>
+          </div>
         </div>
       </div>
 
       {/* Footer */}
-      <footer className="bg-gray-800 py-8 text-white">
-        <div className="mx-auto max-w-4xl px-4">
-          <div className="flex flex-col items-center justify-center">
-            <div className="mb-4 flex items-center justify-center gap-4">
+      <footer className="footer">
+        <div className="footer-container">
+          <div className="footer-content">
+            <div className="social-links">
               <a
                 href="https://www.facebook.com/profile.php?id=100093100000000"
-                className="transition hover:text-indigo-300"
+                className="social-link"
               >
                 <Facebook className="h-5 w-5" />
               </a>
               <a
                 href="https://www.instagram.com/laboratoriolasac/"
-                className="transition hover:text-indigo-300"
+                className="social-link"
               >
                 <Instagram className="h-5 w-5" />
               </a>
               <a
                 href="https://www.linkedin.com/company/laboratorio-lasac/"
-                className="transition hover:text-indigo-300"
+                className="social-link"
               >
                 <Linkedin className="h-5 w-5" />
               </a>
             </div>
           </div>
-          <div className="mt-6 border-t border-gray-700 pt-6 text-center text-sm text-gray-400">
+          <div className="footer-divider">
             <p>
               © 2025 Laboratório Lasac. Todos os direitos reservados. Powered
               by{" "}
               <a
                 href="https://www.sertaosoftware.com.br"
-                className="transition hover:text-indigo-300"
+                className="footer-link"
               >
                 Sertao Software
               </a>
             </p>
-            <p className="mt-2">
-              <a
-                href="https://www.google.com"
-                className="transition hover:text-indigo-300"
-              >
+            <p className="footer-links">
+              <a href="https://www.google.com" className="footer-link">
                 Termos de uso
               </a>{" "}
               |{" "}
-              <a
-                href="https://www.google.com"
-                className="transition hover:text-indigo-300"
-              >
+              <a href="https://www.google.com" className="footer-link">
                 Política de privacidade
               </a>
             </p>
@@ -1242,7 +1668,7 @@ export default function Home() {
 
       {/* Diálogo para gerar cartão PDF */}
       <Dialog open={dialogAberto} onOpenChange={setDialogAberto}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="dialog-pdf bg-white">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
@@ -1252,7 +1678,7 @@ export default function Home() {
 
           <div className="space-y-4">
             <div>
-              <Label htmlFor="cpf-cartao" className="text-sm font-medium">
+              <Label htmlFor="cpf-cartao" className="pb-2 text-sm font-medium">
                 CPF do Titular
               </Label>
               <Input
@@ -1290,9 +1716,9 @@ export default function Home() {
                       }));
                     }
                   }}
-                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="mt-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
-                <Label htmlFor="consentimento-cartao" className="text-sm">
+                <Label htmlFor="consentimento-cartao" className="pt-2 text-sm">
                   Concordo com os termos de uso e política de privacidade
                 </Label>
               </div>
@@ -1315,7 +1741,7 @@ export default function Home() {
               <Button
                 onClick={gerarCartaoPdf}
                 disabled={loadingCartao}
-                className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                className="btn-emerald flex-1"
               >
                 {loadingCartao ? (
                   <>
@@ -1336,3 +1762,5 @@ export default function Home() {
     </div>
   );
 }
+
+export default HomeLegacy;
