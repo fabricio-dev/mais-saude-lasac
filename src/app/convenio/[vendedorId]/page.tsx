@@ -25,7 +25,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { PageContainer } from "@/components/ui/page-container";
+import { PublicPageContainer } from "@/components/ui/page-container";
 import {
   Select,
   SelectContent,
@@ -266,7 +266,7 @@ export default function ConvenioVendedorPage() {
         </div>
       </header>
 
-      <PageContainer>
+      <PublicPageContainer>
         <div className="mx-auto max-w-4xl py-8">
           <div className="mb-8 text-center">
             <h1 className="mb-2 text-3xl font-bold text-white">
@@ -871,7 +871,7 @@ export default function ConvenioVendedorPage() {
             </CardContent>
           </Card>
         </div>
-      </PageContainer>
+      </PublicPageContainer>
 
       {/* Dialog de Informações de Pagamento */}
       <PaymentInfoDialog
