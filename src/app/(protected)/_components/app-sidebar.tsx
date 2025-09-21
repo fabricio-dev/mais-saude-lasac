@@ -13,7 +13,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -202,21 +201,6 @@ export function AppSidebar() {
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex min-w-0 flex-1 flex-col gap-0">
-                    <div>
-                      {isAdmin ? (
-                        <Badge variant="secondary" className="text-xs">
-                          Admin
-                        </Badge>
-                      ) : isGestor ? (
-                        <Badge variant="secondary" className="text-xs">
-                          Gestor
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary" className="text-xs">
-                          Vendedor
-                        </Badge>
-                      )}
-                    </div>
                     <p className="truncate text-xs font-medium">
                       {session.data?.user.name}
                     </p>
