@@ -124,3 +124,4 @@ A versão legacy foi especificamente otimizada para funcionar no Windows 7 com C
 
 Esta implementação garante que todos os usuários, independentemente da versão do navegador, tenham acesso às funcionalidades essenciais do sistema.
 
+

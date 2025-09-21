@@ -136,7 +136,7 @@ export default function ContratoComponent({
         <div className="text-right">
           <div className="absolute top-0 right-0">
             <img
-              src="/lab.svg"
+              src="/lab.png"
               alt="Logo Lasac"
               className="h-20 w-auto object-contain print:h-16"
               style={
@@ -144,7 +144,6 @@ export default function ContratoComponent({
                   imageRendering: "auto" as const,
                   maxWidth: "100%",
                   height: "50px",
-                  filter: "contrast(1.1) saturate(1.1)",
                 } as React.CSSProperties
               }
             />
@@ -386,20 +385,28 @@ export default function ContratoComponent({
             font-size: 8px !important;
           }
           img {
-            image-rendering: optimizeQuality !important;
-            -webkit-image-rendering: optimizeQuality !important;
-            -moz-image-rendering: optimizeQuality !important;
-            -ms-image-rendering: optimizeQuality !important;
+            image-rendering: -webkit-optimize-contrast !important;
+            image-rendering: -moz-crisp-edges !important;
+            image-rendering: crisp-edges !important;
+            image-rendering: high-quality !important;
             print-color-adjust: exact !important;
             -webkit-print-color-adjust: exact !important;
             color-adjust: exact !important;
             max-width: none !important;
             width: auto !important;
             height: auto !important;
+            opacity: 1 !important;
+            filter: none !important;
+            object-fit: contain !important;
           }
           img[src="/mais.png"] {
             height: 50px !important;
             width: auto !important;
+          }
+          img[src="/lab.png"] {
+            height: 50px !important;
+            width: auto !important;
+            image-rendering: high-quality !important;
           }
         }
       `}</style>
