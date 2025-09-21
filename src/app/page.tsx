@@ -1,6 +1,11 @@
 "use client";
 
 import { motion } from "framer-motion";
+import dynamic from "next/dynamic";
+import { useEffect, useState } from "react";
+
+// Import da versão legacy dinamicamente
+const HomeLegacy = dynamic(() => import("./page-legacy"), { ssr: false });
 import {
   CreditCard,
   Facebook,
@@ -15,7 +20,6 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -147,6 +151,7 @@ interface Convenio {
 }
 
 export default function Home() {
+  const [isLegacyBrowser, setIsLegacyBrowser] = useState(false);
   const [cpf, setCpf] = useState("");
   const [loading, setLoading] = useState(false);
   const [convenios, setConvenios] = useState<Convenio[]>([]);
@@ -157,6 +162,37 @@ export default function Home() {
   const [errors, setErrors] = useState<
     Partial<Record<keyof ConsultaConvenioForm, string>>
   >({});
+
+  // Detectar navegadores antigos
+  useEffect(() => {
+    const detectLegacyBrowser = () => {
+      const userAgent = navigator.userAgent;
+
+      // Detectar Windows 7 - força uso da versão legacy
+      const isWindows7 = /Windows NT 6\.1/.test(userAgent);
+      if (isWindows7) {
+        return true;
+      }
+
+      const isOldChrome =
+        /Chrome\/([0-9]+)/.test(userAgent) &&
+        parseInt(userAgent.match(/Chrome\/([0-9]+)/)![1]) < 110;
+      const isOldFirefox =
+        /Firefox\/([0-9]+)/.test(userAgent) &&
+        parseInt(userAgent.match(/Firefox\/([0-9]+)/)![1]) < 100;
+      const isOldSafari =
+        /Version\/([0-9]+)/.test(userAgent) &&
+        parseInt(userAgent.match(/Version\/([0-9]+)/)![1]) < 15;
+      const isIE = /MSIE|Trident/.test(userAgent);
+      const isOldEdge =
+        /Edge\/([0-9]+)/.test(userAgent) &&
+        parseInt(userAgent.match(/Edge\/([0-9]+)/)![1]) < 90;
+
+      return isOldChrome || isOldFirefox || isOldSafari || isIE || isOldEdge;
+    };
+
+    setIsLegacyBrowser(detectLegacyBrowser());
+  }, []);
 
   // Estados para o diálogo de geração de cartão
   const [dialogAberto, setDialogAberto] = useState(false);
@@ -739,8 +775,13 @@ export default function Home() {
     printWindow.document.close();
   };
 
+  // Se for navegador antigo, usar versão legacy
+  if (isLegacyBrowser) {
+    return <HomeLegacy />;
+  }
+
   return (
-    <div className="min-h-screen overflow-x-hidden bg-emerald-500">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-100 to-purple-200">
       {/* Header com menu */}
       <header className="absolute top-0 right-0 z-50 p-4 sm:p-6">
         <DropdownMenu>

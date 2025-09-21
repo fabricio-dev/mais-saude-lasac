@@ -847,6 +847,7 @@ export default function ConvenioVendedorPage() {
                   <div className="flex flex-col space-y-3 pt-6 sm:flex-row sm:justify-center sm:space-y-0 sm:space-x-4">
                     <Button
                       type="submit"
+                      variant="outline"
                       disabled={createPatientAction.isExecuting}
                       className="w-full bg-emerald-600 hover:bg-emerald-700 sm:max-w-md"
                       size="lg"
