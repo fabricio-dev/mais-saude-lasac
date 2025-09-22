@@ -40,6 +40,3 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# scripts
-src/scripts/dados_tratados.xlsx
-src/scripts/dados_teste_tratados.xlsx

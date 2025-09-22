@@ -148,7 +148,7 @@ async function importPatients() {
             updatedAt: parseDate(row.updated_at) ?? new Date(),
 
             cardType:
-              row.card_type === "enterprise"
+              row.card_type === "EMPRESA"
                 ? ("enterprise" as const)
                 : ("personal" as const),
             Enterprise: row.enterprise ? String(row.enterprise).trim() : null,
