@@ -36,7 +36,7 @@ interface PatientRow {
   active_at?: string | Date | number; // Versão correta
 }
 
-const workbook = XLSX.readFile("src/scripts/dados_teste_tratados.xlsx"); // ajuste o caminho conforme seu projeto
+const workbook = XLSX.readFile("src/scripts/dados_tratados.xlsx"); // ajuste o caminho conforme seu projeto
 const sheet = workbook.Sheets[workbook.SheetNames[0]];
 const data: PatientRow[] = XLSX.utils.sheet_to_json(sheet);
 
