@@ -29,7 +29,9 @@ export const upsertPatient = actionClient
         .insert(patientsTable)
         .values({
           ...parsedInput,
-          birthDate: new Date(parsedInput.birthDate).toISOString(),
+          birthDate: parsedInput.birthDate
+            ? new Date(parsedInput.birthDate).toISOString()
+            : null,
           expirationDate: parsedInput.expirationDate
             ? dayjs(parsedInput.expirationDate).toDate()
             : undefined,
@@ -39,7 +41,9 @@ export const upsertPatient = actionClient
           target: [patientsTable.id],
           set: {
             ...parsedInput,
-            birthDate: new Date(parsedInput.birthDate).toISOString(),
+            birthDate: parsedInput.birthDate
+              ? new Date(parsedInput.birthDate).toISOString()
+              : null,
             expirationDate: parsedInput.expirationDate
               ? dayjs(parsedInput.expirationDate).toDate()
               : undefined,
@@ -49,7 +53,9 @@ export const upsertPatient = actionClient
       // Criação - definir a data de expiração
       await db.insert(patientsTable).values({
         ...parsedInput,
-        birthDate: new Date(parsedInput.birthDate).toISOString(),
+        birthDate: parsedInput.birthDate
+          ? new Date(parsedInput.birthDate).toISOString()
+          : null,
         expirationDate: expirationDate,
         activeAt: new Date(),
       });

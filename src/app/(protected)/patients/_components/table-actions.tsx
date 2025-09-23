@@ -42,17 +42,17 @@ import UpsertPatientForm from "./upsert-patient-form";
 interface Patient {
   id: string;
   name: string;
-  cpfNumber: string;
+  cpfNumber: string | null;
   phoneNumber: string;
-  city: string;
+  city: string | null;
   cardType: "enterprise" | "personal";
-  numberCards: number;
+  numberCards: number | null;
   expirationDate: Date | null;
-  birthDate: Date;
-  rgNumber: string;
-  address: string;
-  homeNumber: string;
-  state: string;
+  birthDate: Date | null;
+  rgNumber: string | null;
+  address: string | null;
+  homeNumber: string | null;
+  state: string | null;
   Enterprise: string | null;
   dependents1: string | null;
   dependents2: string | null;
@@ -115,7 +115,9 @@ export default function TableActions({
               <UpsertPatientForm
                 patient={{
                   ...patient,
-                  birthDate: patient.birthDate.toISOString().split("T")[0],
+                  birthDate: patient.birthDate
+                    ? patient.birthDate.toISOString().split("T")[0]
+                    : "",
                   clinicId: patient.clinicId,
                   isActive: patient.isActive,
                   reactivatedAt: patient.reactivatedAt,
@@ -137,7 +139,9 @@ export default function TableActions({
                   <PrintCardComponent
                     patient={{
                       ...patient,
-                      birthDate: patient.birthDate.toISOString().split("T")[0],
+                      birthDate: patient.birthDate
+                        ? patient.birthDate.toISOString().split("T")[0]
+                        : "",
                       seller: patient.seller || null,
                     }}
                     variant="ghost"

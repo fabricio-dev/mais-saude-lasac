@@ -92,7 +92,8 @@ export const activatePatient = actionClient
     // Calcular nova data de expiração (data atual + 1 ano)
     const newExpirationDate = dayjs().add(1, "year").toDate();
 
-    const timeRemaining = dayjs(patient.expirationDate).diff(dayjs(), "days");
+    const timeRemaining =
+      dayjs(patient.expirationDate).diff(dayjs(), "days") + 1;
     const newExpirationDateAntecipated = dayjs()
       .add(1, "year")
       .add(timeRemaining, "days")

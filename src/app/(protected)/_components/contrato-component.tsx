@@ -12,17 +12,17 @@ dayjs.extend(timezone);
 interface Patient {
   id: string;
   name: string;
-  cpfNumber: string;
+  cpfNumber: string | null;
   phoneNumber: string;
-  city: string;
+  city: string | null;
   cardType: "enterprise" | "personal";
-  numberCards: number;
+  numberCards: number | null;
   expirationDate: Date | null;
-  birthDate: Date;
-  rgNumber: string;
-  address: string;
-  homeNumber: string;
-  state: string;
+  birthDate: Date | null;
+  rgNumber: string | null;
+  address: string | null;
+  homeNumber: string | null;
+  state: string | null;
   Enterprise: string | null;
   dependents1: string | null;
   dependents2: string | null;
@@ -265,10 +265,12 @@ export default function ContratoComponent({
       <div className="rounded border border-gray-400 p-2">
         <div className="grid grid-cols-2 text-[10px]">
           <div className="pb-1 pl-2">
-            <strong>DATA DE NASCIMENTO:</strong> {formatDate(patient.birthDate)}
+            <strong>DATA DE NASCIMENTO:</strong>{" "}
+            {patient.birthDate ? formatDate(patient.birthDate) : ""}
           </div>
           <div className="pb-1 pl-2">
-            <strong>RG:</strong> {formatRg(patient.rgNumber)}
+            <strong>RG:</strong>{" "}
+            {patient.rgNumber ? formatRg(patient.rgNumber) : ""}
           </div>
         </div>
         <div className="grid grid-cols-2 text-[10px]">
@@ -281,15 +283,18 @@ export default function ContratoComponent({
           </div>
         </div>
         <div className="pt-1 pb-1 pl-2 text-[10px]">
-          <strong>ENDEREÇO:</strong> {patient.address.toUpperCase()}
+          <strong>ENDEREÇO:</strong>{" "}
+          {patient.address ? patient.address.toUpperCase() : ""}
         </div>
         <div className="grid grid-cols-2 text-[10px]">
           <div className="pt-1 pb-1 pl-2">
-            <strong>BAIRRO:</strong> {patient.homeNumber.toUpperCase()}
+            <strong>BAIRRO:</strong>{" "}
+            {patient.homeNumber ? patient.homeNumber.toUpperCase() : ""}
           </div>
           <div className="pt-1 pb-1 pl-2">
-            <strong>CIDADE:</strong> {patient.city.toUpperCase()}{" "}
-            {patient.state}
+            <strong>CIDADE:</strong>{" "}
+            {patient.city ? patient.city.toUpperCase() : ""}{" "}
+            {patient.state || ""}
           </div>
         </div>
       </div>
@@ -330,7 +335,9 @@ export default function ContratoComponent({
           </div>
           <div className="p-1">
             <strong>NÚMERO CARTÕES EXTRAS:</strong>{" "}
-            {patient.numberCards > 1 ? patient.numberCards - 1 : 0}
+            {patient.numberCards && patient.numberCards > 1
+              ? patient.numberCards - 1
+              : 0}
           </div>
         </div>
         <div className="grid grid-cols-2 text-[10px]">
