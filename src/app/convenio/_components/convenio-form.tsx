@@ -547,7 +547,7 @@ export function ConvenioForm() {
                     control={form.control}
                     name="cardType"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem hidden={true}>
                         <FormLabel className="text-emerald-950">
                           Tipo de Cartão
                         </FormLabel>
@@ -574,7 +574,7 @@ export function ConvenioForm() {
                     control={form.control}
                     name="Enterprise"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem hidden={true}>
                         <FormLabel className="text-emerald-950">
                           Empresa
                         </FormLabel>
@@ -601,7 +601,7 @@ export function ConvenioForm() {
                         <FormControl>
                           <Input
                             type="number"
-                            min="1"
+                            min="0"
                             max="6"
                             placeholder="1"
                             {...field}
