@@ -108,11 +108,11 @@ const PatientCard = ({ patient }: PatientCardProps) => {
             </p>
           )}
 
-          {/* {patient.clinic && (
+          {patient.clinic && (
             <p>
               <strong>Clínica:</strong> {patient.clinic.name}
             </p>
-          )} */}
+          )}
 
           {patient.expirationDate && (
             <p
