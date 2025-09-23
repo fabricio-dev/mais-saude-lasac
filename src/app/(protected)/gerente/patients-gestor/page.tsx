@@ -179,7 +179,9 @@ const PatientsGestorPage = async ({
             <PatientsTable
               patients={patients.map((patient) => ({
                 ...patient,
-                birthDate: new Date(patient.birthDate),
+                birthDate: patient.birthDate
+                  ? new Date(patient.birthDate)
+                  : null,
               }))}
               gestorClinicId={gestor.clinicId!}
             />

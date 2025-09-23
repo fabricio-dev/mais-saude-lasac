@@ -41,17 +41,17 @@ import {
 interface Patient {
   id: string;
   name: string;
-  cpfNumber: string;
+  cpfNumber: string | null;
   phoneNumber: string;
-  city: string;
+  city: string | null;
   cardType: "enterprise" | "personal";
-  numberCards: number;
+  numberCards: number | null;
   expirationDate: Date | null;
-  birthDate: Date;
-  rgNumber: string;
-  address: string;
-  homeNumber: string;
-  state: string;
+  birthDate: Date | null;
+  rgNumber: string | null;
+  address: string | null;
+  homeNumber: string | null;
+  state: string | null;
   Enterprise: string | null;
   dependents1: string | null;
   dependents2: string | null;

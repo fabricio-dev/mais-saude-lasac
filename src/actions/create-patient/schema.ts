@@ -33,25 +33,22 @@ const isValidCPF = (cpf: string): boolean => {
 export const createPatientSchema = z
   .object({
     name: z.string().trim().min(1, { message: "Nome titular é obrigatório" }),
-    birthDate: z
-      .string()
-      .min(1, { message: "Data de nascimento é obrigatória" }),
+    birthDate: z.string().optional(),
     phoneNumber: z
       .string()
       .trim()
       .min(10, { message: "Telefone é obrigatório" }),
-    rgNumber: z.string().trim().min(1, { message: "RG é obrigatório" }),
+    rgNumber: z.string().optional(),
     cpfNumber: z
       .string()
-      .trim()
-      .min(11, { message: "CPF é obrigatório" })
-      .refine((cpf) => isValidCPF(cpf), {
+      .optional()
+      .refine((cpf) => !cpf || isValidCPF(cpf), {
         message: "CPF inválido",
       }),
-    address: z.string().trim().min(1, { message: "Endereço é obrigatório" }),
-    homeNumber: z.string().trim().min(1, { message: "Bairro é obrigatório" }),
-    city: z.string().trim().min(1, { message: "Cidade é obrigatória" }),
-    state: z.string().trim().min(2, { message: "UF é obrigatória" }),
+    address: z.string().optional(),
+    homeNumber: z.string().optional(),
+    city: z.string().optional(),
+    state: z.string().optional(),
 
     cardType: z.enum(["enterprise", "personal"], {
       message: "Tipo de cartão é obrigatório",
@@ -59,11 +56,11 @@ export const createPatientSchema = z
     Enterprise: z.string().optional(),
     numberCards: z
       .string()
-      .min(1, { message: "Quantidade de cartões é obrigatória" })
-      .refine((value) => parseInt(value) > 0, {
+      .optional()
+      .refine((value) => !value || parseInt(value) > 0, {
         message: "A quantidade de cartões deve ser maior que 0",
       })
-      .refine((value) => parseInt(value) <= 6, {
+      .refine((value) => !value || parseInt(value) <= 6, {
         message: "A quantidade de cartões não pode ser maior que 6",
       }),
 

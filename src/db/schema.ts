@@ -101,14 +101,14 @@ export const statusAgreementEnum = pgEnum("status_agreement", [
 export const patientsTable = pgTable("patients", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),
-  birthDate: date("birth_date").notNull(),
-  rgNumber: text("rg_number").notNull(),
-  cpfNumber: text("cpf_number").notNull(), // Permite vazio no banco, mas validação obrigatória nos formulários
+  birthDate: date("birth_date"),
+  rgNumber: text("rg_number"),
+  cpfNumber: text("cpf_number"), // Permite vazio no banco, mas validação obrigatória nos formulários
   phoneNumber: text("phone_number").notNull(),
-  address: text("address").notNull(),
-  homeNumber: text("home_number").notNull(),
-  city: text("city").notNull(),
-  state: text("state").notNull(),
+  address: text("address"),
+  homeNumber: text("home_number"),
+  city: text("city"),
+  state: text("state"),
 
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at")
@@ -117,7 +117,7 @@ export const patientsTable = pgTable("patients", {
 
   cardType: typeCardEnum("card_type").notNull(),
   Enterprise: text("enterprise"),
-  numberCards: integer("number_cards").notNull(),
+  numberCards: integer("number_cards"),
   sellerId: uuid("seller_id").references(() => sellersTable.id),
   clinicId: uuid("clinic_id").references(() => clinicsTable.id),
   dependents1: text("dependents1"),

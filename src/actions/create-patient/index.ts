@@ -35,32 +35,37 @@ export const createPatient = actionClient
       dependents6,
     } = parsedInput;
 
-    // Verificar se CPF já existe
-    const cleanCPF = cpfNumber.replace(/\D/g, "");
-    const existingPatient = await db
-      .select()
-      .from(patientsTable)
-      .where(eq(patientsTable.cpfNumber, cleanCPF))
-      .limit(1);
+    // Verificar se CPF já existe (apenas se CPF foi fornecido)
+    let cleanCPF = null;
+    if (cpfNumber && cpfNumber.trim() !== "") {
+      cleanCPF = cpfNumber.replace(/\D/g, "");
+      const existingPatient = await db
+        .select()
+        .from(patientsTable)
+        .where(eq(patientsTable.cpfNumber, cleanCPF))
+        .limit(1);
 
-    if (existingPatient.length > 0) {
-      throw new Error("Este CPF já está cadastrado no sistema");
+      if (existingPatient.length > 0) {
+        throw new Error("Este CPF já está cadastrado no sistema");
+      }
     }
 
     // Criar paciente sem vendedor e clínica (será atribuído posteriormente)
     await db.insert(patientsTable).values({
       name,
-      birthDate: new Date(birthDate).toISOString().split("T")[0],
+      birthDate: birthDate
+        ? new Date(birthDate).toISOString().split("T")[0]
+        : null,
       phoneNumber,
-      rgNumber,
+      rgNumber: rgNumber || null,
       cpfNumber: cleanCPF,
-      address,
-      homeNumber,
-      city,
-      state,
+      address: address || null,
+      homeNumber: homeNumber || null,
+      city: city || null,
+      state: state || null,
       cardType,
       Enterprise: Enterprise || null,
-      numberCards: parseInt(numberCards),
+      numberCards: numberCards ? parseInt(numberCards) : null,
       sellerId: parsedInput.sellerId,
       clinicId: parsedInput.clinicId,
       observation: observation || null,
