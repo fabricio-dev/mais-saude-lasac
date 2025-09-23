@@ -1,4 +1,13 @@
-import { and, eq, ilike, inArray, isNotNull, lte, or } from "drizzle-orm";
+import {
+  and,
+  eq,
+  ilike,
+  inArray,
+  isNotNull,
+  lte,
+  or,
+  type SQL,
+} from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -14,7 +23,7 @@ import {
   PageTitle,
 } from "@/components/ui/page-container";
 import { db } from "@/db";
-import { patientsTable, sellersTable, usersToClinicsTable } from "@/db/schema";
+import { patientsTable, usersToClinicsTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 
 import AddPatientButton from "./_components/add-patient-button";
@@ -58,47 +67,37 @@ const PatientsPage = async ({ searchParams }: PatientsPageProps) => {
     redirect("/clinics");
   }
 
-  // Buscar vendedores das clínicas do usuário
-  const sellers = await db
-    .select({ id: sellersTable.id })
-    .from(sellersTable)
-    .where(inArray(sellersTable.clinicId, clinicIds));
-
-  const sellerIds = sellers.map((s) => s.id);
-
   // Construir as condições de busca
   const searchTerm = search?.trim();
 
-  let whereCondition =
-    sellerIds.length > 0
-      ? inArray(patientsTable.sellerId, sellerIds)
-      : undefined;
+  // Condição base: filtrar pacientes por clínicas do usuário admin
+  const baseCondition = inArray(patientsTable.clinicId, clinicIds);
+
+  let whereCondition: SQL<unknown> = baseCondition;
 
   // Aplicar filtro de vencidos se necessário
-  if (isShowingExpired && sellerIds.length > 0) {
-    const expiredCondition = and(
-      inArray(patientsTable.sellerId, sellerIds),
+  if (isShowingExpired) {
+    whereCondition = and(
+      baseCondition,
       isNotNull(patientsTable.expirationDate),
       lte(patientsTable.expirationDate, new Date()),
-    );
-
-    whereCondition = expiredCondition;
+    )!;
   }
 
   // Aplicar filtro de busca por texto
-  if (searchTerm && whereCondition) {
+  if (searchTerm) {
     const searchConditions = or(
       ilike(patientsTable.name, `%${searchTerm}%`),
       ilike(patientsTable.cpfNumber, `%${searchTerm}%`),
       ilike(patientsTable.rgNumber, `%${searchTerm}%`),
       ilike(patientsTable.phoneNumber, `%${searchTerm}%`),
       ilike(patientsTable.city, `%${searchTerm}%`),
-    );
+    )!;
 
-    whereCondition = and(whereCondition, searchConditions);
+    whereCondition = and(whereCondition, searchConditions)!;
   }
 
-  // Buscar pacientes dos vendedores das clínicas do usuário
+  // Buscar todos os pacientes das clínicas do usuário admin
   const patients = await db.query.patientsTable.findMany({
     where: whereCondition,
     with: {
@@ -124,7 +123,7 @@ const PatientsPage = async ({ searchParams }: PatientsPageProps) => {
           </PageDescription>
         </PageHeaderContent>
         <PageActions>
-          {sellerIds.length > 0 && (
+          {clinicIds.length > 0 && (
             <div className="flex gap-2">
               <ListExpiredButton />
               <AddPatientButton />
@@ -133,17 +132,17 @@ const PatientsPage = async ({ searchParams }: PatientsPageProps) => {
         </PageActions>
       </PageHeader>
       <PageContent>
-        {sellerIds.length === 0 ? (
+        {clinicIds.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <h3 className="text-lg font-semibold text-gray-900">
-              Nenhum vendedor cadastrado
+              Nenhuma clínica cadastrada
             </h3>
             <p className="mt-2 text-sm text-gray-600">
-              Você precisa cadastrar pelo menos um vendedor antes de adicionar
+              Você precisa cadastrar pelo menos uma clínica antes de gerenciar
               pacientes.
             </p>
             <Button className="mt-4" asChild>
-              <a href="/sellers">Cadastrar Vendedor</a>
+              <a href="/clinics">Cadastrar Clínica</a>
             </Button>
           </div>
         ) : (
