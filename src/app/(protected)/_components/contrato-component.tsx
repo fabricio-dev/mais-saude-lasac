@@ -179,7 +179,7 @@ export default function ContratoComponent({
       {/* Termos */}
       <div
         className="mb-4 text-justify leading-relaxed"
-        style={{ fontSize: "13px" }}
+        style={{ fontSize: "12px" }}
       >
         <div className="mb-0">
           <strong>1.</strong> Os usuários pagarão uma taxa única de manutenção
@@ -189,24 +189,28 @@ export default function ContratoComponent({
         <div className="mb-0">
           <strong>2.</strong> O objetivo do cartão é prestar serviços em
           análises clínicas com a realização de exames laboratoriais com
-          descontos especiais e está restrito ao Laboratório Lasac em
-          Salgueiro/PE, Juazeiro do Norte/CE e Parnamirim/PE.
+          descontos especiais e está restrita ao Laboratório Lasac em
+          Salgueiro/PE, Parnamirim/PE, Serrita/PE, Verdejante/PE, Terra Nova/PE,
+          Custódia/PE, Ouricuri/PE, Penaforte/CE e Barbalha/CE. Os laboratórios
+          LASAC de Araripina/PE, Cabrobó/PE e Caruaru/PE já estão com valores
+          promocionais nos exames, mas oferecem desconto adicional aos pacientes
+          conveniados ao Cartão + Saúde LASAC.
         </div>
 
         <div className="mb-0">
           <strong>3.</strong> Os exames realizados no laboratório Lasac e suas
-          unidades serão cobrados diretamente do cliente com descontos de até
-          50% dos pagamentos à vista, tendo como referência a tabela AMB 92 com
+          unidades serão cobrados diretamente do cliente com descontos de 50% a
+          60% nos pagamentos à vista, tendo como referência a tabela AMB 92 com
           CH vigente.
         </div>
 
         <div className="mb-0">
           <strong>4.</strong> A contratada poderá disponibilizar serviços de
-          apoio, gratuitamente aos beneficiários, acesso a convênios especiais
-          com profissionais e empresas de diversos ramos de atividade, visando a
-          obtenção de melhores preços na aquisição de produtos e/ou serviços.
-          Esses serviços disponibilizados pela contratada poderão ser
-          acrescidos, alterados ou suspensos parcialmente ou totalmente, a
+          apoio, gratuitamente aos beneficiários, acesso a convênios especiais,
+          firmados com profissionais e empresas de diversos ramos de serviços e
+          produtos; e obtenção de vantagens na aquisição de produtos e/ou
+          serviços. Esses serviços disponibilizados pela contratada poderão ser
+          acrescidos, alterados e suspensos parcialmente ou totalmente, a
           qualquer tempo mesmo porque se trata de mera liberalidade que não se
           constitui essência dos serviços hora contratados.
         </div>

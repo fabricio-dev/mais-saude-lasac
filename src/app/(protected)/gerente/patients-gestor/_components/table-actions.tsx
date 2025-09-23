@@ -116,7 +116,9 @@ export default function TableActions({
               <UpsertPatientForm
                 patient={{
                   ...patient,
-                  birthDate: patient.birthDate.toISOString().split("T")[0],
+                  birthDate: patient.birthDate
+                    ? patient.birthDate.toISOString().split("T")[0]
+                    : "",
                   clinicId: patient.clinicId,
                   isActive: patient.isActive,
                   reactivatedAt: patient.reactivatedAt,
@@ -140,7 +142,9 @@ export default function TableActions({
                   <PrintCardComponent
                     patient={{
                       ...patient,
-                      birthDate: patient.birthDate.toISOString().split("T")[0],
+                      birthDate: patient.birthDate
+                        ? patient.birthDate.toISOString().split("T")[0]
+                        : "",
                       seller: patient.seller || null,
                     }}
                     variant="ghost"

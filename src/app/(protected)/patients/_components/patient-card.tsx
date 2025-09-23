@@ -90,14 +90,15 @@ const PatientCard = ({ patient }: PatientCardProps) => {
       <CardContent className="space-y-2">
         <div className="text-sm text-gray-600">
           <p>
-            <strong>CPF:</strong> {formatCpf(patient.cpfNumber)}
+            <strong>CPF:</strong>{" "}
+            {patient.cpfNumber ? formatCpf(patient.cpfNumber) : ""}
           </p>
           <p>
             <strong>Telefone:</strong> {formatPhone(patient.phoneNumber)}
           </p>
           <p>
             <strong>Data Nasc:</strong>{" "}
-            {formatDate(new Date(patient.birthDate))}
+            {patient.birthDate ? formatDate(new Date(patient.birthDate)) : ""}
           </p>
 
           {patient.seller && (
