@@ -10,6 +10,7 @@ import { patientsTable } from "@/db/schema";
 interface PrintCardComponentProps {
   patient: typeof patientsTable.$inferSelect & {
     seller?: { name: string } | null;
+    clinic?: { name: string } | null;
   };
   variant?: "default" | "outline" | "ghost";
   size?: "default" | "sm" | "lg" | "icon";
@@ -119,11 +120,12 @@ const PrintCardComponent = ({
                 
                 .print-dependents {
                   font-size: 10px;
+                  font-weight: bold;
                   margin-bottom: 2px;
                 }
                 
                 .print-dependents-title {
-                  font-weight: bold;
+                  font-weight: normal;
                   margin-bottom: 2px;
                 }
                 
@@ -133,11 +135,11 @@ const PrintCardComponent = ({
                 }
                 
                 .print-logo {
-                  width: 55px;
+                  width: 80px;
                   height: 60px;
                   position: absolute;
-                  top: 50px;
-                  right: 15px;
+                  top: 70px;
+                  right: 10px;
                   -webkit-print-color-adjust: exact;
                   color-adjust: exact;
                   print-color-adjust: exact;
@@ -153,9 +155,9 @@ const PrintCardComponent = ({
                 
                 .print-expiration {
                   position: absolute;
-                  bottom: 15px;
-                  left: 15px;
-                  font-size: 8px;
+                  top: 33px;
+                  right: 15px;
+                  font-size: 14px;
                   font-weight: bold;
                 }
                 
@@ -163,7 +165,20 @@ const PrintCardComponent = ({
                   position: absolute;
                   bottom: 15px;
                   right: 15px;
-                  font-size: 8px;
+                  font-size: 10px;
+                }
+
+                .validade-title {
+                  font-size: 10px;
+                  font-weight: normal;
+                }
+
+                .print-clinic-name {
+                  position: absolute;
+                  bottom: 15px;
+                  left: 15px;
+                  font-size: 12px;
+                  font-weight: bold;
                 }
               }
             `}
@@ -187,11 +202,16 @@ const PrintCardComponent = ({
               <img src="/lab.png" alt="Mais Saúde" className="print-logo" />
 
               <div className="print-expiration">
-                {patient.expirationDate
-                  ? `VÁLIDO ATÉ: ${formatDate(new Date(patient.expirationDate))}`
-                  : ""}
+                {patient.expirationDate ? (
+                  <>
+                    <strong className="validade-title">VALIDADE:</strong>{" "}
+                    {formatDate(new Date(patient.expirationDate))}
+                  </>
+                ) : (
+                  ""
+                )}
               </div>
-
+              <div className="print-clinic-name">{patient.clinic?.name}</div>
               <div className="print-card-type">
                 {patient.cardType === "enterprise" ? "EMPRESA" : "INDIVIDUAL"}
               </div>
