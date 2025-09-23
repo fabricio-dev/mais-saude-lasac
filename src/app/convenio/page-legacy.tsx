@@ -971,7 +971,7 @@ function ConvenioLegacy() {
                     )}
                   </div>
 
-                  <div className="form-group">
+                  <div className="form-group" hidden={true}>
                     <Label htmlFor="cardType" className="form-label">
                       Tipo de Cartão
                     </Label>
@@ -991,7 +991,7 @@ function ConvenioLegacy() {
                     </select>
                   </div>
 
-                  <div className="form-group">
+                  <div className="form-group" hidden={true}>
                     <Label htmlFor="Enterprise" className="form-label">
                       Empresa
                     </Label>
@@ -1015,7 +1015,7 @@ function ConvenioLegacy() {
                     <Input
                       id="numberCards"
                       type="number"
-                      min="1"
+                      min="0"
                       max="6"
                       value={formData.numberCards}
                       onChange={(e) =>
