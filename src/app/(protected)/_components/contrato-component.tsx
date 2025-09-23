@@ -122,7 +122,7 @@ export default function ContratoComponent({
   numeroContrato,
 }: ContratoComponentProps) {
   return (
-    <div className="mx-auto max-w-4xl bg-white p-6 text-sm text-black">
+    <div className="mx-auto max-w-4xl bg-white p-4 text-sm text-black">
       {/* Cabeçalho */}
       <div className="relative mb-2 flex items-start justify-between">
         <div className="flex-1">
@@ -158,13 +158,13 @@ export default function ContratoComponent({
       </div>
 
       {/* Título */}
-      <div className="mb-4 text-center">
+      <div className="mb-3 text-center">
         <h1 className="text-lg font-bold">TERMO DE CONVÊNIO</h1>
       </div>
 
       {/* Texto introdutório */}
       <div
-        className="mb-3 text-justify leading-relaxed"
+        className="mb-2 text-justify leading-relaxed"
         style={{ fontSize: "14px" }}
       >
         <p>
@@ -178,8 +178,8 @@ export default function ContratoComponent({
 
       {/* Termos */}
       <div
-        className="mb-4 text-justify leading-relaxed"
-        style={{ fontSize: "12px" }}
+        className="mb-2 text-justify leading-relaxed"
+        style={{ fontSize: "13px" }}
       >
         <div className="mb-0">
           <strong>1.</strong> Os usuários pagarão uma taxa única de manutenção
@@ -234,8 +234,8 @@ export default function ContratoComponent({
       </div>
 
       {/* Dados do Titular */}
-      <div className="mb-3">
-        <div className="mb-3 font-bold" style={{ fontSize: "14px" }}>
+      <div className="mb-2">
+        <div className="mb-2 font-bold" style={{ fontSize: "14px" }}>
           NOME TITULAR: {patient.name.toUpperCase()}
         </div>
 

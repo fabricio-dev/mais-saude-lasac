@@ -30,6 +30,7 @@ import UpsertPatientForm from "./upsert-patient-form";
 interface PatientCardProps {
   patient: typeof patientsTable.$inferSelect & {
     seller?: { name: string } | null;
+    clinic?: { name: string } | null;
   };
 }
 
@@ -106,6 +107,12 @@ const PatientCard = ({ patient }: PatientCardProps) => {
               <strong>Vendedor:</strong> {patient.seller.name}
             </p>
           )}
+
+          {/* {patient.clinic && (
+            <p>
+              <strong>Clínica:</strong> {patient.clinic.name}
+            </p>
+          )} */}
 
           {patient.expirationDate && (
             <p

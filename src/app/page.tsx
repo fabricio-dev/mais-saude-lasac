@@ -648,11 +648,11 @@ export default function Home() {
             }
             
             .logo-face2 {
-              width: 40px;
-              height: 40px;
+              width: 60px;
+              height: 35px;
               position: absolute;
-              top: 15px;
-              right: 15px;
+              top: 12px;
+              right: 10px;
               image-rendering: auto;
               image-rendering: -webkit-optimize-contrast;
               image-rendering: pixelated;
@@ -725,21 +725,21 @@ export default function Home() {
                 dependents.length > 0
                   ? `
                 <div class="dependents">
-                  <div class="dependents-title">DEPENDENTES:</div>
+                  <div class="dependents-title" >DEPENDENTES:</div>
                   ${dependents.map((dep) => `<div class="dependent-item"> ${dep}</div>`).join("")}
                 </div>
               `
                   : ""
               }
               
-              <img src="/lab.svg" alt="Mais Saúde" class="logo-face2">
+              <img src="/lab.png" alt="Mais Saúde" class="logo-face2">
             </div>
             
             <div class="card-footer">
-              <div style="position: absolute; bottom: 15px; left: 15px; font-size: 8px; font-weight: bold;">
+              <div style="position: absolute; bottom: 15px; left: 15px; font-size: 14px; font-weight: bold;">
                 ${paciente.expirationDate ? `VÁLIDO ATÉ: ${formatDate(new Date(paciente.expirationDate))}` : ""}
               </div>
-              <div style="position: absolute; bottom: 15px; right: 15px;">
+              <div style="position: absolute; bottom: 15px; right: 15px; font-size: 12px; font-weight: bold;">
                 ${paciente.cardType === "enterprise" ? "EMPRESA" : "INDIVIDUAL"}
               </div>
             </div>
