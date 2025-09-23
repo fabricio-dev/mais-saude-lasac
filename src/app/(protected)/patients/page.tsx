@@ -7,6 +7,7 @@ import {
   lte,
   or,
   type SQL,
+  sql,
 } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -86,12 +87,30 @@ const PatientsPage = async ({ searchParams }: PatientsPageProps) => {
 
   // Aplicar filtro de busca por texto
   if (searchTerm) {
+    // Normalizar termo de busca removendo acentos e espaços extras
+    const normalizedSearchTerm = searchTerm
+      .trim()
+      .replace(/\s+/g, " ") // Normalizar espaços múltiplos para um único espaço
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+
+    // Também criar versão com espaços normalizados mas com acentos
+    const spacesNormalizedTerm = searchTerm.trim().replace(/\s+/g, " ");
+
     const searchConditions = or(
+      // Busca normal (com acentos)
       ilike(patientsTable.name, `%${searchTerm}%`),
       ilike(patientsTable.cpfNumber, `%${searchTerm}%`),
       ilike(patientsTable.rgNumber, `%${searchTerm}%`),
       ilike(patientsTable.phoneNumber, `%${searchTerm}%`),
       ilike(patientsTable.city, `%${searchTerm}%`),
+      // Busca com espaços normalizados
+      ilike(patientsTable.name, `%${spacesNormalizedTerm}%`),
+      ilike(patientsTable.city, `%${spacesNormalizedTerm}%`),
+      // Busca sem acentos usando translate (compatível com PostgreSQL)
+      sql`lower(translate(regexp_replace(${patientsTable.name}, '\\s+', ' ', 'g'), 'ÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ', 'AAAAAAaaaaaaOOOOOOooooooEEEEeeeeeCcIIIIiiiiUUUUuuuuyNn')) ilike '%' || lower(${normalizedSearchTerm}) || '%'`,
+      sql`lower(translate(regexp_replace(${patientsTable.city}, '\\s+', ' ', 'g'), 'ÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ', 'AAAAAAaaaaaaOOOOOOooooooEEEEeeeeeCcIIIIiiiiUUUUuuuuyNn')) ilike '%' || lower(${normalizedSearchTerm}) || '%'`,
     )!;
 
     whereCondition = and(whereCondition, searchConditions)!;
