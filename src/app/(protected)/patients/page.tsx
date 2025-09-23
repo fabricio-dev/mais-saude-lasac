@@ -158,7 +158,9 @@ const PatientsPage = async ({ searchParams }: PatientsPageProps) => {
               <PatientsTable
                 patients={patients.map((patient) => ({
                   ...patient,
-                  birthDate: new Date(patient.birthDate),
+                  birthDate: patient.birthDate
+                    ? new Date(patient.birthDate)
+                    : null,
                 }))}
               />
             </div>
