@@ -1,6 +1,6 @@
 "use server";
 
-import { subDays } from "date-fns";
+import dayjs from "dayjs";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
@@ -54,7 +54,7 @@ export const createPatient = actionClient
     await db.insert(patientsTable).values({
       name,
       birthDate: birthDate
-        ? new Date(birthDate).toISOString().split("T")[0]
+        ? dayjs(birthDate).startOf("day").toISOString()
         : null,
       phoneNumber,
       rgNumber: rgNumber || null,
@@ -76,7 +76,7 @@ export const createPatient = actionClient
       dependents5: dependents5 || null,
       dependents6: dependents6 || null,
       isActive: false, // Inativo até ser processado
-      expirationDate: subDays(new Date(), 1), // Será definido posteriormente
+      expirationDate: dayjs().subtract(1, "day").startOf("day").toDate(), // Será definido posteriormente
     });
 
     revalidatePath("/");
