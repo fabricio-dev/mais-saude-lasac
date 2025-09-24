@@ -20,8 +20,8 @@ export const upsertPatient = actionClient
 
     // Usar a data de vencimento fornecida pelo usuário ou calcular como um ano após a data atual
     const expirationDate = parsedInput.expirationDate
-      ? dayjs(parsedInput.expirationDate).toDate()
-      : dayjs().add(1, "year").toDate();
+      ? dayjs(parsedInput.expirationDate).startOf("day").toDate()
+      : dayjs().add(1, "year").startOf("day").toDate();
 
     if (parsedInput.id) {
       // Edição - atualizar incluindo a data de vencimento se fornecida
@@ -30,10 +30,10 @@ export const upsertPatient = actionClient
         .values({
           ...parsedInput,
           birthDate: parsedInput.birthDate
-            ? new Date(parsedInput.birthDate).toISOString()
+            ? dayjs(parsedInput.birthDate).startOf("day").toISOString()
             : null,
           expirationDate: parsedInput.expirationDate
-            ? dayjs(parsedInput.expirationDate).toDate()
+            ? dayjs(parsedInput.expirationDate).startOf("day").toDate()
             : undefined,
           clinicId: parsedInput.clinicId,
         })
@@ -42,10 +42,10 @@ export const upsertPatient = actionClient
           set: {
             ...parsedInput,
             birthDate: parsedInput.birthDate
-              ? new Date(parsedInput.birthDate).toISOString()
+              ? dayjs(parsedInput.birthDate).startOf("day").toISOString()
               : null,
             expirationDate: parsedInput.expirationDate
-              ? dayjs(parsedInput.expirationDate).toDate()
+              ? dayjs(parsedInput.expirationDate).startOf("day").toDate()
               : undefined,
           },
         });
@@ -54,10 +54,10 @@ export const upsertPatient = actionClient
       await db.insert(patientsTable).values({
         ...parsedInput,
         birthDate: parsedInput.birthDate
-          ? new Date(parsedInput.birthDate).toISOString()
+          ? dayjs(parsedInput.birthDate).startOf("day").toISOString()
           : null,
         expirationDate: expirationDate,
-        activeAt: new Date(),
+        activeAt: dayjs().startOf("day").toDate(),
       });
     }
 
