@@ -63,6 +63,7 @@ export const getDashboard = async ({ from, to, session }: Params) => {
     patientsToExpire,
     dailyConveniosData,
     deactivatePatients,
+    reactivatePatients,
   ] = await Promise.all([
     // Pacientes ativados pela primeira vez no período
     db
@@ -399,5 +400,6 @@ export const getDashboard = async ({ from, to, session }: Params) => {
     patientsToExpire,
     dailyConveniosData,
     deactivatePatients,
+    reactivatePatients,
   };
 };
