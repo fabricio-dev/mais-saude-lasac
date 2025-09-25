@@ -1,6 +1,8 @@
 import {
   and,
+  between,
   eq,
+  gte,
   ilike,
   inArray,
   isNotNull,
@@ -28,7 +30,7 @@ import { patientsTable, usersToClinicsTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 
 import AddPatientButton from "./_components/add-patient-button";
-import ListExpiredButton from "./_components/list-expired-button";
+import FiltersBar from "./_components/filters-bar";
 import PatientsTable from "./_components/patients-table";
 import SearchPatients from "./_components/search-patients";
 
@@ -36,6 +38,8 @@ interface PatientsPageProps {
   searchParams: Promise<{
     search?: string;
     filter?: string;
+    dateFrom?: string;
+    dateTo?: string;
   }>;
 }
 
@@ -52,7 +56,7 @@ const PatientsPage = async ({ searchParams }: PatientsPageProps) => {
   }
 
   // Aguardar searchParams antes de usar
-  const { search, filter } = await searchParams;
+  const { search, filter, dateFrom, dateTo } = await searchParams;
   const isShowingExpired = filter === "expired";
 
   // Primeiro, buscar todas as clínicas do usuário
@@ -82,6 +86,32 @@ const PatientsPage = async ({ searchParams }: PatientsPageProps) => {
       baseCondition,
       isNotNull(patientsTable.expirationDate),
       lte(patientsTable.expirationDate, new Date()),
+    )!;
+  }
+
+  // Aplicar filtro por período de data de vencimento
+  if (dateFrom && dateTo) {
+    const fromDate = new Date(dateFrom);
+    const toDate = new Date(dateTo);
+
+    whereCondition = and(
+      whereCondition,
+      isNotNull(patientsTable.expirationDate),
+      between(patientsTable.expirationDate, fromDate, toDate),
+    )!;
+  } else if (dateFrom) {
+    const fromDate = new Date(dateFrom);
+    whereCondition = and(
+      whereCondition,
+      isNotNull(patientsTable.expirationDate),
+      gte(patientsTable.expirationDate, fromDate),
+    )!;
+  } else if (dateTo) {
+    const toDate = new Date(dateTo);
+    whereCondition = and(
+      whereCondition,
+      isNotNull(patientsTable.expirationDate),
+      lte(patientsTable.expirationDate, toDate),
     )!;
   }
 
@@ -143,8 +173,10 @@ const PatientsPage = async ({ searchParams }: PatientsPageProps) => {
         </PageHeaderContent>
         <PageActions>
           {clinicIds.length > 0 && (
-            <div className="flex gap-2">
-              <ListExpiredButton />
+            <div className="flex items-center gap-4">
+              <Suspense fallback={<div>Carregando...</div>}>
+                <FiltersBar />
+              </Suspense>
               <AddPatientButton />
             </div>
           )}
