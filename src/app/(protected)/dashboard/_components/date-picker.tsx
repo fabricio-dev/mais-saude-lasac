@@ -1,7 +1,8 @@
 "use client";
 
-import { format, subMonths } from "date-fns";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import dayjs from "dayjs";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { parseAsIsoDate, useQueryState } from "nuqs";
 import * as React from "react";
@@ -23,11 +24,11 @@ export function DatePicker({
   const [isMobile, setIsMobile] = useState(false);
   const [from, setFrom] = useQueryState(
     "from",
-    parseAsIsoDate.withDefault(subMonths(new Date(), 1)),
+    parseAsIsoDate.withDefault(dayjs().subtract(1, "month").toDate()),
   );
   const [to, setTo] = useQueryState(
     "to",
-    parseAsIsoDate.withDefault(new Date()),
+    parseAsIsoDate.withDefault(dayjs().toDate()),
   );
 
   useEffect(() => {
@@ -40,22 +41,42 @@ export function DatePicker({
 
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
+
   const handleDateSelect = (dateRange: DateRange | undefined) => {
-    if (dateRange?.from) {
-      setFrom(dateRange.from, {
-        shallow: false,
-      });
-    }
-    if (dateRange?.to) {
-      setTo(dateRange.to, {
-        shallow: false,
-      });
+    if (!dateRange?.from) return;
+
+    // console.log("Raw dateRange:", dateRange);
+
+    // Se não há 'to' definido (primeiro clique)
+    if (!dateRange.to) {
+      //console.log("First click - setting both dates to:", dateRange.from);
+      setFrom(dateRange.from, { shallow: false });
+      setTo(dateRange.from, { shallow: false });
+    } else {
+      // console.log(
+      //   "Range selected - from:",
+      //   dateRange.from,
+      //   "to:",
+      //   dateRange.to,
+      // );
+
+      // Usar dayjs para garantir que as datas não sejam alteradas
+      const fromDate = dayjs(dateRange.from).startOf("day");
+      const toDate = dayjs(dateRange.to).startOf("day");
+
+      // console.log("Setting from:", fromDate.format("YYYY-MM-DD"));
+      // console.log("Setting to:", toDate.format("YYYY-MM-DD"));
+
+      setFrom(fromDate.toDate(), { shallow: false });
+      setTo(toDate.toDate(), { shallow: false });
     }
   };
   const date = {
-    from,
-    to,
+    from: from ? dayjs(from).startOf("day").toDate() : undefined,
+    to: to ? dayjs(to).startOf("day").toDate() : undefined,
   };
+
+  // console.log("Display date object:", date);
   return (
     <div className={cn("grid gap-2", className)}>
       <Popover>

@@ -1,5 +1,17 @@
 import dayjs from "dayjs";
-import { and, asc, count, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  gte,
+  inArray,
+  isNotNull,
+  lte,
+  or,
+  sql,
+} from "drizzle-orm";
 
 import { db } from "@/db";
 import { clinicsTable, patientsTable, sellersTable } from "@/db/schema";
@@ -301,7 +313,7 @@ export const getDashboardGestor = async ({ from, to, session }: Params) => {
       return allDates;
     }),
 
-    // Desativar pacientes expirados da clínica do gestor
+    // Desativar pacientes expirados da clínica do gestor (apenas data, sem horário)
     db
       .update(patientsTable)
       .set({
@@ -310,8 +322,34 @@ export const getDashboardGestor = async ({ from, to, session }: Params) => {
       })
       .where(
         and(
-          lte(patientsTable.expirationDate, new Date()),
+          lte(patientsTable.expirationDate, dayjs().endOf("day").toDate()),
           eq(patientsTable.isActive, true),
+          inArray(
+            patientsTable.clinicId,
+            db
+              .select({ clinicId: sellersTable.clinicId })
+              .from(sellersTable)
+              .where(eq(sellersTable.email, session.user.email)),
+          ),
+        ),
+      ),
+
+    // Reativar pacientes inativos com data de expiração válida da clínica do gestor
+    db
+      .update(patientsTable)
+      .set({
+        isActive: true,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          gte(patientsTable.expirationDate, dayjs().startOf("day").toDate()),
+          eq(patientsTable.isActive, false),
+          // Apenas pacientes que já foram ativados pelo menos uma vez
+          or(
+            isNotNull(patientsTable.activeAt),
+            isNotNull(patientsTable.reactivatedAt),
+          ),
           inArray(
             patientsTable.clinicId,
             db

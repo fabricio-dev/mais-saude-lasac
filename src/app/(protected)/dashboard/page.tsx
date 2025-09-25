@@ -56,7 +56,7 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
 
   if (!from || !to) {
     redirect(
-      `/dashboard?from=${dayjs().subtract(1, "month").add(1, "day").format("YYYY-MM-DD")}&to=${dayjs().add(1, "day").format("YYYY-MM-DD")}`,
+      `/dashboard?from=${dayjs().subtract(1, "month").format("YYYY-MM-DD")}&to=${dayjs().format("YYYY-MM-DD")}`,
     );
   }
 
@@ -80,6 +80,7 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
   });
 
   return (
+    //  console.log(from, to),
     <PageContainer>
       <PageHeader>
         <PageHeaderContent>

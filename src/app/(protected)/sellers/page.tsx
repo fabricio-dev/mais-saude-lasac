@@ -87,8 +87,8 @@ const SellersPage = async ({ searchParams }: SellersPageProps) => {
   }
 
   // Definindo datas e condições SQL uma única vez - PRIORIZANDO SQL
-  const fromDate = new Date(from);
-  const toDate = new Date(to);
+  const fromDate = dayjs(from).startOf("day").toDate();
+  const toDate = dayjs(to).endOf("day").toDate();
 
   // Condições SQL centralizadas (sem duplicidade)
   const conveniosCondition =
@@ -146,43 +146,46 @@ const SellersPage = async ({ searchParams }: SellersPageProps) => {
     .groupBy(sellersTable.id, clinicsTable.name);
 
   return (
-    <PageContainer>
-      <PageHeader>
-        <PageHeaderContent>
-          <PageTitle>Vendedores</PageTitle>
-          <PageDescription>
-            Gerencie os vendedores de suas unidades
-          </PageDescription>
-        </PageHeaderContent>
-        <PageActions>
-          <DatePicker />
-          <AddSellerButton />
-        </PageActions>
-      </PageHeader>
-      <PageContent>
-        <div className="grid gap-6 md:grid-cols-2">
-          <Suspense fallback={<div>Carregando...</div>}>
-            <SearchSellers />
-          </Suspense>
-        </div>
+    console.log(from, to),
+    (
+      <PageContainer>
+        <PageHeader>
+          <PageHeaderContent>
+            <PageTitle>Vendedores</PageTitle>
+            <PageDescription>
+              Gerencie os vendedores de suas unidades
+            </PageDescription>
+          </PageHeaderContent>
+          <PageActions>
+            <DatePicker />
+            <AddSellerButton />
+          </PageActions>
+        </PageHeader>
+        <PageContent>
+          <div className="grid gap-6 md:grid-cols-2">
+            <Suspense fallback={<div>Carregando...</div>}>
+              <SearchSellers />
+            </Suspense>
+          </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {sellersWithPatientsCount.length > 0 ? (
-            sellersWithPatientsCount.map((seller) => (
-              <SellerCard key={seller.id} seller={seller} />
-            ))
-          ) : (
-            <div className="col-span-full py-8 text-center">
-              <p className="text-gray-500">
-                {searchTerm
-                  ? `Nenhum vendedor encontrado para "${searchTerm}"`
-                  : "Nenhum vendedor cadastrado"}
-              </p>
-            </div>
-          )}
-        </div>
-      </PageContent>
-    </PageContainer>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {sellersWithPatientsCount.length > 0 ? (
+              sellersWithPatientsCount.map((seller) => (
+                <SellerCard key={seller.id} seller={seller} />
+              ))
+            ) : (
+              <div className="col-span-full py-8 text-center">
+                <p className="text-gray-500">
+                  {searchTerm
+                    ? `Nenhum vendedor encontrado para "${searchTerm}"`
+                    : "Nenhum vendedor cadastrado"}
+                </p>
+              </div>
+            )}
+          </div>
+        </PageContent>
+      </PageContainer>
+    )
   );
 };
 // Wrapper para suporte ao Suspense com searchParams
