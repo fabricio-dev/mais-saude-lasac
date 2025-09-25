@@ -76,7 +76,11 @@ export const createPatient = actionClient
       dependents5: dependents5 || null,
       dependents6: dependents6 || null,
       isActive: false, // Inativo até ser processado
-      expirationDate: dayjs().subtract(1, "day").startOf("day").toDate(), // Será definido posteriormente
+      expirationDate: dayjs()
+        .subtract(1, "day")
+        .startOf("day")
+        .add(6, "hours")
+        .toDate(), // Será definido posteriormente
     });
 
     revalidatePath("/");
