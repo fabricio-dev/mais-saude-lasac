@@ -1159,7 +1159,7 @@ function ConvenioLegacy() {
                 <strong>Chave PIX CPF/CNPJ:</strong> 041.347.194-29
               </p>
               <p>
-                <strong>whatsapp:</strong> (87) 99925-2333
+                <strong>whatsapp:</strong> (87) 98874-9746
               </p>
               <p>
                 <strong>Valor:</strong> R$ 100,00

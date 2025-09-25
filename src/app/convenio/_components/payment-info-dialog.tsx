@@ -22,7 +22,7 @@ export function PaymentInfoDialog({
   onOpenChange,
 }: PaymentInfoDialogProps) {
   const handleWhatsAppClick = () => {
-    const phoneNumber = "5587999252333"; // Número com código do país
+    const phoneNumber = "5587988749746"; // Número com código do país
     const message =
       "Olá! Gostaria de enviar o comprovante de pagamento do convênio.";
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
@@ -73,9 +73,9 @@ export function PaymentInfoDialog({
                 onClick={handleCopyPixKey}
                 variant="outline"
                 size="sm"
-                className="ml-1 h-6 w-6 p-0"
+                className="ml-1 h-6 w-36 p-0"
               >
-                📋
+                📋 Copiar chave PIX
               </Button>
             </p>
           </div>
@@ -92,7 +92,7 @@ export function PaymentInfoDialog({
               className="w-full bg-green-600 text-white hover:bg-green-700"
             >
               <span className="mr-2">📱</span>
-              Enviar Comprovante - (87) 99925-2333
+              Enviar Comprovante - (87) 98874-9746
             </Button>
 
             <p className="text-xs text-gray-500">
