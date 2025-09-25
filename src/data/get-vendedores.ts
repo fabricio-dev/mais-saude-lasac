@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import { and, count, eq, gte, inArray, lte, sql } from "drizzle-orm";
 
 import { db } from "@/db";
@@ -64,6 +65,10 @@ export async function getVendedores({
       vendedorIds = vendedores.map((v) => v.id);
     }
 
+    // Definir datas com horário completo
+    const fromDate = dayjs(from).startOf("day").toDate();
+    const toDate = dayjs(to).endOf("day").toDate();
+
     // Buscar estatísticas gerais usando a mesma lógica do get-management e get-dashboard
     const [
       [totalPatientsNovos = { total: 0 }],
@@ -83,8 +88,8 @@ export async function getVendedores({
           and(
             inArray(patientsTable.sellerId, vendedorIds),
             eq(patientsTable.isActive, true),
-            gte(patientsTable.activeAt, new Date(from)),
-            lte(patientsTable.activeAt, new Date(to)),
+            gte(patientsTable.activeAt, fromDate),
+            lte(patientsTable.activeAt, toDate),
           ),
         ),
 
@@ -98,8 +103,8 @@ export async function getVendedores({
           and(
             inArray(patientsTable.sellerId, vendedorIds),
             eq(patientsTable.isActive, true),
-            gte(patientsTable.reactivatedAt, new Date(from)),
-            lte(patientsTable.reactivatedAt, new Date(to)),
+            gte(patientsTable.reactivatedAt, fromDate),
+            lte(patientsTable.reactivatedAt, toDate),
             sql`${patientsTable.reactivatedAt} IS NOT NULL`,
           ),
         ),
@@ -115,8 +120,8 @@ export async function getVendedores({
             inArray(patientsTable.sellerId, vendedorIds),
             eq(patientsTable.cardType, "enterprise"),
             eq(patientsTable.isActive, true),
-            gte(patientsTable.activeAt, new Date(from)),
-            lte(patientsTable.activeAt, new Date(to)),
+            gte(patientsTable.activeAt, fromDate),
+            lte(patientsTable.activeAt, toDate),
           ),
         ),
 
@@ -131,8 +136,8 @@ export async function getVendedores({
             inArray(patientsTable.sellerId, vendedorIds),
             eq(patientsTable.cardType, "enterprise"),
             eq(patientsTable.isActive, true),
-            gte(patientsTable.reactivatedAt, new Date(from)),
-            lte(patientsTable.reactivatedAt, new Date(to)),
+            gte(patientsTable.reactivatedAt, fromDate),
+            lte(patientsTable.reactivatedAt, toDate),
             sql`${patientsTable.reactivatedAt} IS NOT NULL`,
           ),
         ),
@@ -142,8 +147,8 @@ export async function getVendedores({
         where: and(
           inArray(patientsTable.sellerId, vendedorIds),
           eq(patientsTable.isActive, true),
-          gte(patientsTable.activeAt, new Date(from)),
-          lte(patientsTable.activeAt, new Date(to)),
+          gte(patientsTable.activeAt, fromDate),
+          lte(patientsTable.activeAt, toDate),
         ),
         with: {
           seller: {
@@ -160,8 +165,8 @@ export async function getVendedores({
         where: and(
           inArray(patientsTable.sellerId, vendedorIds),
           eq(patientsTable.isActive, true),
-          gte(patientsTable.reactivatedAt, new Date(from)),
-          lte(patientsTable.reactivatedAt, new Date(to)),
+          gte(patientsTable.reactivatedAt, fromDate),
+          lte(patientsTable.reactivatedAt, toDate),
           sql`${patientsTable.reactivatedAt} IS NOT NULL`,
         ),
         with: {

@@ -51,7 +51,7 @@ const SellersPage = async ({ searchParams }: SellersPageProps) => {
 
   if (!from || !to) {
     redirect(
-      `/sellers?from=${dayjs().subtract(1, "month").add(1, "day").format("YYYY-MM-DD")}&to=${dayjs().add(1, "day").format("YYYY-MM-DD")}`,
+      `/sellers?from=${dayjs().subtract(1, "month").format("YYYY-MM-DD")}&to=${dayjs().format("YYYY-MM-DD")}`,
     );
   }
 
