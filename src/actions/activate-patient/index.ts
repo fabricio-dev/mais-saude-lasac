@@ -90,7 +90,11 @@ export const activatePatient = actionClient
     }
 
     // Calcular nova data de expiração (data atual + 1 ano)
-    const newExpirationDate = dayjs().add(1, "year").startOf("day").toDate();
+    const newExpirationDate = dayjs()
+      .add(1, "year")
+      .startOf("day")
+      .add(3, "hours")
+      .toDate();
 
     const timeRemaining =
       dayjs(patient.expirationDate).diff(dayjs(), "days") + 1; //ver isso depois
@@ -98,27 +102,30 @@ export const activatePatient = actionClient
       .add(1, "year")
       .add(timeRemaining, "days")
       .startOf("day")
+      .add(3, "hours")
       .toDate();
 
     // Determinar se é primeira ativação ou renovacao de convenio
     const updateData =
       patient.activeAt === null // ver se eh aoto cadastro
         ? {
-            activeAt: dayjs().startOf("day").toDate(),
+            activeAt: dayjs().startOf("day").add(3, "hours").toDate(),
             isActive: true,
             expirationDate: newExpirationDate,
             updatedAt: new Date(),
           }
         : patient.expirationDate && patient.expirationDate > new Date()
           ? {
+              // Atualizar a data de expiração antecipada
               expirationDate: newExpirationDateAntecipated,
-              reactivatedAt: dayjs().startOf("day").toDate(),
+              reactivatedAt: dayjs().startOf("day").add(3, "hours").toDate(),
               isActive: true,
               updatedAt: new Date(),
             }
           : {
+              // Atualizar a data de expiração
               expirationDate: newExpirationDate,
-              reactivatedAt: dayjs().startOf("day").toDate(),
+              reactivatedAt: dayjs().startOf("day").add(3, "hours").toDate(),
               isActive: true,
               updatedAt: new Date(),
             };
@@ -131,6 +138,7 @@ export const activatePatient = actionClient
 
     revalidatePath("/patients");
     revalidatePath("/vendedor/patients-seller");
+    revalidatePath("/gerente/patients-gestor");
 
     return { success: true };
   });
