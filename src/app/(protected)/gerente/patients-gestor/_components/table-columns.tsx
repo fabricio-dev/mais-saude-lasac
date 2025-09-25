@@ -164,6 +164,16 @@ export const patientsTableColumns = ({
       const expirationDate = row.getValue("expirationDate") as Date | null;
       const isExpired = isPatientExpired(expirationDate);
       const isPending = isPatientPending(row.original.activeAt);
+      const isUndefined = expirationDate === null;
+
+      if (isUndefined) {
+        return (
+          <Badge variant="secondary" className="bg-gray-100 text-gray-800">
+            Indefinido
+          </Badge>
+        );
+      }
+
       return (
         <Badge
           variant={isExpired ? "destructive" : "default"}

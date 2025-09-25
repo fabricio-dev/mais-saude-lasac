@@ -114,12 +114,19 @@ const PatientCard = ({ patient }: PatientCardProps) => {
             </p>
           )}
 
-          {patient.expirationDate && (
+          {patient.expirationDate ? (
             <p
               className={`font-medium ${isPatientExpired() ? "text-red-600" : "text-gray-600"}`}
             >
               <strong>{isPatientExpired() ? "Venceu em:" : "Vence em:"}</strong>{" "}
               {formatDate(new Date(patient.expirationDate))}
+            </p>
+          ) : (
+            <p className="font-medium text-gray-500">
+              <strong>Status:</strong>{" "}
+              <Badge variant="secondary" className="bg-gray-100 text-gray-800">
+                Indefinido
+              </Badge>
             </p>
           )}
         </div>
