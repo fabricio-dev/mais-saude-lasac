@@ -61,8 +61,12 @@ export const getDashboardSellers = async ({ from, to, session }: Params) => {
     .toDate();
   const regeExpiratedEndDate = dayjs().add(14, "days").endOf("day").toDate();
 
-  const conveniosCondition = sql<number>`COUNT(CASE WHEN ${patientsTable.activeAt} >= ${new Date(from)} AND ${patientsTable.activeAt} <= ${new Date(to)} AND ${patientsTable.activeAt} IS NOT NULL THEN 1 END)`;
-  const conveniosRenovadosCondition = sql<number>`COUNT(CASE WHEN ${patientsTable.reactivatedAt} >= ${new Date(from)} AND ${patientsTable.reactivatedAt} <= ${new Date(to)} AND ${patientsTable.reactivatedAt} IS NOT NULL THEN 1 END)`;
+  // Definindo datas com horário completo
+  const fromDate = dayjs(from).startOf("day").toDate();
+  const toDate = dayjs(to).endOf("day").toDate();
+
+  const conveniosCondition = sql<number>`COUNT(CASE WHEN ${patientsTable.activeAt} >= ${fromDate} AND ${patientsTable.activeAt} <= ${toDate} AND ${patientsTable.activeAt} IS NOT NULL THEN 1 END)`;
+  const conveniosRenovadosCondition = sql<number>`COUNT(CASE WHEN ${patientsTable.reactivatedAt} >= ${fromDate} AND ${patientsTable.reactivatedAt} <= ${toDate} AND ${patientsTable.reactivatedAt} IS NOT NULL THEN 1 END)`;
   const totalCondition = sql<number>`${conveniosCondition} + ${conveniosRenovadosCondition}`;
 
   const [
@@ -74,6 +78,7 @@ export const getDashboardSellers = async ({ from, to, session }: Params) => {
     patientsToExpire,
     dailyConveniosData,
     deactivatePatients,
+    reactivatePatients,
     [sellerClinic = { clinicName: null }],
   ] = await Promise.all([
     // TODO: Implementa a query para o total de pacientes
@@ -92,8 +97,8 @@ export const getDashboardSellers = async ({ from, to, session }: Params) => {
               .where(eq(sellersTable.email, session.user.email)),
           ),
           eq(patientsTable.isActive, true),
-          gte(patientsTable.activeAt, new Date(from)),
-          lte(patientsTable.activeAt, new Date(to)),
+          gte(patientsTable.activeAt, fromDate),
+          lte(patientsTable.activeAt, toDate),
         ),
       ),
     // Query para total de pacientes renovados (reativados) do vendedor logado
@@ -112,8 +117,8 @@ export const getDashboardSellers = async ({ from, to, session }: Params) => {
               .where(eq(sellersTable.email, session.user.email)),
           ),
           eq(patientsTable.isActive, true),
-          gte(patientsTable.reactivatedAt, new Date(from)),
-          lte(patientsTable.reactivatedAt, new Date(to)),
+          gte(patientsTable.reactivatedAt, fromDate),
+          lte(patientsTable.reactivatedAt, toDate),
           sql`${patientsTable.reactivatedAt} IS NOT NULL`,
         ),
       ),
@@ -134,8 +139,8 @@ export const getDashboardSellers = async ({ from, to, session }: Params) => {
           ),
           eq(patientsTable.cardType, "enterprise"),
           eq(patientsTable.isActive, true),
-          gte(patientsTable.activeAt, new Date(from)),
-          lte(patientsTable.activeAt, new Date(to)),
+          gte(patientsTable.activeAt, fromDate),
+          lte(patientsTable.activeAt, toDate),
         ),
       ),
     // TODO: Implementa a query para o total de pacientes de empresas renovados
@@ -156,8 +161,8 @@ export const getDashboardSellers = async ({ from, to, session }: Params) => {
 
           eq(patientsTable.cardType, "enterprise"),
           eq(patientsTable.isActive, true),
-          gte(patientsTable.reactivatedAt, new Date(from)),
-          lte(patientsTable.reactivatedAt, new Date(to)),
+          gte(patientsTable.reactivatedAt, fromDate),
+          lte(patientsTable.reactivatedAt, toDate),
           sql`${patientsTable.reactivatedAt} IS NOT NULL`,
         ),
       ),
@@ -377,6 +382,7 @@ export const getDashboardSellers = async ({ from, to, session }: Params) => {
     patientsToExpire,
     dailyConveniosData,
     deactivatePatients,
+    reactivatePatients,
     sellerClinic: sellerClinic?.clinicName || null,
   };
 };
