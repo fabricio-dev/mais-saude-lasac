@@ -1,5 +1,17 @@
 import dayjs from "dayjs";
-import { and, asc, count, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  gte,
+  inArray,
+  isNotNull,
+  lte,
+  or,
+  sql,
+} from "drizzle-orm";
 
 import { db } from "@/db";
 import {
@@ -32,8 +44,11 @@ export const getDashboard = async ({ from, to, session }: Params) => {
   const regeExpiratedEndDate = dayjs().add(14, "days").endOf("day").toDate();
 
   // Definindo condições SQL uma única vez para eliminar duplicidade - Priorizando SQL
-  const conveniosCondition = sql<number>`COUNT(CASE WHEN ${patientsTable.activeAt} >= ${new Date(from)} AND ${patientsTable.activeAt} <= ${new Date(to)} AND ${patientsTable.activeAt} IS NOT NULL THEN 1 END)`;
-  const conveniosRenovadosCondition = sql<number>`COUNT(CASE WHEN ${patientsTable.reactivatedAt} >= ${new Date(from)} AND ${patientsTable.reactivatedAt} <= ${new Date(to)} AND ${patientsTable.reactivatedAt} IS NOT NULL THEN 1 END)`;
+  const fromDate = dayjs(from).startOf("day").toDate();
+  const toDate = dayjs(to).endOf("day").toDate();
+
+  const conveniosCondition = sql<number>`COUNT(CASE WHEN ${patientsTable.activeAt} >= ${fromDate} AND ${patientsTable.activeAt} <= ${toDate} AND ${patientsTable.activeAt} IS NOT NULL THEN 1 END)`;
+  const conveniosRenovadosCondition = sql<number>`COUNT(CASE WHEN ${patientsTable.reactivatedAt} >= ${fromDate} AND ${patientsTable.reactivatedAt} <= ${toDate} AND ${patientsTable.reactivatedAt} IS NOT NULL THEN 1 END)`;
   const totalCondition = sql<number>`${conveniosCondition} + ${conveniosRenovadosCondition}`;
 
   const [
@@ -65,8 +80,8 @@ export const getDashboard = async ({ from, to, session }: Params) => {
               .where(eq(usersToClinicsTable.userId, session.user.id)),
           ),
           eq(patientsTable.isActive, true),
-          gte(patientsTable.activeAt, new Date(from)),
-          lte(patientsTable.activeAt, new Date(to)),
+          gte(patientsTable.activeAt, fromDate),
+          lte(patientsTable.activeAt, toDate),
         ),
       ),
     db
@@ -84,8 +99,8 @@ export const getDashboard = async ({ from, to, session }: Params) => {
               .where(eq(usersToClinicsTable.userId, session.user.id)),
           ),
           eq(patientsTable.isActive, true),
-          gte(patientsTable.reactivatedAt, new Date(from)),
-          lte(patientsTable.reactivatedAt, new Date(to)),
+          gte(patientsTable.reactivatedAt, fromDate),
+          lte(patientsTable.reactivatedAt, toDate),
           sql`${patientsTable.reactivatedAt} IS NOT NULL`,
         ),
       ),
@@ -137,8 +152,8 @@ export const getDashboard = async ({ from, to, session }: Params) => {
           ),
           eq(patientsTable.cardType, "enterprise"),
           eq(patientsTable.isActive, true),
-          gte(patientsTable.activeAt, new Date(from)),
-          lte(patientsTable.activeAt, new Date(to)),
+          gte(patientsTable.activeAt, fromDate),
+          lte(patientsTable.activeAt, toDate),
         ),
       ),
     db
@@ -158,8 +173,8 @@ export const getDashboard = async ({ from, to, session }: Params) => {
           ),
           eq(patientsTable.cardType, "enterprise"),
           eq(patientsTable.isActive, true),
-          gte(patientsTable.reactivatedAt, new Date(from)),
-          lte(patientsTable.reactivatedAt, new Date(to)),
+          gte(patientsTable.reactivatedAt, fromDate),
+          lte(patientsTable.reactivatedAt, toDate),
           sql`${patientsTable.reactivatedAt} IS NOT NULL`,
         ),
       ),
@@ -324,7 +339,7 @@ export const getDashboard = async ({ from, to, session }: Params) => {
 
       return allDates;
     }),
-    // TODO: Implementa a query para desativar os pacientes que estão para expirar ou exprirados
+    // Desativar pacientes expirados (apenas data, sem horário)
     db
       .update(patientsTable)
       .set({
@@ -333,8 +348,34 @@ export const getDashboard = async ({ from, to, session }: Params) => {
       })
       .where(
         and(
-          lte(patientsTable.expirationDate, new Date()),
+          lte(patientsTable.expirationDate, dayjs().endOf("day").toDate()),
           eq(patientsTable.isActive, true),
+          inArray(
+            patientsTable.clinicId,
+            db
+              .select({ clinicId: usersToClinicsTable.clinicId })
+              .from(usersToClinicsTable)
+              .where(eq(usersToClinicsTable.userId, session.user.id)),
+          ),
+        ),
+      ),
+
+    // Reativar pacientes inativos com data de expiração válida
+    db
+      .update(patientsTable)
+      .set({
+        isActive: true,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          gte(patientsTable.expirationDate, dayjs().startOf("day").toDate()),
+          eq(patientsTable.isActive, false),
+          // Apenas pacientes que já foram ativados pelo menos uma vez
+          or(
+            isNotNull(patientsTable.activeAt),
+            isNotNull(patientsTable.reactivatedAt),
+          ),
           inArray(
             patientsTable.clinicId,
             db
