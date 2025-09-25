@@ -1,4 +1,15 @@
-import { and, eq, ilike, isNotNull, lte, or, type SQL, sql } from "drizzle-orm";
+import {
+  and,
+  between,
+  eq,
+  gte,
+  ilike,
+  isNotNull,
+  lte,
+  or,
+  type SQL,
+  sql,
+} from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -18,7 +29,7 @@ import { auth } from "@/lib/auth";
 
 import GenerateLinkButton from "../../_components/generate-link-button";
 import AddPatientButton from "./_components/add-patient-button";
-import ListExpiredButton from "./_components/list-expired-button";
+import FiltersBar from "./_components/filters-bar";
 import PatientsTable from "./_components/patients-table";
 import SearchPatients from "./_components/search-patients";
 
@@ -26,6 +37,8 @@ interface PatientsGestorPageProps {
   searchParams: Promise<{
     search?: string;
     filter?: string;
+    dateFrom?: string;
+    dateTo?: string;
   }>;
 }
 
@@ -49,7 +62,7 @@ const PatientsGestorPage = async ({
   }
 
   // Aguardar searchParams antes de usar
-  const { search, filter } = await searchParams;
+  const { search, filter, dateFrom, dateTo } = await searchParams;
   const isShowingExpired = filter === "expired";
 
   // Buscar o gestor na tabela de vendedores para obter a clínica
@@ -76,6 +89,41 @@ const PatientsGestorPage = async ({
       isNotNull(patientsTable.expirationDate),
       lte(patientsTable.expirationDate, new Date()),
     )!;
+  }
+
+  // Aplicar filtro por período de data de vencimento
+  if (dateFrom && dateTo) {
+    const fromDate = new Date(dateFrom);
+    const toDate = new Date(dateTo);
+
+    const dateCondition = and(
+      isNotNull(patientsTable.expirationDate),
+      between(patientsTable.expirationDate, fromDate, toDate),
+    )!;
+
+    whereCondition = whereCondition
+      ? and(whereCondition, dateCondition)!
+      : dateCondition;
+  } else if (dateFrom) {
+    const fromDate = new Date(dateFrom);
+    const dateCondition = and(
+      isNotNull(patientsTable.expirationDate),
+      gte(patientsTable.expirationDate, fromDate),
+    )!;
+
+    whereCondition = whereCondition
+      ? and(whereCondition, dateCondition)!
+      : dateCondition;
+  } else if (dateTo) {
+    const toDate = new Date(dateTo);
+    const dateCondition = and(
+      isNotNull(patientsTable.expirationDate),
+      lte(patientsTable.expirationDate, toDate),
+    )!;
+
+    whereCondition = whereCondition
+      ? and(whereCondition, dateCondition)!
+      : dateCondition;
   }
 
   // Aplicar filtro de busca por texto
@@ -177,13 +225,20 @@ const PatientsGestorPage = async ({
           </PageDescription>
         </PageHeaderContent>
         <PageActions>
-          <div className="flex gap-2">
-            <GenerateLinkButton sellerId={gestor.id} sellerName={gestor.name} />
-            <ListExpiredButton />
-            <AddPatientButton
-              sellerId={gestor.id}
-              clinicId={gestor.clinicId!}
-            />
+          <div className="flex items-center gap-4">
+            <div className="flex gap-2">
+              <GenerateLinkButton
+                sellerId={gestor.id}
+                sellerName={gestor.name}
+              />
+              <Suspense fallback={<div>Carregando...</div>}>
+                <FiltersBar />
+              </Suspense>
+              <AddPatientButton
+                sellerId={gestor.id}
+                clinicId={gestor.clinicId!}
+              />
+            </div>
           </div>
         </PageActions>
       </PageHeader>
