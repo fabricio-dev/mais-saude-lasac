@@ -22,9 +22,9 @@ export const upsertPatient = actionClient
     const expirationDate = parsedInput.expirationDate
       ? dayjs(parsedInput.expirationDate)
           .startOf("day")
-          .add(3, "hours")
+          .add(6, "hours")
           .toDate()
-      : dayjs().add(1, "year").startOf("day").add(3, "hours").toDate();
+      : dayjs().add(1, "year").startOf("day").add(6, "hours").toDate();
 
     if (parsedInput.id) {
       // Edição - atualizar incluindo a data de vencimento se fornecida
@@ -38,7 +38,7 @@ export const upsertPatient = actionClient
           expirationDate: parsedInput.expirationDate
             ? dayjs(parsedInput.expirationDate)
                 .startOf("day")
-                .add(3, "hours")
+                .add(6, "hours")
                 .toDate()
             : undefined,
           clinicId: parsedInput.clinicId,
@@ -53,7 +53,7 @@ export const upsertPatient = actionClient
             expirationDate: parsedInput.expirationDate
               ? dayjs(parsedInput.expirationDate)
                   .startOf("day")
-                  .add(3, "hours")
+                  .add(6, "hours")
                   .toDate()
               : undefined,
           },
@@ -66,7 +66,7 @@ export const upsertPatient = actionClient
           ? dayjs(parsedInput.birthDate).startOf("day").toISOString()
           : null,
         expirationDate: expirationDate,
-        activeAt: dayjs().startOf("day").add(3, "hours").toDate(),
+        activeAt: dayjs().startOf("day").add(6, "hours").toDate(),
       });
     }
 

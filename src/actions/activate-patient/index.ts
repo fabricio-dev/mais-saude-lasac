@@ -93,7 +93,7 @@ export const activatePatient = actionClient
     const newExpirationDate = dayjs()
       .add(1, "year")
       .startOf("day")
-      .add(3, "hours")
+      .add(6, "hours")
       .toDate();
 
     const timeRemaining =
@@ -102,14 +102,14 @@ export const activatePatient = actionClient
       .add(1, "year")
       .add(timeRemaining, "days")
       .startOf("day")
-      .add(3, "hours")
+      .add(6, "hours")
       .toDate();
 
     // Determinar se é primeira ativação ou renovacao de convenio
     const updateData =
       patient.activeAt === null // ver se eh aoto cadastro
         ? {
-            activeAt: dayjs().startOf("day").add(3, "hours").toDate(),
+            activeAt: dayjs().startOf("day").add(6, "hours").toDate(),
             isActive: true,
             expirationDate: newExpirationDate,
             updatedAt: new Date(),
@@ -118,14 +118,14 @@ export const activatePatient = actionClient
           ? {
               // Atualizar a data de expiração antecipada
               expirationDate: newExpirationDateAntecipated,
-              reactivatedAt: dayjs().startOf("day").add(3, "hours").toDate(),
+              reactivatedAt: dayjs().startOf("day").add(6, "hours").toDate(),
               isActive: true,
               updatedAt: new Date(),
             }
           : {
               // Atualizar a data de expiração
               expirationDate: newExpirationDate,
-              reactivatedAt: dayjs().startOf("day").add(3, "hours").toDate(),
+              reactivatedAt: dayjs().startOf("day").add(6, "hours").toDate(),
               isActive: true,
               updatedAt: new Date(),
             };
