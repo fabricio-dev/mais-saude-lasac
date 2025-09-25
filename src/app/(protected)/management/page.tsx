@@ -46,7 +46,7 @@ const ManagementPage = async ({ searchParams }: ManagementPageProps) => {
 
   if (!from || !to) {
     redirect(
-      `/management?from=${dayjs().subtract(1, "month").add(1, "day").format("YYYY-MM-DD")}&to=${dayjs().add(1, "day").format("YYYY-MM-DD")}`,
+      `/management?from=${dayjs().subtract(1, "month").format("YYYY-MM-DD")}&to=${dayjs().format("YYYY-MM-DD")}`,
     );
   }
 

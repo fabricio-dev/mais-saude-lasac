@@ -8,6 +8,7 @@ import {
   gte,
   inArray,
   isNotNull,
+  isNull,
   lte,
   or,
   sql,
@@ -78,6 +79,7 @@ export const getDashboardSellers = async ({ from, to, session }: Params) => {
     patientsToExpire,
     dailyConveniosData,
     deactivatePatients,
+    deactivateNullExpirationPatients,
     reactivatePatients,
     [sellerClinic = { clinicName: null }],
   ] = await Promise.all([
@@ -337,6 +339,27 @@ export const getDashboardSellers = async ({ from, to, session }: Params) => {
         ),
       ),
 
+    // Desativar pacientes com data de expiração nula ou vazia do vendedor logado
+    db
+      .update(patientsTable)
+      .set({
+        isActive: false,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          isNull(patientsTable.expirationDate),
+          eq(patientsTable.isActive, true),
+          inArray(
+            patientsTable.sellerId,
+            db
+              .select({ sellerId: sellersTable.id })
+              .from(sellersTable)
+              .where(eq(sellersTable.email, session.user.email)),
+          ),
+        ),
+      ),
+
     // Reativar pacientes inativos com data de expiração válida do vendedor logado
     db
       .update(patientsTable)
@@ -382,6 +405,7 @@ export const getDashboardSellers = async ({ from, to, session }: Params) => {
     patientsToExpire,
     dailyConveniosData,
     deactivatePatients,
+    deactivateNullExpirationPatients,
     reactivatePatients,
     sellerClinic: sellerClinic?.clinicName || null,
   };

@@ -52,7 +52,7 @@ const SellersGestorPage = async ({ searchParams }: SellersGestorPageProps) => {
 
   if (!from || !to) {
     redirect(
-      `/gerente/sellers-gestor?from=${dayjs().subtract(1, "month").add(1, "day").format("YYYY-MM-DD")}&to=${dayjs().add(1, "day").format("YYYY-MM-DD")}`,
+      `/gerente/sellers-gestor?from=${dayjs().subtract(1, "month").format("YYYY-MM-DD")}&to=${dayjs().format("YYYY-MM-DD")}`,
     );
   }
 
@@ -87,8 +87,8 @@ const SellersGestorPage = async ({ searchParams }: SellersGestorPageProps) => {
   }
 
   // Definindo datas e condições SQL uma única vez - PRIORIZANDO SQL
-  const fromDate = new Date(from);
-  const toDate = new Date(to);
+  const fromDate = dayjs(from).startOf("day").toDate();
+  const toDate = dayjs(to).endOf("day").toDate();
 
   // Condições SQL centralizadas (sem duplicidade)
   const conveniosCondition =

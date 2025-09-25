@@ -49,6 +49,8 @@ const getFaturamentoMensal = async (
 
   const startDate = dayjs(from);
   const endDate = dayjs(to);
+  const fromDate = dayjs(from).startOf("day").toDate();
+  const toDate = dayjs(to).endOf("day").toDate();
 
   // Calcular diferença em meses
   const monthsDiff = endDate.diff(startDate, "month") + 1;
@@ -88,8 +90,8 @@ const getFaturamentoMensal = async (
 
     if (isWithinOriginalPeriod) {
       // Para meses dentro do período original, usar os limites do período selecionado
-      periodStart = monthStart < new Date(from) ? new Date(from) : monthStart;
-      periodEnd = monthEnd > new Date(to) ? new Date(to) : monthEnd;
+      periodStart = monthStart < fromDate ? fromDate : monthStart;
+      periodEnd = monthEnd > toDate ? toDate : monthEnd;
     } else {
       // Para meses extras (anterior/próximo), usar o mês completo
       periodStart = monthStart;
@@ -211,6 +213,10 @@ export const getManagement = async ({
   session,
 }: Params): Promise<ManagementData> => {
   try {
+    // Definir datas com horário completo
+    const fromDate = dayjs(from).startOf("day").toDate();
+    const toDate = dayjs(to).endOf("day").toDate();
+
     // Buscar clínicas do usuário
     const userClinics = await db
       .select({ clinicId: usersToClinicsTable.clinicId })
@@ -280,8 +286,8 @@ export const getManagement = async ({
           and(
             inArray(patientsTable.clinicId, targetClinicIds),
             eq(patientsTable.isActive, true),
-            gte(patientsTable.activeAt, new Date(from)),
-            lte(patientsTable.activeAt, new Date(to)),
+            gte(patientsTable.activeAt, fromDate),
+            lte(patientsTable.activeAt, toDate),
           ),
         ),
 
@@ -295,8 +301,8 @@ export const getManagement = async ({
           and(
             inArray(patientsTable.clinicId, targetClinicIds),
             eq(patientsTable.isActive, true),
-            gte(patientsTable.reactivatedAt, new Date(from)),
-            lte(patientsTable.reactivatedAt, new Date(to)),
+            gte(patientsTable.reactivatedAt, fromDate),
+            lte(patientsTable.reactivatedAt, toDate),
             sql`${patientsTable.reactivatedAt} IS NOT NULL`,
           ),
         ),
@@ -312,8 +318,8 @@ export const getManagement = async ({
             inArray(patientsTable.clinicId, targetClinicIds),
             eq(patientsTable.cardType, "enterprise"),
             eq(patientsTable.isActive, true),
-            gte(patientsTable.activeAt, new Date(from)),
-            lte(patientsTable.activeAt, new Date(to)),
+            gte(patientsTable.activeAt, fromDate),
+            lte(patientsTable.activeAt, toDate),
           ),
         ),
 
@@ -328,8 +334,8 @@ export const getManagement = async ({
             inArray(patientsTable.clinicId, targetClinicIds),
             eq(patientsTable.cardType, "enterprise"),
             eq(patientsTable.isActive, true),
-            gte(patientsTable.reactivatedAt, new Date(from)),
-            lte(patientsTable.reactivatedAt, new Date(to)),
+            gte(patientsTable.reactivatedAt, fromDate),
+            lte(patientsTable.reactivatedAt, toDate),
             sql`${patientsTable.reactivatedAt} IS NOT NULL`,
           ),
         ),
@@ -344,8 +350,8 @@ export const getManagement = async ({
           and(
             inArray(patientsTable.clinicId, targetClinicIds),
             eq(patientsTable.isActive, true),
-            gte(patientsTable.activeAt, new Date(from)),
-            lte(patientsTable.activeAt, new Date(to)),
+            gte(patientsTable.activeAt, fromDate),
+            lte(patientsTable.activeAt, toDate),
           ),
         ),
 
@@ -359,8 +365,8 @@ export const getManagement = async ({
           and(
             inArray(patientsTable.clinicId, targetClinicIds),
             eq(patientsTable.isActive, true),
-            gte(patientsTable.reactivatedAt, new Date(from)),
-            lte(patientsTable.reactivatedAt, new Date(to)),
+            gte(patientsTable.reactivatedAt, fromDate),
+            lte(patientsTable.reactivatedAt, toDate),
             sql`${patientsTable.reactivatedAt} IS NOT NULL`,
           ),
         ),
@@ -375,8 +381,8 @@ export const getManagement = async ({
           and(
             inArray(patientsTable.clinicId, targetClinicIds),
             eq(patientsTable.isActive, false),
-            gte(patientsTable.expirationDate, new Date(from)),
-            lte(patientsTable.expirationDate, new Date(to)),
+            gte(patientsTable.expirationDate, fromDate),
+            lte(patientsTable.expirationDate, toDate),
           ),
         ),
 
@@ -391,8 +397,8 @@ export const getManagement = async ({
             inArray(patientsTable.clinicId, targetClinicIds),
             eq(patientsTable.isActive, true),
             sql`(
-              (${patientsTable.activeAt} >= ${new Date(from)} AND ${patientsTable.activeAt} <= ${new Date(to)}) OR 
-              (${patientsTable.reactivatedAt} >= ${new Date(from)} AND ${patientsTable.reactivatedAt} <= ${new Date(to)} AND ${patientsTable.reactivatedAt} IS NOT NULL)
+              (${patientsTable.activeAt} >= ${fromDate} AND ${patientsTable.activeAt} <= ${toDate}) OR 
+              (${patientsTable.reactivatedAt} >= ${fromDate} AND ${patientsTable.reactivatedAt} <= ${toDate} AND ${patientsTable.reactivatedAt} IS NOT NULL)
             )`,
           ),
         ),
