@@ -213,6 +213,7 @@ const PatientsPage = async ({ searchParams }: PatientsPageProps) => {
                   birthDate: patient.birthDate
                     ? new Date(patient.birthDate)
                     : null,
+                  // expirationDate: patient.expirationDate, nao sei quando foi inserido isso
                 }))}
               />
             </div>
