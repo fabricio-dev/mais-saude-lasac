@@ -154,7 +154,9 @@ const PatientsPage = async ({ searchParams }: PatientsPageProps) => {
       clinic: true,
     },
     orderBy: (patients, { desc }) => [
-      isShowingExpired ? desc(patients.activeAt) : desc(patients.updatedAt),
+      isShowingExpired
+        ? desc(patients.expirationDate)
+        : desc(patients.updatedAt),
     ],
   });
 

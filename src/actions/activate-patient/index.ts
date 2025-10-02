@@ -1,6 +1,8 @@
 "use server";
 
 import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
@@ -11,6 +13,10 @@ import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
 
 import { activatePatientSchema } from "./schema";
+
+// Configurar plugins do dayjs
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 export const activatePatient = actionClient
   .schema(activatePatientSchema)
@@ -89,45 +95,48 @@ export const activatePatient = actionClient
       }
     }
 
-    // Calcular nova data de expiração (data atual + 1 ano)
-    const newExpirationDate = dayjs()
-      .add(1, "year")
-      .startOf("day")
-      .add(6, "hours")
-      .toDate();
+    // Obter data/hora atual no fuso horário de São Paulo e converter para UTC
+    const now = dayjs.tz(new Date(), "America/Sao_Paulo").utc().toDate();
 
-    const timeRemaining =
-      dayjs(patient.expirationDate).diff(dayjs(), "days") + 1; //ver isso depois
-    const newExpirationDateAntecipated = dayjs()
+    // Calcular nova data de expiração (data atual + 1 ano)
+    const newExpirationDate = dayjs(now).add(1, "year").toDate();
+
+    // Calcular dias restantes considerando fuso horário brasileiro
+    // Converter ambas as datas para São Paulo e comparar apenas as datas (sem horas)
+    const expirationDateSP = dayjs(patient.expirationDate)
+      .tz("America/Sao_Paulo")
+      .startOf("day");
+    const nowSP = dayjs.tz(new Date(), "America/Sao_Paulo").startOf("day");
+    const timeRemaining = expirationDateSP.diff(nowSP, "days");
+
+    const newExpirationDateAntecipated = dayjs(now)
       .add(1, "year")
       .add(timeRemaining, "days")
-      .startOf("day")
-      .add(6, "hours")
       .toDate();
 
     // Determinar se é primeira ativação ou renovacao de convenio
     const updateData =
-      patient.activeAt === null // ver se eh aoto cadastro
+      patient.activeAt === null
         ? {
-            activeAt: dayjs().startOf("day").add(6, "hours").toDate(),
+            activeAt: now,
             isActive: true,
             expirationDate: newExpirationDate,
-            updatedAt: new Date(),
+            updatedAt: now,
           }
-        : patient.expirationDate && patient.expirationDate > new Date()
+        : patient.expirationDate && patient.expirationDate > now
           ? {
               // Atualizar a data de expiração antecipada
               expirationDate: newExpirationDateAntecipated,
-              reactivatedAt: dayjs().startOf("day").add(6, "hours").toDate(),
+              reactivatedAt: now,
               isActive: true,
-              updatedAt: new Date(),
+              updatedAt: now,
             }
           : {
               // Atualizar a data de expiração
               expirationDate: newExpirationDate,
-              reactivatedAt: dayjs().startOf("day").add(6, "hours").toDate(),
+              reactivatedAt: now,
               isActive: true,
-              updatedAt: new Date(),
+              updatedAt: now,
             };
 
     // Atualizar o paciente
