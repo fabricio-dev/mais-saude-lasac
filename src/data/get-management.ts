@@ -1,9 +1,13 @@
 import "dayjs/locale/pt-br";
 
 import dayjs from "dayjs";
-import { and, count, eq, gte, inArray, lte, sql } from "drizzle-orm";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
+import { and, count, eq, inArray, sql } from "drizzle-orm";
 
 dayjs.locale("pt-br");
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 import { db } from "@/db";
 import { patientsTable, usersToClinicsTable } from "@/db/schema";
@@ -49,8 +53,11 @@ const getFaturamentoMensal = async (
 
   const startDate = dayjs(from);
   const endDate = dayjs(to);
-  const fromDate = dayjs(from).startOf("day").toDate();
-  const toDate = dayjs(to).endOf("day").toDate();
+  const fromDate = dayjs
+    .tz(`${from} 00:00:00`, "America/Sao_Paulo")
+    .utc()
+    .toDate();
+  const toDate = dayjs.tz(`${to} 23:59:59`, "America/Sao_Paulo").utc().toDate();
 
   // Calcular diferença em meses
   const monthsDiff = endDate.diff(startDate, "month") + 1;
@@ -108,8 +115,8 @@ const getFaturamentoMensal = async (
         and(
           inArray(patientsTable.clinicId, clinicIds),
           eq(patientsTable.isActive, true),
-          gte(patientsTable.activeAt, periodStart),
-          lte(patientsTable.activeAt, periodEnd),
+          sql`${patientsTable.activeAt} AT TIME ZONE 'UTC' >= ${periodStart}`,
+          sql`${patientsTable.activeAt} AT TIME ZONE 'UTC' <= ${periodEnd}`,
         ),
       );
 
@@ -123,8 +130,8 @@ const getFaturamentoMensal = async (
         and(
           inArray(patientsTable.clinicId, clinicIds),
           eq(patientsTable.isActive, true),
-          gte(patientsTable.reactivatedAt, periodStart),
-          lte(patientsTable.reactivatedAt, periodEnd),
+          sql`${patientsTable.reactivatedAt} AT TIME ZONE 'UTC' >= ${periodStart}`,
+          sql`${patientsTable.reactivatedAt} AT TIME ZONE 'UTC' <= ${periodEnd}`,
           sql`${patientsTable.reactivatedAt} IS NOT NULL`,
         ),
       );
@@ -140,8 +147,8 @@ const getFaturamentoMensal = async (
           inArray(patientsTable.clinicId, clinicIds),
           eq(patientsTable.cardType, "enterprise"),
           eq(patientsTable.isActive, true),
-          gte(patientsTable.activeAt, periodStart),
-          lte(patientsTable.activeAt, periodEnd),
+          sql`${patientsTable.activeAt} AT TIME ZONE 'UTC' >= ${periodStart}`,
+          sql`${patientsTable.activeAt} AT TIME ZONE 'UTC' <= ${periodEnd}`,
         ),
       );
 
@@ -156,8 +163,8 @@ const getFaturamentoMensal = async (
           inArray(patientsTable.clinicId, clinicIds),
           eq(patientsTable.cardType, "enterprise"),
           eq(patientsTable.isActive, true),
-          gte(patientsTable.reactivatedAt, periodStart),
-          lte(patientsTable.reactivatedAt, periodEnd),
+          sql`${patientsTable.reactivatedAt} AT TIME ZONE 'UTC' >= ${periodStart}`,
+          sql`${patientsTable.reactivatedAt} AT TIME ZONE 'UTC' <= ${periodEnd}`,
           sql`${patientsTable.reactivatedAt} IS NOT NULL`,
         ),
       );
@@ -213,9 +220,15 @@ export const getManagement = async ({
   session,
 }: Params): Promise<ManagementData> => {
   try {
-    // Definir datas com horário completo
-    const fromDate = dayjs(from).startOf("day").toDate();
-    const toDate = dayjs(to).endOf("day").toDate();
+    // Definir datas considerando fuso horário brasileiro
+    const fromDate = dayjs
+      .tz(`${from} 00:00:00`, "America/Sao_Paulo")
+      .utc()
+      .toDate();
+    const toDate = dayjs
+      .tz(`${to} 23:59:59`, "America/Sao_Paulo")
+      .utc()
+      .toDate();
 
     // Buscar clínicas do usuário
     const userClinics = await db
@@ -286,8 +299,8 @@ export const getManagement = async ({
           and(
             inArray(patientsTable.clinicId, targetClinicIds),
             eq(patientsTable.isActive, true),
-            gte(patientsTable.activeAt, fromDate),
-            lte(patientsTable.activeAt, toDate),
+            sql`${patientsTable.activeAt} AT TIME ZONE 'UTC' >= ${fromDate}`,
+            sql`${patientsTable.activeAt} AT TIME ZONE 'UTC' <= ${toDate}`,
           ),
         ),
 
@@ -301,8 +314,8 @@ export const getManagement = async ({
           and(
             inArray(patientsTable.clinicId, targetClinicIds),
             eq(patientsTable.isActive, true),
-            gte(patientsTable.reactivatedAt, fromDate),
-            lte(patientsTable.reactivatedAt, toDate),
+            sql`${patientsTable.reactivatedAt} AT TIME ZONE 'UTC' >= ${fromDate}`,
+            sql`${patientsTable.reactivatedAt} AT TIME ZONE 'UTC' <= ${toDate}`,
             sql`${patientsTable.reactivatedAt} IS NOT NULL`,
           ),
         ),
@@ -318,8 +331,8 @@ export const getManagement = async ({
             inArray(patientsTable.clinicId, targetClinicIds),
             eq(patientsTable.cardType, "enterprise"),
             eq(patientsTable.isActive, true),
-            gte(patientsTable.activeAt, fromDate),
-            lte(patientsTable.activeAt, toDate),
+            sql`${patientsTable.activeAt} AT TIME ZONE 'UTC' >= ${fromDate}`,
+            sql`${patientsTable.activeAt} AT TIME ZONE 'UTC' <= ${toDate}`,
           ),
         ),
 
@@ -334,8 +347,8 @@ export const getManagement = async ({
             inArray(patientsTable.clinicId, targetClinicIds),
             eq(patientsTable.cardType, "enterprise"),
             eq(patientsTable.isActive, true),
-            gte(patientsTable.reactivatedAt, fromDate),
-            lte(patientsTable.reactivatedAt, toDate),
+            sql`${patientsTable.reactivatedAt} AT TIME ZONE 'UTC' >= ${fromDate}`,
+            sql`${patientsTable.reactivatedAt} AT TIME ZONE 'UTC' <= ${toDate}`,
             sql`${patientsTable.reactivatedAt} IS NOT NULL`,
           ),
         ),
@@ -350,8 +363,8 @@ export const getManagement = async ({
           and(
             inArray(patientsTable.clinicId, targetClinicIds),
             eq(patientsTable.isActive, true),
-            gte(patientsTable.activeAt, fromDate),
-            lte(patientsTable.activeAt, toDate),
+            sql`${patientsTable.activeAt} AT TIME ZONE 'UTC' >= ${fromDate}`,
+            sql`${patientsTable.activeAt} AT TIME ZONE 'UTC' <= ${toDate}`,
           ),
         ),
 
@@ -365,8 +378,8 @@ export const getManagement = async ({
           and(
             inArray(patientsTable.clinicId, targetClinicIds),
             eq(patientsTable.isActive, true),
-            gte(patientsTable.reactivatedAt, fromDate),
-            lte(patientsTable.reactivatedAt, toDate),
+            sql`${patientsTable.reactivatedAt} AT TIME ZONE 'UTC' >= ${fromDate}`,
+            sql`${patientsTable.reactivatedAt} AT TIME ZONE 'UTC' <= ${toDate}`,
             sql`${patientsTable.reactivatedAt} IS NOT NULL`,
           ),
         ),
@@ -381,8 +394,8 @@ export const getManagement = async ({
           and(
             inArray(patientsTable.clinicId, targetClinicIds),
             eq(patientsTable.isActive, false),
-            gte(patientsTable.expirationDate, fromDate),
-            lte(patientsTable.expirationDate, toDate),
+            sql`${patientsTable.expirationDate} AT TIME ZONE 'UTC' >= ${fromDate}`,
+            sql`${patientsTable.expirationDate} AT TIME ZONE 'UTC' <= ${toDate}`,
           ),
         ),
 
@@ -397,8 +410,8 @@ export const getManagement = async ({
             inArray(patientsTable.clinicId, targetClinicIds),
             eq(patientsTable.isActive, true),
             sql`(
-              (${patientsTable.activeAt} >= ${fromDate} AND ${patientsTable.activeAt} <= ${toDate}) OR 
-              (${patientsTable.reactivatedAt} >= ${fromDate} AND ${patientsTable.reactivatedAt} <= ${toDate} AND ${patientsTable.reactivatedAt} IS NOT NULL)
+              (${patientsTable.activeAt} AT TIME ZONE 'UTC' >= ${fromDate} AND ${patientsTable.activeAt} AT TIME ZONE 'UTC' <= ${toDate}) OR 
+              (${patientsTable.reactivatedAt} AT TIME ZONE 'UTC' >= ${fromDate} AND ${patientsTable.reactivatedAt} AT TIME ZONE 'UTC' <= ${toDate} AND ${patientsTable.reactivatedAt} IS NOT NULL)
             )`,
           ),
         ),

@@ -1,8 +1,14 @@
 import dayjs from "dayjs";
-import { and, count, eq, gte, inArray, lte, sql } from "drizzle-orm";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
+import { and, count, eq, inArray, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import { patientsTable, sellersTable, usersToClinicsTable } from "@/db/schema";
+
+// Configurar plugins do dayjs
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 interface GetVendedoresParams {
   from: string;
@@ -65,9 +71,15 @@ export async function getVendedores({
       vendedorIds = vendedores.map((v) => v.id);
     }
 
-    // Definir datas com horário completo
-    const fromDate = dayjs(from).startOf("day").toDate();
-    const toDate = dayjs(to).endOf("day").toDate();
+    // Definir datas considerando fuso horário brasileiro
+    const fromDate = dayjs
+      .tz(`${from} 00:00:00`, "America/Sao_Paulo")
+      .utc()
+      .toDate();
+    const toDate = dayjs
+      .tz(`${to} 23:59:59`, "America/Sao_Paulo")
+      .utc()
+      .toDate();
 
     // Buscar estatísticas gerais usando a mesma lógica do get-management e get-dashboard
     const [
@@ -88,8 +100,8 @@ export async function getVendedores({
           and(
             inArray(patientsTable.sellerId, vendedorIds),
             eq(patientsTable.isActive, true),
-            gte(patientsTable.activeAt, fromDate),
-            lte(patientsTable.activeAt, toDate),
+            sql`${patientsTable.activeAt} AT TIME ZONE 'UTC' >= ${fromDate}`,
+            sql`${patientsTable.activeAt} AT TIME ZONE 'UTC' <= ${toDate}`,
           ),
         ),
 
@@ -103,8 +115,8 @@ export async function getVendedores({
           and(
             inArray(patientsTable.sellerId, vendedorIds),
             eq(patientsTable.isActive, true),
-            gte(patientsTable.reactivatedAt, fromDate),
-            lte(patientsTable.reactivatedAt, toDate),
+            sql`${patientsTable.reactivatedAt} AT TIME ZONE 'UTC' >= ${fromDate}`,
+            sql`${patientsTable.reactivatedAt} AT TIME ZONE 'UTC' <= ${toDate}`,
             sql`${patientsTable.reactivatedAt} IS NOT NULL`,
           ),
         ),
@@ -120,8 +132,8 @@ export async function getVendedores({
             inArray(patientsTable.sellerId, vendedorIds),
             eq(patientsTable.cardType, "enterprise"),
             eq(patientsTable.isActive, true),
-            gte(patientsTable.activeAt, fromDate),
-            lte(patientsTable.activeAt, toDate),
+            sql`${patientsTable.activeAt} AT TIME ZONE 'UTC' >= ${fromDate}`,
+            sql`${patientsTable.activeAt} AT TIME ZONE 'UTC' <= ${toDate}`,
           ),
         ),
 
@@ -136,8 +148,8 @@ export async function getVendedores({
             inArray(patientsTable.sellerId, vendedorIds),
             eq(patientsTable.cardType, "enterprise"),
             eq(patientsTable.isActive, true),
-            gte(patientsTable.reactivatedAt, fromDate),
-            lte(patientsTable.reactivatedAt, toDate),
+            sql`${patientsTable.reactivatedAt} AT TIME ZONE 'UTC' >= ${fromDate}`,
+            sql`${patientsTable.reactivatedAt} AT TIME ZONE 'UTC' <= ${toDate}`,
             sql`${patientsTable.reactivatedAt} IS NOT NULL`,
           ),
         ),
@@ -147,8 +159,8 @@ export async function getVendedores({
         where: and(
           inArray(patientsTable.sellerId, vendedorIds),
           eq(patientsTable.isActive, true),
-          gte(patientsTable.activeAt, fromDate),
-          lte(patientsTable.activeAt, toDate),
+          sql`${patientsTable.activeAt} AT TIME ZONE 'UTC' >= ${fromDate}`,
+          sql`${patientsTable.activeAt} AT TIME ZONE 'UTC' <= ${toDate}`,
         ),
         with: {
           seller: {
@@ -165,8 +177,8 @@ export async function getVendedores({
         where: and(
           inArray(patientsTable.sellerId, vendedorIds),
           eq(patientsTable.isActive, true),
-          gte(patientsTable.reactivatedAt, fromDate),
-          lte(patientsTable.reactivatedAt, toDate),
+          sql`${patientsTable.reactivatedAt} AT TIME ZONE 'UTC' >= ${fromDate}`,
+          sql`${patientsTable.reactivatedAt} AT TIME ZONE 'UTC' <= ${toDate}`,
           sql`${patientsTable.reactivatedAt} IS NOT NULL`,
         ),
         with: {
@@ -203,30 +215,31 @@ export async function getVendedores({
     const novos = totalPatientsNovos.total;
 
     // Calcular ranking de vendedores
-    const sixMonthsAgo = new Date();
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-
     const vendedorStats = vendedores.map((vendedor) => {
-      const vendedorPatients = patients.filter(
+      // Separar pacientes novos e renovados para este vendedor
+      const vendedorPatientsNovos = patientsNovos.filter(
+        (p) => p.sellerId === vendedor.id,
+      );
+      const vendedorPatientsRenovados = patientsRenovados.filter(
         (p) => p.sellerId === vendedor.id,
       );
 
-      // Usar a mesma lógica do faturamento total (contadores)
-      const totalConvenios = vendedorPatients.length;
-      const conveniosEmpresariais = vendedorPatients.filter(
-        (p) => p.cardType === "enterprise",
-      ).length;
+      // Total de convênios é a soma de novos + renovados
+      const novosConvenios = vendedorPatientsNovos.length;
+      const renovacoesVendedor = vendedorPatientsRenovados.length;
+      const totalConvenios = novosConvenios + renovacoesVendedor;
+
+      // Convênios empresariais (soma de novos e renovados)
+      const conveniosEmpresariais =
+        vendedorPatientsNovos.filter((p) => p.cardType === "enterprise")
+          .length +
+        vendedorPatientsRenovados.filter((p) => p.cardType === "enterprise")
+          .length;
       const conveniosIndividuais = totalConvenios - conveniosEmpresariais;
 
       // Calcular faturamento igual ao faturamento total
       const faturamento =
         conveniosIndividuais * 100 + conveniosEmpresariais * 90;
-      const renovacoesVendedor = vendedorPatients.filter(
-        (p) => p.reactivatedAt && new Date(p.reactivatedAt) > sixMonthsAgo,
-      ).length;
-      const novosConvenios = vendedorPatients.filter(
-        (p) => !p.reactivatedAt || new Date(p.reactivatedAt) <= sixMonthsAgo,
-      ).length;
 
       // Meta mockada (pode ser implementada no banco depois)
       const meta = 100000; // Meta padrão
