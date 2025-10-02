@@ -1,3 +1,6 @@
+import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
 import {
   and,
   between,
@@ -14,6 +17,10 @@ import {
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+
+// Configurar plugins do dayjs
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 import { Button } from "@/components/ui/button";
 import {
@@ -90,9 +97,11 @@ const PatientsPage = async ({ searchParams }: PatientsPageProps) => {
   }
 
   // Aplicar filtro por período de data de vencimento
+  // Interpreta as datas como horário de São Paulo e converte para UTC
+  // O DatePicker já envia as datas com horas (formato: YYYY-MM-DD HH:mm:ss)
   if (dateFrom && dateTo) {
-    const fromDate = new Date(dateFrom);
-    const toDate = new Date(dateTo);
+    const fromDate = dayjs.tz(dateFrom, "America/Sao_Paulo").utc().toDate();
+    const toDate = dayjs.tz(dateTo, "America/Sao_Paulo").utc().toDate();
 
     whereCondition = and(
       whereCondition,
@@ -100,14 +109,14 @@ const PatientsPage = async ({ searchParams }: PatientsPageProps) => {
       between(patientsTable.expirationDate, fromDate, toDate),
     )!;
   } else if (dateFrom) {
-    const fromDate = new Date(dateFrom);
+    const fromDate = dayjs.tz(dateFrom, "America/Sao_Paulo").utc().toDate();
     whereCondition = and(
       whereCondition,
       isNotNull(patientsTable.expirationDate),
       gte(patientsTable.expirationDate, fromDate),
     )!;
   } else if (dateTo) {
-    const toDate = new Date(dateTo);
+    const toDate = dayjs.tz(dateTo, "America/Sao_Paulo").utc().toDate();
     whereCondition = and(
       whereCondition,
       isNotNull(patientsTable.expirationDate),
