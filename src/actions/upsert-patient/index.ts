@@ -2,6 +2,7 @@
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
+import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
@@ -46,40 +47,72 @@ export const upsertPatient = actionClient
       : dayjs().utc().add(1, "year").toDate();
 
     if (parsedInput.id) {
-      // Edição - atualizar incluindo a data de vencimento se fornecida
+      // Edição - verificar se paciente já foi reativado
+      const existingPatient = await db.query.patientsTable.findFirst({
+        where: eq(patientsTable.id, parsedInput.id),
+      });
+
+      // Determinar para qual campo vai a data do contrato
+      const contractDateData: {
+        activeAt?: Date;
+        reactivatedAt?: Date;
+      } = {};
+
+      if (parsedInput.contractDate) {
+        if (existingPatient?.reactivatedAt) {
+          // Paciente já foi reativado → atualizar reactivatedAt
+          contractDateData.reactivatedAt = convertToUTCDate(
+            parsedInput.contractDate,
+          );
+        } else {
+          // Paciente nunca foi reativado → atualizar activeAt
+          contractDateData.activeAt = convertToUTCDate(
+            parsedInput.contractDate,
+          );
+        }
+      }
+
+      // Remover contractDate do parsedInput pois é processado separadamente
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { contractDate, ...patientData } = parsedInput;
+
       await db
         .insert(patientsTable)
         .values({
-          ...parsedInput,
-          birthDate: parsedInput.birthDate
-            ? convertToUTCDate(parsedInput.birthDate).toISOString()
+          ...patientData,
+          birthDate: patientData.birthDate
+            ? convertToUTCDate(patientData.birthDate).toISOString()
             : null,
-          expirationDate: parsedInput.expirationDate
-            ? convertToUTCDate(parsedInput.expirationDate)
+          expirationDate: patientData.expirationDate
+            ? convertToUTCDate(patientData.expirationDate)
             : undefined,
-          clinicId: parsedInput.clinicId,
+          ...contractDateData,
+          clinicId: patientData.clinicId,
         })
         .onConflictDoUpdate({
           target: [patientsTable.id],
           set: {
-            ...parsedInput,
-            birthDate: parsedInput.birthDate
-              ? convertToUTCDate(parsedInput.birthDate).toISOString()
+            ...patientData,
+            birthDate: patientData.birthDate
+              ? convertToUTCDate(patientData.birthDate).toISOString()
               : null,
-            expirationDate: parsedInput.expirationDate
-              ? convertToUTCDate(parsedInput.expirationDate)
+            expirationDate: patientData.expirationDate
+              ? convertToUTCDate(patientData.expirationDate)
               : undefined,
+            ...contractDateData,
           },
         });
     } else {
-      // Criação - definir a data de expiração
+      // Criação - sempre usar activeAt
       await db.insert(patientsTable).values({
         ...parsedInput,
         birthDate: parsedInput.birthDate
           ? convertToUTCDate(parsedInput.birthDate).toISOString()
           : null,
         expirationDate: expirationDate,
-        activeAt: getActivationDate(),
+        activeAt: parsedInput.contractDate
+          ? convertToUTCDate(parsedInput.contractDate)
+          : getActivationDate(),
       });
     }
 

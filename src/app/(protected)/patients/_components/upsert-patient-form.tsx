@@ -49,6 +49,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { patientsTable } from "@/db/schema";
+import { usePermissions } from "@/hooks/use-permissions";
 
 // Função para verificar CPF duplicado
 const checkCPFExists = async (
@@ -167,6 +168,7 @@ const formSchema = z
     dependents4: z.string().optional(),
     dependents5: z.string().optional(),
     dependents6: z.string().optional(),
+    contractDate: z.string().optional(), // Data do contrato (pode ir para activeAt ou reactivatedAt)
   })
   .superRefine((data, ctx) => {
     if (
@@ -231,6 +233,7 @@ const UpsertPatientForm = ({
   patient,
   onSuccess,
 }: UpsertPatientFormProps) => {
+  const { isAdmin } = usePermissions();
   const [sellers, setSellers] = useState<Seller[]>([]);
   const [allSellers, setAllSellers] = useState<Seller[]>([]);
   const [clinics, setClinics] = useState<Clinic[]>([]);
@@ -275,6 +278,11 @@ const UpsertPatientForm = ({
       dependents4: patient?.dependents4 ?? "",
       dependents5: patient?.dependents5 ?? "",
       dependents6: patient?.dependents6 ?? "",
+      contractDate: patient?.reactivatedAt
+        ? dayjs(patient.reactivatedAt).format("YYYY-MM-DD")
+        : patient?.activeAt
+          ? dayjs(patient.activeAt).format("YYYY-MM-DD")
+          : "",
     },
   });
 
@@ -309,6 +317,11 @@ const UpsertPatientForm = ({
         dependents4: patient?.dependents4 ?? "",
         dependents5: patient?.dependents5 ?? "",
         dependents6: patient?.dependents6 ?? "",
+        contractDate: patient?.reactivatedAt
+          ? dayjs(patient.reactivatedAt).format("YYYY-MM-DD")
+          : patient?.activeAt
+            ? dayjs(patient.activeAt).format("YYYY-MM-DD")
+            : "",
       });
     }
     const loadData = async () => {
@@ -392,10 +405,11 @@ const UpsertPatientForm = ({
       ...values,
       numberCards: values.numberCards ? parseInt(values.numberCards) : 0,
       id: patient?.id,
-      clinicId: values.clinicId, // mudei para o id para testar
+      clinicId: values.clinicId,
       Enterprise: values.Enterprise,
       observation: values.observation,
       expirationDate: values.expirationDate,
+      contractDate: values.contractDate,
     });
   };
 
@@ -715,6 +729,23 @@ const UpsertPatientForm = ({
                 </FormItem>
               )}
             />
+            {isAdmin && (
+              <FormField
+                control={form.control}
+                name="contractDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-amber-950">
+                      Data do Contrato
+                    </FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             <FormField
               control={form.control}
               name="clinicId"

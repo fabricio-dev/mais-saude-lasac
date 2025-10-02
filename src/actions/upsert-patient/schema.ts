@@ -94,6 +94,7 @@ export const upsertPatientSchema = z
     dependents4: z.string().optional(),
     dependents5: z.string().optional(),
     dependents6: z.string().optional(),
+    contractDate: z.string().optional(), // Data do contrato (pode ir para activeAt ou reactivatedAt)
   })
   .superRefine(async (data, ctx) => {
     // Verificar se CPF já existe no banco (somente se CPF foi fornecido)

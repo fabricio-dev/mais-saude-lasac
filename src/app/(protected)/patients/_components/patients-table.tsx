@@ -411,7 +411,10 @@ export default function PatientsTable({ patients }: PatientsTableProps) {
         </Table>
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="text-muted-foreground flex-1 text-sm"></div>
+        <div className="text-muted-foreground flex-1 text-sm">
+          Mostrando {table.getRowModel().rows.length} de {patients.length}{" "}
+          pacientes
+        </div>
         <div className="space-x-2">
           <Button
             variant="outline"
