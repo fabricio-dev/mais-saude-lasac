@@ -1,8 +1,14 @@
 import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
 import { and, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+
+// Configurar plugins do dayjs
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 import {
   PageActions,
@@ -86,17 +92,21 @@ const SellersPage = async ({ searchParams }: SellersPageProps) => {
     ) as typeof whereCondition;
   }
 
-  // Definindo datas e condições SQL uma única vez - PRIORIZANDO SQL
-  const fromDate = dayjs(from).startOf("day").toDate();
-  const toDate = dayjs(to).endOf("day").toDate();
+  // Definindo datas e condições SQL considerando fuso horário brasileiro
+  // Interpreta as datas como horário de São Paulo e converte para UTC
+  const fromDate = dayjs
+    .tz(`${from} 00:00:00`, "America/Sao_Paulo")
+    .utc()
+    .toDate();
+  const toDate = dayjs.tz(`${to} 23:59:59`, "America/Sao_Paulo").utc().toDate();
 
-  // Condições SQL centralizadas (sem duplicidade)
+  // Condições SQL centralizadas com forçamento de UTC
   const conveniosCondition =
-    sql<number>`COUNT(CASE WHEN ${patientsTable.activeAt} >= ${fromDate} AND ${patientsTable.activeAt} <= ${toDate} AND ${patientsTable.activeAt} IS NOT NULL THEN 1 END)`.mapWith(
+    sql<number>`COUNT(CASE WHEN ${patientsTable.activeAt} AT TIME ZONE 'UTC' >= ${fromDate} AND ${patientsTable.activeAt} AT TIME ZONE 'UTC' <= ${toDate} AND ${patientsTable.activeAt} IS NOT NULL THEN 1 END)`.mapWith(
       Number,
     );
   const conveniosRenovadosCondition =
-    sql<number>`COUNT(CASE WHEN ${patientsTable.reactivatedAt} >= ${fromDate} AND ${patientsTable.reactivatedAt} <= ${toDate} AND ${patientsTable.reactivatedAt} IS NOT NULL THEN 1 END)`.mapWith(
+    sql<number>`COUNT(CASE WHEN ${patientsTable.reactivatedAt} AT TIME ZONE 'UTC' >= ${fromDate} AND ${patientsTable.reactivatedAt} AT TIME ZONE 'UTC' <= ${toDate} AND ${patientsTable.reactivatedAt} IS NOT NULL THEN 1 END)`.mapWith(
       Number,
     );
   const totalCondition =
@@ -105,11 +115,11 @@ const SellersPage = async ({ searchParams }: SellersPageProps) => {
     );
 
   const enterpriseCondition =
-    sql<number>`COUNT(CASE WHEN ${patientsTable.cardType} = 'enterprise' AND ${patientsTable.isActive} = true AND ${patientsTable.activeAt} >= ${fromDate} AND ${patientsTable.activeAt} <= ${toDate} AND ${patientsTable.activeAt} IS NOT NULL THEN 1 END)`.mapWith(
+    sql<number>`COUNT(CASE WHEN ${patientsTable.cardType} = 'enterprise' AND ${patientsTable.isActive} = true AND ${patientsTable.activeAt} AT TIME ZONE 'UTC' >= ${fromDate} AND ${patientsTable.activeAt} AT TIME ZONE 'UTC' <= ${toDate} AND ${patientsTable.activeAt} IS NOT NULL THEN 1 END)`.mapWith(
       Number,
     );
   const enterpriseRenovadosCondition =
-    sql<number>`COUNT(CASE WHEN ${patientsTable.cardType} = 'enterprise' AND ${patientsTable.isActive} = true AND ${patientsTable.reactivatedAt} >= ${fromDate} AND ${patientsTable.reactivatedAt} <= ${toDate} AND ${patientsTable.reactivatedAt} IS NOT NULL THEN 1 END)`.mapWith(
+    sql<number>`COUNT(CASE WHEN ${patientsTable.cardType} = 'enterprise' AND ${patientsTable.isActive} = true AND ${patientsTable.reactivatedAt} AT TIME ZONE 'UTC' >= ${fromDate} AND ${patientsTable.reactivatedAt} AT TIME ZONE 'UTC' <= ${toDate} AND ${patientsTable.reactivatedAt} IS NOT NULL THEN 1 END)`.mapWith(
       Number,
     );
   const enterpriseTotalCondition =
@@ -143,7 +153,8 @@ const SellersPage = async ({ searchParams }: SellersPageProps) => {
       ),
     )
     .where(whereCondition)
-    .groupBy(sellersTable.id, clinicsTable.name);
+    .groupBy(sellersTable.id, clinicsTable.name)
+    .orderBy(sql`${totalCondition} DESC`);
 
   return (
     console.log(from, to),
