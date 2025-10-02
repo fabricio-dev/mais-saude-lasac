@@ -1,4 +1,6 @@
 import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
 import {
   and,
   asc,
@@ -21,6 +23,10 @@ import {
   sellersTable,
   usersToClinicsTable,
 } from "@/db/schema";
+
+// Configurar plugins do dayjs para lidar corretamente com fusos horários
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 interface Params {
   from: string;
@@ -54,20 +60,34 @@ export const getDashboardSellers = async ({ from, to, session }: Params) => {
     };
   }
 
-  const chartSatartDate = dayjs().subtract(14, "days").startOf("day").toDate();
-  const chartEndDate = dayjs().add(10, "days").endOf("day").toDate();
+  // Todas as datas agora em UTC para compatibilidade com o banco
+  const chartSatartDate = dayjs()
+    .utc()
+    .subtract(14, "days")
+    .startOf("day")
+    .toDate();
+  const chartEndDate = dayjs().utc().add(10, "days").endOf("day").toDate();
   const regeExpiratedDate = dayjs()
+    .utc()
     .subtract(90, "days")
     .startOf("day")
     .toDate();
-  const regeExpiratedEndDate = dayjs().add(14, "days").endOf("day").toDate();
+  const regeExpiratedEndDate = dayjs()
+    .utc()
+    .add(14, "days")
+    .endOf("day")
+    .toDate();
 
-  // Definindo datas com horário completo
-  const fromDate = dayjs(from).startOf("day").toDate();
-  const toDate = dayjs(to).endOf("day").toDate();
+  // Definindo datas com horário completo - Considerando fuso horário brasileiro
+  // Interpreta a data como horário local de São Paulo e converte para UTC
+  const fromDate = dayjs
+    .tz(`${from} 00:00:00`, "America/Sao_Paulo")
+    .utc()
+    .toDate();
+  const toDate = dayjs.tz(`${to} 23:59:59`, "America/Sao_Paulo").utc().toDate();
 
-  const conveniosCondition = sql<number>`COUNT(CASE WHEN ${patientsTable.activeAt} >= ${fromDate} AND ${patientsTable.activeAt} <= ${toDate} AND ${patientsTable.activeAt} IS NOT NULL THEN 1 END)`;
-  const conveniosRenovadosCondition = sql<number>`COUNT(CASE WHEN ${patientsTable.reactivatedAt} >= ${fromDate} AND ${patientsTable.reactivatedAt} <= ${toDate} AND ${patientsTable.reactivatedAt} IS NOT NULL THEN 1 END)`;
+  const conveniosCondition = sql<number>`COUNT(CASE WHEN ${patientsTable.activeAt} AT TIME ZONE 'UTC' >= ${fromDate} AND ${patientsTable.activeAt} AT TIME ZONE 'UTC' <= ${toDate} AND ${patientsTable.activeAt} IS NOT NULL THEN 1 END)`;
+  const conveniosRenovadosCondition = sql<number>`COUNT(CASE WHEN ${patientsTable.reactivatedAt} AT TIME ZONE 'UTC' >= ${fromDate} AND ${patientsTable.reactivatedAt} AT TIME ZONE 'UTC' <= ${toDate} AND ${patientsTable.reactivatedAt} IS NOT NULL THEN 1 END)`;
   const totalCondition = sql<number>`${conveniosCondition} + ${conveniosRenovadosCondition}`;
 
   const [
@@ -236,9 +256,12 @@ export const getDashboardSellers = async ({ from, to, session }: Params) => {
     // TODO: Implementa a query para os convenios diários dentre um intervalo de 21 dias
     Promise.all([
       // Consulta para pacientes novos do vendedor logado (baseado na data de ativacao)
+      // Convertendo de UTC para fuso horário local (UTC-3) antes de extrair a data
       db
         .select({
-          date: sql<string>`DATE(${patientsTable.activeAt})`.as("date"),
+          date: sql<string>`DATE(${patientsTable.activeAt} AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo')`.as(
+            "date",
+          ),
           count: count(patientsTable.id),
         })
         .from(patientsTable)
@@ -256,13 +279,20 @@ export const getDashboardSellers = async ({ from, to, session }: Params) => {
             eq(patientsTable.isActive, true),
           ),
         )
-        .groupBy(sql<string>`DATE(${patientsTable.activeAt})`)
-        .orderBy(sql<string>`DATE(${patientsTable.activeAt})`),
+        .groupBy(
+          sql<string>`DATE(${patientsTable.activeAt} AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo')`,
+        )
+        .orderBy(
+          sql<string>`DATE(${patientsTable.activeAt} AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo')`,
+        ),
 
       // Consulta para pacientes reativados do vendedor logado (baseado na data de reativação)
+      // Convertendo de UTC para fuso horário local (UTC-3) antes de extrair a data
       db
         .select({
-          date: sql<string>`DATE(${patientsTable.reactivatedAt})`.as("date"),
+          date: sql<string>`DATE(${patientsTable.reactivatedAt} AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo')`.as(
+            "date",
+          ),
           count: count(patientsTable.id),
         })
         .from(patientsTable)
@@ -281,12 +311,20 @@ export const getDashboardSellers = async ({ from, to, session }: Params) => {
             sql`${patientsTable.isActive} IS TRUE`,
           ),
         )
-        .groupBy(sql<string>`DATE(${patientsTable.reactivatedAt})`)
-        .orderBy(sql<string>`DATE(${patientsTable.reactivatedAt})`),
+        .groupBy(
+          sql<string>`DATE(${patientsTable.reactivatedAt} AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo')`,
+        )
+        .orderBy(
+          sql<string>`DATE(${patientsTable.reactivatedAt} AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo')`,
+        ),
     ]).then(([novosData, renovadosData]) => {
-      // Criar mapa de todas as datas no período
-      const currentDate = dayjs(chartSatartDate);
-      const endDate = dayjs(chartEndDate);
+      // Criar mapa de todas as datas no período (convertendo para fuso horário local)
+      const currentDate = dayjs(chartSatartDate)
+        .utc()
+        .utcOffset(-3 * 60); // UTC-3 (São Paulo)
+      const endDate = dayjs(chartEndDate)
+        .utc()
+        .utcOffset(-3 * 60); // UTC-3 (São Paulo)
       const allDates: { date: string; novos: number; renovados: number }[] = [];
 
       // Gerar todas as datas do período
@@ -318,16 +356,19 @@ export const getDashboardSellers = async ({ from, to, session }: Params) => {
 
       return allDates;
     }),
-    // Desativar pacientes expirados do vendedor logado (apenas data, sem horário)
+    // Desativar pacientes expirados do vendedor logado (usando UTC)
     db
       .update(patientsTable)
       .set({
         isActive: false,
-        updatedAt: new Date(),
+        updatedAt: dayjs().utc().toDate(),
       })
       .where(
         and(
-          lte(patientsTable.expirationDate, dayjs().endOf("day").toDate()),
+          lte(
+            patientsTable.expirationDate,
+            dayjs().utc().endOf("day").toDate(),
+          ),
           eq(patientsTable.isActive, true),
           inArray(
             patientsTable.sellerId,
@@ -344,7 +385,6 @@ export const getDashboardSellers = async ({ from, to, session }: Params) => {
       .update(patientsTable)
       .set({
         isActive: false,
-        updatedAt: new Date(),
       })
       .where(
         and(
@@ -360,16 +400,18 @@ export const getDashboardSellers = async ({ from, to, session }: Params) => {
         ),
       ),
 
-    // Reativar pacientes inativos com data de expiração válida do vendedor logado
+    // Reativar pacientes inativos com data de expiração válida do vendedor logado (usando UTC)
     db
       .update(patientsTable)
       .set({
         isActive: true,
-        updatedAt: new Date(),
       })
       .where(
         and(
-          gte(patientsTable.expirationDate, dayjs().startOf("day").toDate()),
+          gte(
+            patientsTable.expirationDate,
+            dayjs().utc().startOf("day").toDate(),
+          ),
           eq(patientsTable.isActive, false),
           // Apenas pacientes que já foram ativados pelo menos uma vez
           or(

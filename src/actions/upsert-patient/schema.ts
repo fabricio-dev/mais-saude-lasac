@@ -1,9 +1,15 @@
 import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
 import { and, eq, ne } from "drizzle-orm";
 import { z } from "zod";
 
 import { db } from "@/db";
 import { patientsTable } from "@/db/schema";
+
+// Configurar plugins do dayjs
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 // Função para validar CPF
 const isValidCPF = (cpf: string): boolean => {
@@ -71,13 +77,15 @@ export const upsertPatientSchema = z
         (value) => {
           if (!value) return true;
           if (!dayjs(value).isValid()) return false;
-          return (
-            dayjs(value).isAfter(dayjs(), "day") ||
-            dayjs(value).isSame(dayjs(), "day")
-          );
+
+          // Converter ambas as datas para UTC para comparação correta
+          const inputDate = dayjs(value).utc().startOf("day");
+          const today = dayjs().utc().startOf("day");
+
+          return inputDate.isAfter(today) || inputDate.isSame(today);
         },
         {
-          message: "Data de vencimento nao pode ser uma data passada",
+          message: "Data de vencimento não pode ser uma data passada",
         },
       ),
     dependents1: z.string().optional(),

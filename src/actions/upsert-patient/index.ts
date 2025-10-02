@@ -1,5 +1,7 @@
 "use server";
 import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
@@ -10,6 +12,10 @@ import { actionClient } from "@/lib/next-safe-action";
 
 import { upsertPatientSchema } from "./schema";
 
+// Configurar plugins do dayjs para lidar corretamente com fusos horários
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
 export const upsertPatient = actionClient
   .schema(upsertPatientSchema)
   .action(async ({ parsedInput }) => {
@@ -18,13 +24,26 @@ export const upsertPatient = actionClient
       throw new Error("Usuário não encontrado");
     }
 
+    // Função auxiliar para converter datas do formulário (horário local SP) para UTC
+    // Interpreta a data como horário de São Paulo e converte para UTC
+    const convertToUTCDate = (dateString: string) => {
+      return dayjs
+        .tz(dateString, "America/Sao_Paulo")
+        .startOf("day") // Início do dia em São Paulo (00:00:00)
+        .utc() // Converte para UTC
+        .toDate();
+    };
+
+    // Função auxiliar para data de ativação (momento atual em UTC)
+    // Registra o momento exato da ativação em UTC
+    const getActivationDate = () => {
+      return dayjs().utc().toDate();
+    };
+
     // Usar a data de vencimento fornecida pelo usuário ou calcular como um ano após a data atual
     const expirationDate = parsedInput.expirationDate
-      ? dayjs(parsedInput.expirationDate)
-          .startOf("day")
-          .add(6, "hours")
-          .toDate()
-      : dayjs().add(1, "year").startOf("day").add(6, "hours").toDate();
+      ? convertToUTCDate(parsedInput.expirationDate)
+      : dayjs().utc().add(1, "year").toDate();
 
     if (parsedInput.id) {
       // Edição - atualizar incluindo a data de vencimento se fornecida
@@ -33,13 +52,10 @@ export const upsertPatient = actionClient
         .values({
           ...parsedInput,
           birthDate: parsedInput.birthDate
-            ? dayjs(parsedInput.birthDate).startOf("day").toISOString()
+            ? convertToUTCDate(parsedInput.birthDate).toISOString()
             : null,
           expirationDate: parsedInput.expirationDate
-            ? dayjs(parsedInput.expirationDate)
-                .startOf("day")
-                .add(6, "hours")
-                .toDate()
+            ? convertToUTCDate(parsedInput.expirationDate)
             : undefined,
           clinicId: parsedInput.clinicId,
         })
@@ -48,13 +64,10 @@ export const upsertPatient = actionClient
           set: {
             ...parsedInput,
             birthDate: parsedInput.birthDate
-              ? dayjs(parsedInput.birthDate).startOf("day").toISOString()
+              ? convertToUTCDate(parsedInput.birthDate).toISOString()
               : null,
             expirationDate: parsedInput.expirationDate
-              ? dayjs(parsedInput.expirationDate)
-                  .startOf("day")
-                  .add(6, "hours")
-                  .toDate()
+              ? convertToUTCDate(parsedInput.expirationDate)
               : undefined,
           },
         });
@@ -63,10 +76,10 @@ export const upsertPatient = actionClient
       await db.insert(patientsTable).values({
         ...parsedInput,
         birthDate: parsedInput.birthDate
-          ? dayjs(parsedInput.birthDate).startOf("day").toISOString()
+          ? convertToUTCDate(parsedInput.birthDate).toISOString()
           : null,
         expirationDate: expirationDate,
-        activeAt: dayjs().startOf("day").add(6, "hours").toDate(),
+        activeAt: getActivationDate(),
       });
     }
 

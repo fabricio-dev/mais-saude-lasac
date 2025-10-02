@@ -58,19 +58,9 @@ interface PrintableContratoProps {
 const formatDate = (date: Date | string) => {
   if (!date) return "";
 
-  if (date instanceof Date) {
-    // Para Date objects, usar a data UTC (original do banco)
-    const year = date.getUTCFullYear();
-    const month = String(date.getUTCMonth() + 1).padStart(2, "0");
-    const day = String(date.getUTCDate()).padStart(2, "0");
-    return `${day}/${month}/${year}`;
-  }
-
-  // Para strings, extrair a parte da data
-  const dateStr = date.toString();
-  const dateOnly = dateStr.split("T")[0];
-  const [year, month, day] = dateOnly.split("-");
-  return `${day}/${month}/${year}`;
+  // Converter para o fuso horário de São Paulo e formatar
+  const dayjsDate = dayjs(date).tz("America/Sao_Paulo");
+  return dayjsDate.format("DD/MM/YYYY");
 };
 
 const formatPhone = (phone: string) => {
