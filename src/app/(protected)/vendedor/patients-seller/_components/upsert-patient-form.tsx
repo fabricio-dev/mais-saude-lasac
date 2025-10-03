@@ -120,8 +120,8 @@ const formSchema = z
     numberCards: z
       .string()
       .optional()
-      .refine((value) => !value || parseInt(value) > 0, {
-        message: "A quantidade de cartões deve ser maior que 0",
+      .refine((value) => !value || parseInt(value) >= 0, {
+        message: "A quantidade de cartões deve ser maior ou igual a 0",
       })
       .refine((value) => !value || parseInt(value) <= 6, {
         message: "A quantidade de cartões não pode ser maior que 6",
@@ -681,7 +681,7 @@ const UpsertPatientForm = ({
                     Quantidade de Cartões
                   </FormLabel>
                   <FormControl>
-                    <Input type="number" min="1" placeholder="1" {...field} />
+                    <Input type="number" min="0" placeholder="1" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
