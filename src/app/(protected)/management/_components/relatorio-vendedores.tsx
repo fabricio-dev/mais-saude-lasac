@@ -507,7 +507,7 @@ const RelatorioVendedores = ({
                           <tr
                             key={vendedor.nome}
                             className={`border-b ${
-                              index % 2 === 0 ? "bg-white" : "bg-muted/20"
+                              index % 2 === 0 ? "bg-white" : "bg-gray-100"
                             }`}
                           >
                             <td className="p-3 font-medium">{vendedor.nome}</td>
