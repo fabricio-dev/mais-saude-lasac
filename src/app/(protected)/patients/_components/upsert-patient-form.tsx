@@ -109,7 +109,7 @@ const isValidCPF = (cpf: string): boolean => {
 };
 
 // Função que cria o schema de validação
-const createFormSchema = (isEditing: boolean) =>
+const createFormSchema = (patient?: typeof patientsTable.$inferSelect) =>
   z
     .object({
       name: z.string().trim().min(1, { message: "Nome titular é obrigatório" }),
@@ -155,8 +155,21 @@ const createFormSchema = (isEditing: boolean) =>
           (value) => {
             if (!value) return true;
             if (!dayjs(value).isValid()) return false;
-            // Se estiver editando, permite datas passadas (para pacientes já vencidos)
-            if (isEditing) return true;
+
+            // Se estamos editando um paciente vencido ou pendente, não validar data passada
+            if (patient) {
+              const isPending = !patient.activeAt && !patient.reactivatedAt;
+              const isExpired = patient.expirationDate
+                ? dayjs(patient.expirationDate).isBefore(dayjs(), "day")
+                : false;
+
+              // Se está vencido ou pendente, permitir a data atual (campo desabilitado)
+              if (isPending || isExpired) {
+                return true;
+              }
+            }
+
+            // Para novos pacientes ou pacientes ativos, não permite datas passadas
             return (
               dayjs(value).isAfter(dayjs(), "day") ||
               dayjs(value).isSame(dayjs(), "day")
@@ -251,7 +264,7 @@ const UpsertPatientForm = ({
   const [loadingSeller, setLoadingSeller] = useState(false);
   const [loadingClinic, setLoadingClinic] = useState(false);
 
-  const formSchema = createFormSchema(!!patient);
+  const formSchema = createFormSchema(patient);
 
   const form = useForm<z.infer<typeof formSchema>>({
     shouldUnregister: true,

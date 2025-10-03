@@ -15,8 +15,19 @@ import ConveniosVencidosRenovadosChart from "./convenios-vencidos-renovados-char
 import { DatePicker } from "./date-picker";
 import FaturamentoChart from "./faturamento-chart";
 import NovosConveniosRenovacaoChart from "./novos-convenios-renovacao-chart";
+import PatientsActivationsTable from "./patients-activations-table";
 import SelectClinic from "./select-clinic";
 import StatsCardsUnidade from "./stats-cards-unidade";
+
+interface PatientActivation {
+  id: string;
+  name: string;
+  activeAt: Date | null;
+  reactivatedAt: Date | null;
+  expirationDate: Date | null;
+  sellerName: string | null;
+  clinicName: string | null;
+}
 
 interface RelatorioUnidadesProps {
   searchParams: {
@@ -37,6 +48,7 @@ interface RelatorioUnidadesProps {
       faturamento: number;
       isWithinPeriod?: boolean;
     }[];
+    patientsActivations: PatientActivation[];
   };
 }
 
@@ -53,6 +65,7 @@ interface UnidadeData {
     faturamento: number;
     isWithinPeriod?: boolean;
   }[];
+  patientsActivations: PatientActivation[];
 }
 
 const RelatorioUnidades = ({
@@ -80,6 +93,7 @@ const RelatorioUnidades = ({
     totalPatients: initialData.totalPatients,
     totalEnterprise: initialData.totalEnterprise,
     faturamentoMensal: initialData.faturamentoMensal,
+    patientsActivations: initialData.patientsActivations,
   });
 
   // Função de impressão
@@ -194,6 +208,7 @@ const RelatorioUnidades = ({
       totalPatients: initialData.totalPatients,
       totalEnterprise: initialData.totalEnterprise,
       faturamentoMensal: initialData.faturamentoMensal,
+      patientsActivations: initialData.patientsActivations,
     });
     // Desativar loading quando novos dados chegam
     setIsLoading(false);
@@ -332,6 +347,14 @@ const RelatorioUnidades = ({
                 isLoading={isLoading}
               />
             </div>
+          </div>
+
+          {/* Tabela de Pacientes Ativados/Reativados */}
+          <div className="print-section">
+            <PatientsActivationsTable
+              data={data.patientsActivations}
+              isLoading={isLoading}
+            />
           </div>
         </div>
 
