@@ -137,8 +137,8 @@ const createFormSchema = (isEditing: boolean) =>
       numberCards: z
         .string()
         .optional()
-        .refine((value) => !value || parseInt(value) > 0, {
-          message: "A quantidade de cartões deve ser maior que 0",
+        .refine((value) => !value || parseInt(value) >= 0, {
+          message: "A quantidade de cartões deve ser maior ou igual a 0",
         })
         .refine((value) => !value || parseInt(value) <= 6, {
           message: "A quantidade de cartões não pode ser maior que 6",
@@ -408,7 +408,59 @@ const UpsertPatientForm = ({
     },
   });
 
+  // Verificar se deve desabilitar o campo de data de vencimento
+  const shouldDisableExpirationDate = () => {
+    if (!patient) return false; // Ao criar novo paciente, não desabilitar
+
+    // Verificar se está pendente (sem data de ativação ou reativação)
+    const isPending = !patient.activeAt && !patient.reactivatedAt;
+    if (isPending) return true;
+
+    // Verificar se está vencido
+    if (patient.expirationDate) {
+      const isExpired = dayjs(patient.expirationDate).isBefore(dayjs(), "day");
+      if (isExpired) return true;
+    }
+
+    return false;
+  };
+
   const onSubmit = (values: z.infer<typeof formSchema>) => {
+    // Determinar a data do contrato e data de vencimento
+    let contractDate = "";
+    let expirationDate = values.expirationDate;
+
+    if (patient) {
+      // Ao editar: verificar se a data de vencimento foi alterada
+      const originalExpirationDate = patient.expirationDate
+        ? dayjs(patient.expirationDate).format("YYYY-MM-DD")
+        : "";
+      const newExpirationDate = values.expirationDate || "";
+
+      if (originalExpirationDate !== newExpirationDate) {
+        // Data de vencimento foi alterada
+        if (newExpirationDate) {
+          // Recalcular a data do contrato
+          contractDate = dayjs(newExpirationDate)
+            .subtract(1, "year")
+            .format("YYYY-MM-DD");
+          expirationDate = newExpirationDate;
+        } else {
+          expirationDate = undefined;
+        }
+      } else {
+        // Data de vencimento não foi alterada, manter a data do contrato original
+        contractDate = values.contractDate || "";
+        // Não enviar expirationDate para não atualizar no banco
+        expirationDate = undefined;
+      }
+    } else {
+      // Ao criar: calcular a partir da data de vencimento
+      contractDate = values.expirationDate
+        ? dayjs(values.expirationDate).subtract(1, "year").format("YYYY-MM-DD")
+        : "";
+    }
+
     upsertPatientAction.execute({
       ...values,
       numberCards: values.numberCards ? parseInt(values.numberCards) : 0,
@@ -416,8 +468,8 @@ const UpsertPatientForm = ({
       clinicId: values.clinicId,
       Enterprise: values.Enterprise,
       observation: values.observation,
-      expirationDate: values.expirationDate,
-      contractDate: values.contractDate,
+      expirationDate,
+      contractDate,
     });
   };
 
@@ -715,7 +767,7 @@ const UpsertPatientForm = ({
                     Quantidade de Cartões
                   </FormLabel>
                   <FormControl>
-                    <Input type="number" min="1" placeholder="1" {...field} />
+                    <Input type="number" min="0" placeholder="1" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -731,7 +783,11 @@ const UpsertPatientForm = ({
                     Data de Vencimento
                   </FormLabel>
                   <FormControl>
-                    <Input type="date" {...field} />
+                    <Input
+                      type="date"
+                      disabled={shouldDisableExpirationDate()}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -739,10 +795,11 @@ const UpsertPatientForm = ({
             />
             {isAdmin && (
               <FormField
+                disabled={true}
                 control={form.control}
                 name="contractDate"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem hidden={true}>
                     <FormLabel className="text-amber-950">
                       Data do Contrato
                     </FormLabel>
