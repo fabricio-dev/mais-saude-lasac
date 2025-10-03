@@ -328,7 +328,9 @@ const UpsertPatientForm = ({
       onSuccess?.();
     },
     onError: () => {
-      toast.error("Erro ao adicionar paciente");
+      toast.error(
+        patient ? "Erro ao atualizar paciente" : "Erro ao adicionar paciente",
+      );
     },
   });
 

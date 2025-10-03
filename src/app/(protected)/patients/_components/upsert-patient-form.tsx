@@ -108,80 +108,84 @@ const isValidCPF = (cpf: string): boolean => {
   return digit2 === parseInt(cleanCPF.charAt(10));
 };
 
-const formSchema = z
-  .object({
-    name: z.string().trim().min(1, { message: "Nome titular é obrigatório" }),
-    birthDate: z.string().optional(),
-    phoneNumber: z
-      .string()
-      .trim()
-      .min(10, { message: "Telefone é obrigatório" }),
-    rgNumber: z.string().optional(),
-    cpfNumber: z
-      .string()
-      .optional()
-      .refine((cpf) => !cpf || isValidCPF(cpf), {
-        message: "CPF inválido",
-      }),
-    address: z.string().optional(),
-    homeNumber: z.string().optional(),
-    city: z.string().optional(),
-    state: z.string().optional(),
+// Função que cria o schema de validação
+const createFormSchema = (isEditing: boolean) =>
+  z
+    .object({
+      name: z.string().trim().min(1, { message: "Nome titular é obrigatório" }),
+      birthDate: z.string().optional(),
+      phoneNumber: z
+        .string()
+        .trim()
+        .min(10, { message: "Telefone é obrigatório" }),
+      rgNumber: z.string().optional(),
+      cpfNumber: z
+        .string()
+        .optional()
+        .refine((cpf) => !cpf || isValidCPF(cpf), {
+          message: "CPF inválido",
+        }),
+      address: z.string().optional(),
+      homeNumber: z.string().optional(),
+      city: z.string().optional(),
+      state: z.string().optional(),
 
-    cardType: z.enum(["enterprise", "personal"], {
-      message: "Tipo de cartão é obrigatório",
-    }),
-    Enterprise: z.string().optional(),
-    numberCards: z
-      .string()
-      .optional()
-      .refine((value) => !value || parseInt(value) > 0, {
-        message: "A quantidade de cartões deve ser maior que 0",
-      })
-      .refine((value) => !value || parseInt(value) <= 6, {
-        message: "A quantidade de cartões não pode ser maior que 6",
+      cardType: z.enum(["enterprise", "personal"], {
+        message: "Tipo de cartão é obrigatório",
       }),
+      Enterprise: z.string().optional(),
+      numberCards: z
+        .string()
+        .optional()
+        .refine((value) => !value || parseInt(value) > 0, {
+          message: "A quantidade de cartões deve ser maior que 0",
+        })
+        .refine((value) => !value || parseInt(value) <= 6, {
+          message: "A quantidade de cartões não pode ser maior que 6",
+        }),
 
-    // TODO: Verificar se a quantidade de cartões é maior que o número de dependentes
-    sellerId: z.string().uuid({ message: "Vendedor é obrigatório" }),
-    clinicId: z.string().uuid({ message: "Clínica é obrigatória" }),
-    observation: z.string().optional(),
-    expirationDate: z
-      .string()
-      .optional()
-      .refine(
-        (value) => {
-          if (!value) return true;
-          if (!dayjs(value).isValid()) return false;
-          return (
-            dayjs(value).isAfter(dayjs(), "day") ||
-            dayjs(value).isSame(dayjs(), "day")
-          );
-        },
-        {
-          message: "Data de vencimento nao pode ser uma data passada",
-        },
-      ),
-    dependents1: z.string().optional(),
-    dependents2: z.string().optional(),
-    dependents3: z.string().optional(),
-    dependents4: z.string().optional(),
-    dependents5: z.string().optional(),
-    dependents6: z.string().optional(),
-    contractDate: z.string().optional(), // Data do contrato (pode ir para activeAt ou reactivatedAt)
-  })
-  .superRefine((data, ctx) => {
-    if (
-      data.cardType === "enterprise" &&
-      (!data.Enterprise || data.Enterprise.trim() === "")
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Nome da empresa é obrigatório para cartão empresarial",
-        path: ["Enterprise"],
-      });
-    }
-  });
+      // TODO: Verificar se a quantidade de cartões é maior que o número de dependentes
+      sellerId: z.string().uuid({ message: "Vendedor é obrigatório" }),
+      clinicId: z.string().uuid({ message: "Clínica é obrigatória" }),
+      observation: z.string().optional(),
+      expirationDate: z
+        .string()
+        .optional()
+        .refine(
+          (value) => {
+            if (!value) return true;
+            if (!dayjs(value).isValid()) return false;
+            // Se estiver editando, permite datas passadas (para pacientes já vencidos)
+            if (isEditing) return true;
+            return (
+              dayjs(value).isAfter(dayjs(), "day") ||
+              dayjs(value).isSame(dayjs(), "day")
+            );
+          },
+          {
+            message: "Data de vencimento nao pode ser uma data passada",
+          },
+        ),
+      dependents1: z.string().optional(),
+      dependents2: z.string().optional(),
+      dependents3: z.string().optional(),
+      dependents4: z.string().optional(),
+      dependents5: z.string().optional(),
+      dependents6: z.string().optional(),
+      contractDate: z.string().optional(), // Data do contrato (pode ir para activeAt ou reactivatedAt)
+    })
+    .superRefine((data, ctx) => {
+      if (
+        data.cardType === "enterprise" &&
+        (!data.Enterprise || data.Enterprise.trim() === "")
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Nome da empresa é obrigatório para cartão empresarial",
+          path: ["Enterprise"],
+        });
+      }
+    });
 
 interface UpsertPatientFormProps {
   isOpen: boolean;
@@ -246,6 +250,8 @@ const UpsertPatientForm = ({
   const [loadingCardType, setLoadingCardType] = useState(false);
   const [loadingSeller, setLoadingSeller] = useState(false);
   const [loadingClinic, setLoadingClinic] = useState(false);
+
+  const formSchema = createFormSchema(!!patient);
 
   const form = useForm<z.infer<typeof formSchema>>({
     shouldUnregister: true,
@@ -396,7 +402,9 @@ const UpsertPatientForm = ({
       onSuccess?.();
     },
     onError: () => {
-      toast.error("Erro ao adicionar paciente");
+      toast.error(
+        patient ? "Erro ao atualizar paciente" : "Erro ao adicionar paciente",
+      );
     },
   });
 

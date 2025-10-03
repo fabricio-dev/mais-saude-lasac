@@ -70,24 +70,7 @@ export const upsertPatientSchema = z
     sellerId: z.string().uuid({ message: "Vendedor é obrigatório" }),
     clinicId: z.string().uuid({ message: "Clínica é obrigatória" }),
     observation: z.string().optional(),
-    expirationDate: z
-      .string()
-      .optional()
-      .refine(
-        (value) => {
-          if (!value) return true;
-          if (!dayjs(value).isValid()) return false;
-
-          // Converter ambas as datas para UTC para comparação correta
-          const inputDate = dayjs(value).utc().startOf("day");
-          const today = dayjs().utc().startOf("day");
-
-          return inputDate.isAfter(today) || inputDate.isSame(today);
-        },
-        {
-          message: "Data de vencimento não pode ser uma data passada",
-        },
-      ),
+    expirationDate: z.string().optional(),
     dependents1: z.string().optional(),
     dependents2: z.string().optional(),
     dependents3: z.string().optional(),
@@ -97,6 +80,29 @@ export const upsertPatientSchema = z
     contractDate: z.string().optional(), // Data do contrato (pode ir para activeAt ou reactivatedAt)
   })
   .superRefine(async (data, ctx) => {
+    // Validar data de vencimento apenas para novos pacientes
+    if (!data.id && data.expirationDate) {
+      if (!dayjs(data.expirationDate).isValid()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Data de vencimento inválida",
+          path: ["expirationDate"],
+        });
+      } else {
+        // Converter ambas as datas para UTC para comparação correta
+        const inputDate = dayjs(data.expirationDate).utc().startOf("day");
+        const today = dayjs().utc().startOf("day");
+
+        if (!inputDate.isAfter(today) && !inputDate.isSame(today)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Data de vencimento não pode ser uma data passada",
+            path: ["expirationDate"],
+          });
+        }
+      }
+    }
+
     // Verificar se CPF já existe no banco (somente se CPF foi fornecido)
     if (data.cpfNumber && data.cpfNumber.trim() !== "") {
       const cleanCPF = data.cpfNumber.replace(/\D/g, "");
