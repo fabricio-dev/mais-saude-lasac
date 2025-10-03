@@ -362,7 +362,6 @@ export const getDashboardGestor = async ({ from, to, session }: Params) => {
       .update(patientsTable)
       .set({
         isActive: false,
-        updatedAt: dayjs().utc().toDate(),
       })
       .where(
         and(
