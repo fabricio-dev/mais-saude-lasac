@@ -3,14 +3,19 @@ import "dayjs/locale/pt-br";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
-import { and, count, eq, inArray, sql } from "drizzle-orm";
+import { and, count, eq, inArray, or, sql } from "drizzle-orm";
 
 dayjs.locale("pt-br");
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
 import { db } from "@/db";
-import { patientsTable, usersToClinicsTable } from "@/db/schema";
+import {
+  clinicsTable,
+  patientsTable,
+  sellersTable,
+  usersToClinicsTable,
+} from "@/db/schema";
 
 interface Params {
   from: string;
@@ -22,6 +27,16 @@ interface Params {
       email: string;
     };
   };
+}
+
+interface PatientActivation {
+  id: string;
+  name: string;
+  activeAt: Date | null;
+  reactivatedAt: Date | null;
+  expirationDate: Date | null;
+  sellerName: string | null;
+  clinicName: string | null;
 }
 
 interface ManagementData {
@@ -39,6 +54,7 @@ interface ManagementData {
     faturamento: number;
     isWithinPeriod?: boolean;
   }[];
+  patientsActivations: PatientActivation[];
 }
 
 // Função auxiliar para calcular faturamento mensal
@@ -251,6 +267,7 @@ export const getManagement = async ({
         totalPatientsRenovated: 0,
         totalEnterpriseRenovated: 0,
         faturamentoMensal: [],
+        patientsActivations: [],
       };
     }
 
@@ -273,6 +290,7 @@ export const getManagement = async ({
           totalPatientsRenovated: 0,
           totalEnterpriseRenovated: 0,
           faturamentoMensal: [],
+          patientsActivations: [],
         };
       }
     }
@@ -442,6 +460,41 @@ export const getManagement = async ({
       to,
     );
 
+    // Buscar ativações de pacientes (novos e renovados) no período
+    const patientsActivations = await db
+      .select({
+        id: patientsTable.id,
+        name: patientsTable.name,
+        activeAt: patientsTable.activeAt,
+        reactivatedAt: patientsTable.reactivatedAt,
+        expirationDate: patientsTable.expirationDate,
+        sellerName: sellersTable.name,
+        clinicName: clinicsTable.name,
+      })
+      .from(patientsTable)
+      .leftJoin(sellersTable, eq(patientsTable.sellerId, sellersTable.id))
+      .leftJoin(clinicsTable, eq(patientsTable.clinicId, clinicsTable.id))
+      .where(
+        and(
+          inArray(patientsTable.clinicId, targetClinicIds),
+          eq(patientsTable.isActive, true),
+          or(
+            // Novos pacientes ativados no período
+            and(
+              sql`${patientsTable.activeAt} AT TIME ZONE 'UTC' >= ${fromDate}`,
+              sql`${patientsTable.activeAt} AT TIME ZONE 'UTC' <= ${toDate}`,
+            ),
+            // Pacientes renovados no período
+            and(
+              sql`${patientsTable.reactivatedAt} AT TIME ZONE 'UTC' >= ${fromDate}`,
+              sql`${patientsTable.reactivatedAt} AT TIME ZONE 'UTC' <= ${toDate}`,
+              sql`${patientsTable.reactivatedAt} IS NOT NULL`,
+            ),
+          ),
+        ),
+      )
+      .orderBy(clinicsTable.name, sellersTable.name);
+
     return {
       faturamentoTotal,
       totalConvenios: totalAtivos.total,
@@ -453,6 +506,7 @@ export const getManagement = async ({
       totalPatientsRenovated: totalPatientsRenovated.total,
       totalEnterpriseRenovated: totalEnterpriseRenovated.total,
       faturamentoMensal,
+      patientsActivations,
     };
   } catch (error) {
     console.error("Erro ao buscar dados de management:", error);
@@ -467,6 +521,7 @@ export const getManagement = async ({
       totalPatientsRenovated: 0,
       totalEnterpriseRenovated: 0,
       faturamentoMensal: [],
+      patientsActivations: [],
     };
   }
 };
