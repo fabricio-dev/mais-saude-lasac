@@ -178,6 +178,27 @@ const createFormSchema = (patient?: typeof patientsTable.$inferSelect) =>
           {
             message: "Data de vencimento nao pode ser uma data passada",
           },
+        )
+        .refine(
+          (value) => {
+            if (!value) return true;
+            if (!dayjs(value).isValid()) return false;
+
+            // Se estamos editando um paciente, não validar limite de 1 ano (campo desabilitado)
+            if (patient) {
+              return true;
+            }
+
+            // Para novos pacientes, não permite datas superiores a 1 ano da data atual
+            const maxDate = dayjs().add(1, "year");
+            return (
+              dayjs(value).isBefore(maxDate, "day") ||
+              dayjs(value).isSame(maxDate, "day")
+            );
+          },
+          {
+            message: `Data de vencimento nao pode ultrapassar 1 ano (limite: ${dayjs().add(1, "year").format("DD/MM/YYYY")})`,
+          },
         ),
       dependents1: z.string().optional(),
       dependents2: z.string().optional(),
@@ -422,20 +443,9 @@ const UpsertPatientForm = ({
   });
 
   // Verificar se deve desabilitar o campo de data de vencimento
+  // Data de vencimento só pode ser editada na criação de um novo paciente
   const shouldDisableExpirationDate = () => {
-    if (!patient) return false; // Ao criar novo paciente, não desabilitar
-
-    // Verificar se está pendente (sem data de ativação ou reativação)
-    const isPending = !patient.activeAt && !patient.reactivatedAt;
-    if (isPending) return true;
-
-    // Verificar se está vencido
-    if (patient.expirationDate) {
-      const isExpired = dayjs(patient.expirationDate).isBefore(dayjs(), "day");
-      if (isExpired) return true;
-    }
-
-    return false;
+    return !!patient; // Desabilita se está editando (patient existe)
   };
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
@@ -791,7 +801,7 @@ const UpsertPatientForm = ({
               control={form.control}
               name="expirationDate"
               render={({ field }) => (
-                <FormItem>
+                <FormItem hidden={!!patient}>
                   <FormLabel className="text-amber-950">
                     Data de Vencimento
                   </FormLabel>
