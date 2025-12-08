@@ -1,3 +1,5 @@
+import { headers } from "next/headers";
+
 import { auth } from "@/lib/auth";
 
 /**
@@ -27,6 +29,7 @@ export async function setUserAsAdmin(userEmail: string) {
         userId: user.id,
         role: "admin",
       },
+      headers: await headers(),
     });
 
     return {
@@ -68,6 +71,7 @@ export async function removeUserAdmin(userEmail: string) {
         userId: user.id,
         role: "user",
       },
+      headers: await headers(),
     });
 
     return {
