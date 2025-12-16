@@ -13,7 +13,10 @@ interface TopClinicsProps {
 }
 
 export default function TopClinics({ topClinics }: TopClinicsProps) {
-  const maxPatients = topClinics.reduce((acc, curr) => acc + curr.patients, 0);
+  const maxPatients = topClinics.reduce(
+    (acc, curr) => acc + curr.patients + curr.patientsRenovated,
+    0,
+  );
 
   return (
     <Card className="mx-auto w-full">
@@ -29,7 +32,9 @@ export default function TopClinics({ topClinics }: TopClinicsProps) {
         <div className="space-y-6">
           {topClinics.map((clinic) => {
             // Porcentagem de ocupação da especialidade baseando-se no maior número de pacientes
-            const progressValue = (clinic.patients / maxPatients) * 100;
+            const progressValue =
+              ((clinic.patients + clinic.patientsRenovated) / maxPatients) *
+              100;
 
             return (
               <div key={clinic.clinic} className="flex items-center gap-2">
