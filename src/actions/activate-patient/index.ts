@@ -8,11 +8,16 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
 import { db } from "@/db";
-import { clinicsTable, patientsTable, sellersTable, usersToClinicsTable } from "@/db/schema";
+import {
+  clinicsTable,
+  patientsTable,
+  sellersTable,
+  usersToClinicsTable,
+} from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
-import { sendWhatsAppMessageAsync } from "@/lib/whatsapp/client";
-import { getMessageTemplate } from "@/lib/whatsapp/templates";
+import { sendWhatsAppTemplateAsync } from "@/lib/whatsapp/client";
+import { getTemplateConfig } from "@/lib/whatsapp/templates";
 
 import { activatePatientSchema } from "./schema";
 
@@ -176,22 +181,23 @@ export const activatePatient = actionClient
           ? newExpirationDateAntecipated
           : newExpirationDate;
 
-    // Preparar mensagem personalizada
-    const message = getMessageTemplate(messageType, {
+    // Preparar template do WhatsApp com parâmetros
+    const templateConfig = getTemplateConfig(messageType, {
       patientName: patient.name,
       expirationDate: finalExpirationDate,
       clinicName,
     });
 
-    // Enviar WhatsApp de forma assíncrona (não bloqueia o processo)
+    // Enviar WhatsApp usando template pré-aprovado (não bloqueia o processo)
     // Se falhar, será logado mas não impedirá a ativação
-    sendWhatsAppMessageAsync({
+    sendWhatsAppTemplateAsync({
       phoneNumber: patient.phoneNumber,
-      message,
+      templateName: templateConfig.name,
+      parameters: templateConfig.parameters,
     }).catch((error) => {
       // Log do erro mas não propaga (não deve falhar a ativação)
       console.error(
-        `Erro ao enviar WhatsApp para paciente ${patient.id}:`,
+        `Erro ao enviar WhatsApp template para paciente ${patient.id}:`,
         error,
       );
     });
