@@ -836,6 +836,12 @@ export default function ConvenioVendedorPage() {
                                 }
                               />
                             </FormLabel>
+
+                            <FormLabel className="text-emerald-950">
+                              Ao aceitar, você concorda em receber mensagens
+                              sobre atualizações de status do convênio por
+                              WhatsApp.
+                            </FormLabel>
                             <FormMessage />
                           </div>
                         </FormItem>
