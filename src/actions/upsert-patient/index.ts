@@ -7,9 +7,11 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
 import { db } from "@/db";
-import { patientsTable } from "@/db/schema";
+import { clinicsTable, patientsTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
+import { sendWhatsAppMessageAsync } from "@/lib/whatsapp/client";
+import { getMessageTemplate } from "@/lib/whatsapp/templates";
 
 import { upsertPatientSchema } from "./schema";
 
@@ -104,7 +106,7 @@ export const upsertPatient = actionClient
         });
     } else {
       // Criação - sempre usar activeAt
-      await db.insert(patientsTable).values({
+      const newPatientData = {
         ...parsedInput,
         birthDate: parsedInput.birthDate
           ? convertToUTCDate(parsedInput.birthDate).toISOString()
@@ -113,6 +115,39 @@ export const upsertPatient = actionClient
         activeAt: parsedInput.contractDate
           ? convertToUTCDate(parsedInput.contractDate)
           : getActivationDate(),
+      };
+
+      await db.insert(patientsTable).values(newPatientData);
+
+      // Enviar WhatsApp de boas-vindas para o novo paciente
+      // Buscar nome da clínica para incluir na mensagem
+      let clinicName: string | undefined;
+      if (parsedInput.clinicId) {
+        const clinicResult = await db
+          .select({ name: clinicsTable.name })
+          .from(clinicsTable)
+          .where(eq(clinicsTable.id, parsedInput.clinicId))
+          .limit(1);
+        clinicName = clinicResult[0]?.name;
+      }
+
+      // Preparar mensagem de ativação (primeira ativação)
+      const message = getMessageTemplate("activation", {
+        patientName: parsedInput.name,
+        expirationDate: expirationDate,
+        clinicName,
+      });
+
+      // Enviar WhatsApp de forma assíncrona (não bloqueia o processo)
+      sendWhatsAppMessageAsync({
+        phoneNumber: parsedInput.phoneNumber,
+        message,
+      }).catch((error) => {
+        // Log do erro mas não propaga (não deve falhar a criação)
+        console.error(
+          `Erro ao enviar WhatsApp para novo paciente ${parsedInput.name}:`,
+          error,
+        );
       });
     }
 

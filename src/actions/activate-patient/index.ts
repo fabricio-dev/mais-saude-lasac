@@ -8,9 +8,11 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
 import { db } from "@/db";
-import { patientsTable, sellersTable, usersToClinicsTable } from "@/db/schema";
+import { clinicsTable, patientsTable, sellersTable, usersToClinicsTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
+import { sendWhatsAppMessageAsync } from "@/lib/whatsapp/client";
+import { getMessageTemplate } from "@/lib/whatsapp/templates";
 
 import { activatePatientSchema } from "./schema";
 
@@ -144,6 +146,55 @@ export const activatePatient = actionClient
       .update(patientsTable)
       .set(updateData)
       .where(eq(patientsTable.id, parsedInput.patientId));
+
+    // Buscar nome da clínica para incluir na mensagem
+    let clinicName: string | undefined;
+    if (patient.clinicId) {
+      const clinicResult = await db
+        .select({ name: clinicsTable.name })
+        .from(clinicsTable)
+        .where(eq(clinicsTable.id, patient.clinicId))
+        .limit(1);
+      clinicName = clinicResult[0]?.name;
+    }
+
+    // Determinar tipo de mensagem baseado no tipo de ativação
+    let messageType: "activation" | "renewal" | "early_renewal";
+    if (patient.activeAt === null) {
+      messageType = "activation";
+    } else if (patient.expirationDate && patient.expirationDate > now) {
+      messageType = "early_renewal";
+    } else {
+      messageType = "renewal";
+    }
+
+    // Obter data de expiração final (a que foi salva no banco)
+    const finalExpirationDate =
+      messageType === "activation"
+        ? newExpirationDate
+        : messageType === "early_renewal"
+          ? newExpirationDateAntecipated
+          : newExpirationDate;
+
+    // Preparar mensagem personalizada
+    const message = getMessageTemplate(messageType, {
+      patientName: patient.name,
+      expirationDate: finalExpirationDate,
+      clinicName,
+    });
+
+    // Enviar WhatsApp de forma assíncrona (não bloqueia o processo)
+    // Se falhar, será logado mas não impedirá a ativação
+    sendWhatsAppMessageAsync({
+      phoneNumber: patient.phoneNumber,
+      message,
+    }).catch((error) => {
+      // Log do erro mas não propaga (não deve falhar a ativação)
+      console.error(
+        `Erro ao enviar WhatsApp para paciente ${patient.id}:`,
+        error,
+      );
+    });
 
     revalidatePath("/patients");
     revalidatePath("/vendedor/patients-seller");
