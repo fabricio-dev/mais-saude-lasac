@@ -764,7 +764,8 @@ export function ConvenioForm() {
                     <p className="mb-3 text-sm text-emerald-800">
                       Para prosseguir com sua solicitação de convênio, é
                       necessário aceitar nossos termos de uso e política de
-                      privacidade.
+                      privacidade. <br /> Ao aceitar, você concorda em receber
+                      mensagens sobre atualizações do convênio por WhatsApp.
                     </p>
                     <div className="mb-3">
                       <ContratoDialog
