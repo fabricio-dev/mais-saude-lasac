@@ -10,8 +10,8 @@ import { db } from "@/db";
 import { clinicsTable, patientsTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
-import { sendWhatsAppMessageAsync } from "@/lib/whatsapp/client";
-import { getMessageTemplate } from "@/lib/whatsapp/templates";
+import { sendWhatsAppTemplateAsync } from "@/lib/whatsapp/client";
+import { getTemplateConfig } from "@/lib/whatsapp/templates";
 
 import { upsertPatientSchema } from "./schema";
 
@@ -131,21 +131,22 @@ export const upsertPatient = actionClient
         clinicName = clinicResult[0]?.name;
       }
 
-      // Preparar mensagem de ativação (primeira ativação)
-      const message = getMessageTemplate("activation", {
+      // Preparar template do WhatsApp (primeira ativação)
+      const templateConfig = getTemplateConfig("activation", {
         patientName: parsedInput.name,
         expirationDate: expirationDate,
         clinicName,
       });
 
-      // Enviar WhatsApp de forma assíncrona (não bloqueia o processo)
-      sendWhatsAppMessageAsync({
+      // Enviar WhatsApp usando template pré-aprovado (não bloqueia o processo)
+      sendWhatsAppTemplateAsync({
         phoneNumber: parsedInput.phoneNumber,
-        message,
+        templateName: templateConfig.name,
+        parameters: templateConfig.parameters,
       }).catch((error) => {
         // Log do erro mas não propaga (não deve falhar a criação)
         console.error(
-          `Erro ao enviar WhatsApp para novo paciente ${parsedInput.name}:`,
+          `Erro ao enviar WhatsApp template para novo paciente ${parsedInput.name}:`,
           error,
         );
       });

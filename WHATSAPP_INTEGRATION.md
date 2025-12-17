@@ -18,9 +18,23 @@ Sistema de envio automático de mensagens WhatsApp quando um paciente é **criad
 
 ---
 
+## ⚠️ IMPORTANTE: Templates Obrigatórios
+
+A **WhatsApp Business API oficial do Meta** exige que mensagens de notificação sejam enviadas usando **templates pré-aprovados**.
+
+### 📋 Você precisa:
+
+1. ✅ Criar 3 templates no Meta Business Manager
+2. ✅ Aguardar aprovação (24-48h)
+3. ✅ Configurar credenciais da API
+
+**📖 Guia Completo**: Veja o arquivo `WHATSAPP_TEMPLATES_GUIDE.md` para instruções detalhadas de como criar os templates.
+
+---
+
 ## 🚀 Como Configurar
 
-### 1. Obter Credenciais do WhatsApp Business API
+### 1. Criar Templates no Meta Business Manager
 
 Você já tem uma conta, então precisa apenas pegar estas informações:
 
@@ -72,7 +86,17 @@ WHATSAPP_PHONE_NUMBER_ID=SEU_PHONE_NUMBER_ID_AQUI
 
 ---
 
-### 3. Testar a Integração
+### 3. Verificar Status dos Templates
+
+Antes de testar, certifique-se que os templates estão aprovados:
+
+1. Acesse: https://business.facebook.com/wa/manage/message-templates
+2. Verifique se os 3 templates têm status **APPROVED** ✅
+3. Se estiver **PENDING** ⏳, aguarde aprovação
+
+---
+
+### 4. Testar a Integração
 
 #### **Teste 1: Desabilitar WhatsApp**
 
@@ -108,49 +132,17 @@ WHATSAPP_ENABLED=true
 ### 🎉 Primeira Ativação
 
 ```
-🎉 Olá João!
+Olá João!
 
-Seu convênio Mais Saúde foi ativado com sucesso! ✅
+Seu convênio Mais Saúde foi ativado com sucesso!
 
-📅 Validade até: 17/12/2026
-🏥 Unidade: Clínica São Paulo
+Validade até: 17/12/2026
+Unidade: Clínica São Paulo
 
 Bem-vindo(a) à família Mais Saúde! Agora você tem acesso a uma rede completa de serviços de saúde.
 
-Qualquer dúvida, estamos à disposição! 💚
+Qualquer dúvida, estamos à disposição!
 ```
-
-### ✅ Renovação
-
-```
-✅ Olá Maria!
-
-Seu convênio Mais Saúde foi renovado! 🔄
-
-📅 Nova validade até: 17/12/2026
-🏥 Unidade: Clínica Rio de Janeiro
-
-Obrigado por continuar conosco! Sua saúde é nossa prioridade.
-
-Qualquer dúvida, estamos à disposição! 💚
-```
-
-### ⚡ Renovação Antecipada
-
-```
-✅ Olá Pedro!
-
-Seu convênio Mais Saúde foi renovado antecipadamente! 🔄⚡
-
-📅 Nova validade até: 15/06/2027
-🏥 Unidade: Clínica Belo Horizonte
-
-Obrigado pela renovação antecipada! Seu tempo adicional foi preservado.
-
-Qualquer dúvida, estamos à disposição! 💚
-```
-
----
 
 ## 🔧 Arquivos Criados
 
@@ -193,6 +185,34 @@ src/
 ---
 
 ## 🐛 Troubleshooting
+
+### 🔴 Erros Relacionados a Templates
+
+#### Problema: Erro 132000 - Template não encontrado
+
+**Solução**:
+
+- Template não existe ou nome está incorreto
+- Verifique se os templates estão criados: `convenio_ativado`, `convenio_renovado`, `convenio_renovado_antecipado`
+- Nomes devem ser exatamente iguais (case sensitive)
+
+#### Problema: Erro 133000 - Template não aprovado
+
+**Solução**:
+
+- Template ainda está em aprovação (PENDING)
+- Aguarde aprovação do Meta (24-48h)
+- Verifique status em: https://business.facebook.com/wa/manage/message-templates
+
+#### Problema: Erro 131026 - Parameter Invalid (Templates)
+
+**Solução**:
+
+- Número de parâmetros não corresponde ao template
+- Templates têm 3 parâmetros: {{1}} (nome), {{2}} (data), {{3}} (clínica)
+- Verifique se todos estão sendo enviados corretamente
+
+### 🔴 Outros Erros Comuns
 
 ### Problema: "Configurações do WhatsApp não encontradas"
 

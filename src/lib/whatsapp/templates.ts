@@ -2,8 +2,9 @@
  * Templates de mensagens WhatsApp para ativação e renovação de pacientes
  */
 
-import dayjs from "dayjs";
 import "dayjs/locale/pt-br";
+
+import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 
@@ -20,11 +21,21 @@ interface MessageTemplateParams {
 
 /**
  * Formata a data de expiração no formato brasileiro
+ * Retorna fallback se data for inválida
  */
-function formatExpirationDate(date: Date): string {
-  return dayjs(date)
-    .tz("America/Sao_Paulo")
-    .format("DD/MM/YYYY");
+function formatExpirationDate(date: Date | null | undefined): string {
+  if (!date) {
+    return "Data não informada";
+  }
+
+  const formatted = dayjs(date).tz("America/Sao_Paulo").format("DD/MM/YYYY");
+
+  // Verificar se a data é válida
+  if (!dayjs(date).isValid()) {
+    return "Data não informada";
+  }
+
+  return formatted;
 }
 
 /**
@@ -38,15 +49,15 @@ export function getActivationMessageTemplate({
   const formattedDate = formatExpirationDate(expirationDate);
   const firstName = patientName.split(" ")[0];
 
-  return `🎉 Olá ${firstName}!
+  return `Olá ${firstName}.
 
-Seu convênio Mais Saúde foi ativado com sucesso! ✅
+Seu convênio Mais Saúde foi ativado com sucesso.
 
-📅 *Validade até:* ${formattedDate}${clinicName ? `\n🏥 *Unidade:* ${clinicName}` : ""}
+Validade até: ${formattedDate}
 
-Bem-vindo(a) à família Mais Saúde! Agora você tem acesso a uma rede completa de serviços de saúde.
+Unidade: ${clinicName || "Mais Saúde"}
 
-Qualquer dúvida, estamos à disposição! 💚`;
+Qualquer dúvida, estamos à disposição.`;
 }
 
 /**
@@ -60,15 +71,15 @@ export function getRenewalMessageTemplate({
   const formattedDate = formatExpirationDate(expirationDate);
   const firstName = patientName.split(" ")[0];
 
-  return `✅ Olá ${firstName}!
+  return `Olá ${firstName}.
 
-Seu convênio Mais Saúde foi renovado! 🔄
+Seu convênio Mais Saúde foi renovado com sucesso.
 
-📅 *Nova validade até:* ${formattedDate}${clinicName ? `\n🏥 *Unidade:* ${clinicName}` : ""}
+*Nova validade até:* ${formattedDate}
 
-Obrigado por continuar conosco! Sua saúde é nossa prioridade.
+*Unidade:* ${clinicName || "Mais Saúde"}
 
-Qualquer dúvida, estamos à disposição! 💚`;
+Esta é uma confirmação automática do sistema.`;
 }
 
 /**
@@ -82,15 +93,17 @@ export function getEarlyRenewalMessageTemplate({
   const formattedDate = formatExpirationDate(expirationDate);
   const firstName = patientName.split(" ")[0];
 
-  return `✅ Olá ${firstName}!
+  return `Olá ${firstName}.
 
-Seu convênio Mais Saúde foi renovado antecipadamente! 🔄⚡
+Seu convênio Mais Saúde foi renovado antecipadamente.
 
-📅 *Nova validade até:* ${formattedDate}${clinicName ? `\n🏥 *Unidade:* ${clinicName}` : ""}
+*Nova validade até:* ${formattedDate}
+
+*Unidade:* ${clinicName || "Mais Saúde"}
 
 Obrigado pela renovação antecipada! Seu tempo adicional foi preservado.
 
-Qualquer dúvida, estamos à disposição! 💚`;
+Esta é uma confirmação automática do sistema.`;
 }
 
 /**
@@ -112,3 +125,49 @@ export function getMessageTemplate(
   }
 }
 
+/**
+ * Estrutura para usar templates aprovados do WhatsApp Business API
+ */
+interface TemplateConfig {
+  name: string;
+  parameters: string[];
+}
+
+/**
+ * Retorna configuração do template para WhatsApp Business API
+ * Templates devem estar pré-aprovados no Meta Business Manager
+ */
+export function getTemplateConfig(
+  type: "activation" | "renewal" | "early_renewal",
+  params: MessageTemplateParams,
+): TemplateConfig {
+  const formattedDate = formatExpirationDate(params.expirationDate);
+  const firstName = params.patientName.split(" ")[0]?.trim() || "Cliente";
+  const clinicName = params.clinicName?.trim() || "Mais Saúde";
+
+  switch (type) {
+    case "activation":
+      return {
+        name: "convenio_ativado",
+        parameters: [firstName, formattedDate, clinicName],
+      };
+
+    case "early_renewal":
+      return {
+        name: "convenio_renovado_antecipado",
+        parameters: [firstName, formattedDate, clinicName],
+      };
+
+    case "renewal":
+      return {
+        name: "convenio_renovado",
+        parameters: [firstName, formattedDate, clinicName],
+      };
+
+    default:
+      return {
+        name: "convenio_renovado",
+        parameters: [firstName, formattedDate, clinicName],
+      };
+  }
+}
