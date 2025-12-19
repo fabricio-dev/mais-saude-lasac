@@ -16,7 +16,10 @@ import {
 } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
-import { sendWhatsAppTemplateAsync } from "@/lib/whatsapp/client";
+import {
+  sendWhatsAppTemplateAsync,
+  sendWhatsAppTemplateWithDocumentAsync,
+} from "@/lib/whatsapp/client";
 import { getTemplateConfig } from "@/lib/whatsapp/templates";
 
 import { activatePatientSchema } from "./schema";
@@ -198,6 +201,29 @@ export const activatePatient = actionClient
       // Log do erro mas não propaga (não deve falhar a ativação)
       console.error(
         `Erro ao enviar WhatsApp template para paciente ${patient.id}:`,
+        error,
+      );
+    });
+
+    // Enviar PDF com lista de parceiros após 3 segundos
+    // Envia em todos os casos: ativação, renovação e renovação antecipada
+    // Usar a URL base da aplicação para construir a URL pública do PDF
+    const appUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      process.env.BETTER_AUTH_URL ||
+      "https://seu-dominio.com";
+    const pdfUrl = `${appUrl}/docs/LISTA%20DE%20M%C3%89DICOS%20E%20BENEF%C3%8DCIOS%20LASAC.pdf`;
+
+    sendWhatsAppTemplateWithDocumentAsync(
+      {
+        phoneNumber: patient.phoneNumber,
+        templateName: "lista_de_parceiros",
+        documentUrl: pdfUrl,
+      },
+      3000, // 3 segundos de delay
+    ).catch((error) => {
+      console.error(
+        `Erro ao enviar PDF de parceiros para paciente ${patient.id}:`,
         error,
       );
     });

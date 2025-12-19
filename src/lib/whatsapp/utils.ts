@@ -51,8 +51,8 @@ export function maskPhoneNumber(phoneNumber: string): string {
   // Pegar últimos 4 dígitos
   const lastFour = cleaned.slice(-4);
   // Pegar DDD (assumindo formato brasileiro)
-  const ddd = cleaned.length >= 11 ? cleaned.slice(-11, -9) : cleaned.slice(0, 2);
+  const ddd =
+    cleaned.length >= 11 ? cleaned.slice(-11, -9) : cleaned.slice(0, 2);
 
   return `(${ddd}) 9****-${lastFour}`;
 }
-
