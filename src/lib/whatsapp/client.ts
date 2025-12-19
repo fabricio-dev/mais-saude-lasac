@@ -66,6 +66,13 @@ interface SendTemplateParams {
   maxRetries?: number;
 }
 
+interface SendTemplateWithDocumentParams {
+  phoneNumber: string;
+  templateName: string;
+  documentUrl: string;
+  maxRetries?: number;
+}
+
 interface SendMessageResult {
   success: boolean;
   messageId?: string;
@@ -376,6 +383,180 @@ export function sendWhatsAppMessageAsync(
   // Executar em background sem bloquear
   return sendWhatsAppMessage(params).catch((error) => {
     console.error("Erro crítico ao enviar WhatsApp:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Erro desconhecido",
+    };
+  });
+}
+
+/**
+ * Envia um template com documento (PDF) via WhatsApp Business API
+ * Usado para enviar lista de parceiros após ativação
+ */
+export async function sendWhatsAppTemplateWithDocument({
+  phoneNumber,
+  templateName,
+  documentUrl,
+  maxRetries = 2,
+}: SendTemplateWithDocumentParams): Promise<SendMessageResult> {
+  // Verificar se WhatsApp está habilitado
+  if (process.env.WHATSAPP_ENABLED !== "true") {
+    console.log(
+      "WhatsApp desabilitado. Documento não enviado para:",
+      phoneNumber,
+    );
+    return {
+      success: false,
+      error: "WhatsApp está desabilitado no ambiente",
+    };
+  }
+
+  // Validar configurações
+  const apiUrl = process.env.WHATSAPP_API_URL;
+  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+
+  if (!apiUrl || !accessToken || !phoneNumberId) {
+    console.error("Configurações do WhatsApp incompletas");
+    return {
+      success: false,
+      error: "Configurações do WhatsApp não encontradas",
+    };
+  }
+
+  // Formatar número de telefone
+  const formattedPhone = phoneNumber.replace(/\D/g, "");
+
+  if (!formattedPhone || formattedPhone.length < 10) {
+    console.error("Número de telefone inválido:", phoneNumber);
+    return {
+      success: false,
+      error: "Número de telefone inválido",
+    };
+  }
+
+  // Preparar template com documento
+  const payload = {
+    messaging_product: "whatsapp",
+    to: formattedPhone,
+    type: "template",
+    template: {
+      name: templateName,
+      language: {
+        code: "pt_BR",
+      },
+      components: [
+        {
+          type: "header",
+          parameters: [
+            {
+              type: "document",
+              document: {
+                link: documentUrl,
+                filename: "Lista de Parceiros - Mais Saúde.pdf",
+              },
+            },
+          ],
+        },
+      ],
+    },
+  };
+
+  // Tentar enviar com retries
+  let lastError: string | undefined;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(
+        `Tentativa ${attempt}/${maxRetries} - Enviando documento WhatsApp "${templateName}" para ${formattedPhone}`,
+      );
+
+      const response = await fetch(`${apiUrl}/${phoneNumberId}/messages`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = (await response.json()) as WhatsAppError;
+        lastError =
+          errorData.error?.message ||
+          `Erro HTTP ${response.status}: ${response.statusText}`;
+        console.error(
+          `Erro ao enviar documento WhatsApp (tentativa ${attempt}):`,
+          lastError,
+        );
+
+        // Se for erro de parâmetro inválido ou template não encontrado, não tentar novamente
+        if (
+          errorData.error?.code === 100 ||
+          errorData.error?.code === 131026 ||
+          errorData.error?.code === 132000
+        ) {
+          return {
+            success: false,
+            error: lastError,
+          };
+        }
+
+        // Esperar antes de tentar novamente
+        if (attempt < maxRetries) {
+          await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
+        }
+        continue;
+      }
+
+      const data = (await response.json()) as WhatsAppResponse;
+      const messageId = data.messages?.[0]?.id;
+
+      console.log(
+        `✅ Documento WhatsApp "${templateName}" enviado com sucesso para ${formattedPhone} - ID: ${messageId}`,
+      );
+
+      return {
+        success: true,
+        messageId,
+      };
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : "Erro desconhecido";
+      console.error(
+        `Erro ao enviar documento WhatsApp (tentativa ${attempt}):`,
+        lastError,
+      );
+
+      // Esperar antes de tentar novamente
+      if (attempt < maxRetries) {
+        await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
+      }
+    }
+  }
+
+  return {
+    success: false,
+    error: lastError || "Falha ao enviar documento após todas as tentativas",
+  };
+}
+
+/**
+ * Envia um template com documento de forma assíncrona
+ * Com delay opcional antes do envio
+ */
+export async function sendWhatsAppTemplateWithDocumentAsync(
+  params: SendTemplateWithDocumentParams,
+  delayMs = 0,
+): Promise<SendMessageResult> {
+  // Aguardar delay se especificado
+  if (delayMs > 0) {
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+  }
+
+  // Executar em background sem bloquear
+  return sendWhatsAppTemplateWithDocument(params).catch((error) => {
+    console.error("Erro crítico ao enviar documento WhatsApp:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Erro desconhecido",
