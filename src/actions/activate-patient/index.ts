@@ -213,7 +213,7 @@ export const activatePatient = actionClient
           templateName: "lista_de_parceiros",
           documentUrl: pdfUrl,
         },
-        3000, // 3 segundos de delay
+        500, // 500ms de delay
       ),
     ]).catch((error) => {
       console.error(
