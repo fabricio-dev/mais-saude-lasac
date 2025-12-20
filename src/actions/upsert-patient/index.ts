@@ -145,7 +145,7 @@ export const upsertPatient = actionClient
       const appUrl =
         process.env.NEXT_PUBLIC_APP_URL ||
         process.env.BETTER_AUTH_URL ||
-        "https://seu-dominio.com";
+        "https://maissaudelasac.com.br";
       const pdfUrl = `${appUrl}/docs/LISTA%20DE%20M%C3%89DICOS%20E%20BENEF%C3%8DCIOS%20LASAC.pdf`;
 
       // Enviar ambos os WhatsApp em paralelo (aguarda completar para evitar problemas na Vercel)
@@ -163,7 +163,7 @@ export const upsertPatient = actionClient
             templateName: "lista_de_parceiros",
             documentUrl: pdfUrl,
           },
-          3000, // 3 segundos de delay
+          500, // 500ms de delay
         ),
       ]).catch((error) => {
         console.error(
