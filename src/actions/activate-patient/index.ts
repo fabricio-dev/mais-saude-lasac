@@ -191,39 +191,33 @@ export const activatePatient = actionClient
       clinicName,
     });
 
-    // Enviar WhatsApp usando template pré-aprovado (não bloqueia o processo)
-    // Se falhar, será logado mas não impedirá a ativação
-    sendWhatsAppTemplateAsync({
-      phoneNumber: patient.phoneNumber,
-      templateName: templateConfig.name,
-      parameters: templateConfig.parameters,
-    }).catch((error) => {
-      // Log do erro mas não propaga (não deve falhar a ativação)
-      console.error(
-        `Erro ao enviar WhatsApp template para paciente ${patient.id}:`,
-        error,
-      );
-    });
-
-    // Enviar PDF com lista de parceiros após 3 segundos
-    // Envia em todos os casos: ativação, renovação e renovação antecipada
-    // Usar a URL base da aplicação para construir a URL pública do PDF
+    // Preparar URL do PDF
     const appUrl =
       process.env.NEXT_PUBLIC_APP_URL ||
       process.env.BETTER_AUTH_URL ||
       "https://seu-dominio.com";
     const pdfUrl = `${appUrl}/docs/LISTA%20DE%20M%C3%89DICOS%20E%20BENEF%C3%8DCIOS%20LASAC.pdf`;
 
-    sendWhatsAppTemplateWithDocumentAsync(
-      {
+    // Enviar ambos os WhatsApp em paralelo (aguarda completar para evitar problemas na Vercel)
+    await Promise.allSettled([
+      // 1. Enviar template de confirmação
+      sendWhatsAppTemplateAsync({
         phoneNumber: patient.phoneNumber,
-        templateName: "lista_de_parceiros",
-        documentUrl: pdfUrl,
-      },
-      3000, // 3 segundos de delay
-    ).catch((error) => {
+        templateName: templateConfig.name,
+        parameters: templateConfig.parameters,
+      }),
+      // 2. Enviar PDF após 3 segundos
+      sendWhatsAppTemplateWithDocumentAsync(
+        {
+          phoneNumber: patient.phoneNumber,
+          templateName: "lista_de_parceiros",
+          documentUrl: pdfUrl,
+        },
+        3000, // 3 segundos de delay
+      ),
+    ]).catch((error) => {
       console.error(
-        `Erro ao enviar PDF de parceiros para paciente ${patient.id}:`,
+        `Erro ao enviar mensagens WhatsApp para paciente ${patient.id}:`,
         error,
       );
     });

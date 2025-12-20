@@ -141,37 +141,33 @@ export const upsertPatient = actionClient
         clinicName,
       });
 
-      // Enviar WhatsApp usando template pré-aprovado (não bloqueia o processo)
-      sendWhatsAppTemplateAsync({
-        phoneNumber: parsedInput.phoneNumber,
-        templateName: templateConfig.name,
-        parameters: templateConfig.parameters,
-      }).catch((error) => {
-        // Log do erro mas não propaga (não deve falhar a criação)
-        console.error(
-          `Erro ao enviar WhatsApp template para novo paciente ${parsedInput.name}:`,
-          error,
-        );
-      });
-
-      // Enviar PDF com lista de parceiros após 3 segundos (primeira ativação)
-      // Usar a URL base da aplicação para construir a URL pública do PDF
+      // Preparar URL do PDF
       const appUrl =
         process.env.NEXT_PUBLIC_APP_URL ||
         process.env.BETTER_AUTH_URL ||
         "https://seu-dominio.com";
       const pdfUrl = `${appUrl}/docs/LISTA%20DE%20M%C3%89DICOS%20E%20BENEF%C3%8DCIOS%20LASAC.pdf`;
 
-      sendWhatsAppTemplateWithDocumentAsync(
-        {
+      // Enviar ambos os WhatsApp em paralelo (aguarda completar para evitar problemas na Vercel)
+      await Promise.allSettled([
+        // 1. Enviar template de confirmação
+        sendWhatsAppTemplateAsync({
           phoneNumber: parsedInput.phoneNumber,
-          templateName: "lista_de_parceiros",
-          documentUrl: pdfUrl,
-        },
-        3000, // 3 segundos de delay
-      ).catch((error) => {
+          templateName: templateConfig.name,
+          parameters: templateConfig.parameters,
+        }),
+        // 2. Enviar PDF após 3 segundos
+        sendWhatsAppTemplateWithDocumentAsync(
+          {
+            phoneNumber: parsedInput.phoneNumber,
+            templateName: "lista_de_parceiros",
+            documentUrl: pdfUrl,
+          },
+          3000, // 3 segundos de delay
+        ),
+      ]).catch((error) => {
         console.error(
-          `Erro ao enviar PDF de parceiros para novo paciente ${parsedInput.name}:`,
+          `Erro ao enviar mensagens WhatsApp para novo paciente ${parsedInput.name}:`,
           error,
         );
       });
