@@ -207,6 +207,7 @@ const createFormSchema = (patient?: typeof patientsTable.$inferSelect) =>
       dependents5: z.string().optional(),
       dependents6: z.string().optional(),
       contractDate: z.string().optional(), // Data do contrato (pode ir para activeAt ou reactivatedAt)
+      whatsappConsent: z.boolean(),
     })
     .superRefine((data, ctx) => {
       if (
@@ -323,6 +324,7 @@ const UpsertPatientForm = ({
         : patient?.activeAt
           ? dayjs(patient.activeAt).format("YYYY-MM-DD")
           : "",
+      whatsappConsent: patient?.whatsappConsent ?? true,
     },
   });
 
@@ -362,6 +364,7 @@ const UpsertPatientForm = ({
           : patient?.activeAt
             ? dayjs(patient.activeAt).format("YYYY-MM-DD")
             : "",
+        whatsappConsent: patient?.whatsappConsent ?? true,
       });
     }
     const loadData = async () => {
@@ -567,7 +570,35 @@ const UpsertPatientForm = ({
                 </FormItem>
               )}
             />
+          </div>
 
+          <div className="col-span-1 md:col-span-2">
+            <FormField
+              control={form.control}
+              name="whatsappConsent"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-y-0 space-x-3">
+                  <FormControl>
+                    <input
+                      type="checkbox"
+                      checked={field.value}
+                      onChange={field.onChange}
+                      className="mt-0.5 h-4 w-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500"
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel className="text-sm font-normal text-amber-950">
+                      Autorização para recebimento de avisos, lembretes e
+                      comunicações sobre o meu cartão LASAC por WhatsApp.
+                    </FormLabel>
+                    <FormMessage />
+                  </div>
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 gap-1 md:grid-cols-2">
             <FormField
               control={form.control}
               name="rgNumber"

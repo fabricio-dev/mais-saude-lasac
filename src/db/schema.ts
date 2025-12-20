@@ -132,6 +132,7 @@ export const patientsTable = pgTable("patients", {
   isActive: boolean("is_active").notNull().default(true),
   activeAt: timestamp("active_at"),
   reactivatedAt: timestamp("reactivated_at"),
+  whatsappConsent: boolean("whatsapp_consent").notNull().default(true),
 });
 
 /* 
