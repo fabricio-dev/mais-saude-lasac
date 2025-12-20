@@ -69,6 +69,7 @@ interface Patient {
   isActive: boolean;
   reactivatedAt: Date | null;
   activeAt: Date | null;
+  whatsappConsent: boolean;
 }
 
 interface TableActionsProps {

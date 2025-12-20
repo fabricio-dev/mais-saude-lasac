@@ -76,6 +76,7 @@ export const createPatientSchema = z
     acceptTerms: z.boolean().refine((value) => value === true, {
       message: "Você deve aceitar os termos de uso e política de privacidade",
     }),
+    whatsappConsent: z.boolean(),
   })
   .superRefine((data, ctx) => {
     if (

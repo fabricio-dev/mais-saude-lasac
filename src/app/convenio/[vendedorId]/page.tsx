@@ -196,6 +196,7 @@ export default function ConvenioVendedorPage() {
       dependents5: "",
       dependents6: "",
       acceptTerms: false,
+      whatsappConsent: true,
     },
   });
 
@@ -810,8 +811,32 @@ export default function ConvenioVendedorPage() {
                   {/* Observações */}
                   {/* <div></div> */}
 
-                  {/* Termos de Uso */}
+                  {/* Termos de Uso  e consentimento WhatsApp*/}
                   <div className="pt-4">
+                    <FormField
+                      control={form.control}
+                      name="whatsappConsent"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-y-0 space-x-3">
+                          <FormControl>
+                            <input
+                              type="checkbox"
+                              checked={field.value}
+                              onChange={field.onChange}
+                              className="mt-2 mb-2 h-4 w-4 rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500"
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel className="mt-2 mb-2 text-sm font-normal text-emerald-950">
+                              Autorizo o recebimento de mensagens via WhatsApp
+                              relacionadas a avisos, lembretes e comunicações
+                              sobre o meu cartão LASAC.
+                            </FormLabel>
+                            <FormMessage />
+                          </div>
+                        </FormItem>
+                      )}
+                    />
                     <FormField
                       control={form.control}
                       name="acceptTerms"

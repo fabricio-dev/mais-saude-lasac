@@ -159,6 +159,7 @@ export function ConvenioForm() {
       dependents5: "",
       dependents6: "",
       acceptTerms: false,
+      whatsappConsent: true,
     },
   });
 
@@ -755,17 +756,18 @@ export function ConvenioForm() {
               </div>
 
               {/* Termos e Condições */}
+
               <div>
                 <h3 className="mb-4 text-lg font-semibold text-emerald-900">
                   Termos e Condições
                 </h3>
+
                 <div className="space-y-4">
                   <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
                     <p className="mb-3 text-sm text-emerald-800">
                       Para prosseguir com sua solicitação de convênio, é
                       necessário aceitar nossos termos de uso e política de
-                      privacidade. <br /> Ao aceitar, você concorda em receber
-                      mensagens sobre atualizações do convênio por WhatsApp.
+                      privacidade.
                     </p>
                     <div className="mb-3">
                       <ContratoDialog
@@ -789,7 +791,30 @@ export function ConvenioForm() {
                         }
                       />
                     </div>
-
+                    <FormField
+                      control={form.control}
+                      name="whatsappConsent"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-y-0 space-x-3">
+                          <FormControl>
+                            <input
+                              type="checkbox"
+                              checked={field.value}
+                              onChange={field.onChange}
+                              className="mt-2 h-4 w-4 rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500"
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel className="mt-2 mb-2 text-sm font-medium text-emerald-950">
+                              Autorizo o recebimento de mensagens via WhatsApp
+                              sobre avisos, lembretes e comunicações sobre o meu
+                              cartão LASAC.
+                            </FormLabel>
+                            <FormMessage />
+                          </div>
+                        </FormItem>
+                      )}
+                    />
                     <FormField
                       control={form.control}
                       name="acceptTerms"

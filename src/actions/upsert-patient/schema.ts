@@ -78,6 +78,7 @@ export const upsertPatientSchema = z
     dependents5: z.string().optional(),
     dependents6: z.string().optional(),
     contractDate: z.string().optional(), // Data do contrato (pode ir para activeAt ou reactivatedAt)
+    whatsappConsent: z.boolean(),
   })
   .superRefine(async (data, ctx) => {
     // Validar data de vencimento apenas para novos pacientes

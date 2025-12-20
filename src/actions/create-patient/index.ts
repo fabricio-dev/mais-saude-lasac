@@ -33,6 +33,7 @@ export const createPatient = actionClient
       dependents4,
       dependents5,
       dependents6,
+      whatsappConsent,
     } = parsedInput;
 
     // Verificar se CPF já existe (apenas se CPF foi fornecido)
@@ -75,6 +76,7 @@ export const createPatient = actionClient
       dependents4: dependents4 || null,
       dependents5: dependents5 || null,
       dependents6: dependents6 || null,
+      whatsappConsent: whatsappConsent ?? false,
       isActive: false, // Inativo até ser processado
       expirationDate: dayjs()
         .subtract(1, "day")
