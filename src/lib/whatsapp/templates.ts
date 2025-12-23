@@ -8,6 +8,8 @@ import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 
+import { formatPhoneNumber } from "./utils";
+
 // Configurar dayjs
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -138,12 +140,24 @@ interface TemplateConfig {
  * Templates devem estar pré-aprovados no Meta Business Manager
  */
 export function getTemplateConfig(
-  type: "activation" | "renewal" | "early_renewal",
+  type:
+    | "activation"
+    | "renewal"
+    | "early_renewal"
+    | "renewal_reminder_d7"
+    | "renewal_reminder_d0"
+    | "renewal_reminder_d30",
   params: MessageTemplateParams,
 ): TemplateConfig {
   const formattedDate = formatExpirationDate(params.expirationDate);
   const firstName = params.patientName.split(" ")[0]?.trim() || "Cliente";
   const clinicName = params.clinicName?.trim() || "Mais Saúde";
+
+  // Número oficial do WhatsApp (busca do .env para facilitar mudanças)
+  // Remove formatação para usar em links wa.me/
+  const officialWhatsAppRaw =
+    process.env.WHATSAPP_OFFICIAL_NUMBER || "5511912345678";
+  const officialWhatsApp = formatPhoneNumber(officialWhatsAppRaw);
 
   switch (type) {
     case "activation":
@@ -162,6 +176,36 @@ export function getTemplateConfig(
       return {
         name: "convenio_renovado",
         parameters: [firstName, formattedDate, clinicName],
+      };
+
+    // Templates para lembretes de renovação (Marketing)
+    case "renewal_reminder_d7":
+      // Lembrete 7 dias antes do vencimento
+      // Template: "Olá, {{1}}. Este é um lembrete importante: seu cartão LASAC vence em {{2}}."
+      // Parâmetros: nome, data, número WhatsApp (wa.me/{{3}})
+      return {
+        name: "lembrete_vencimento_7_dias",
+        parameters: [firstName, formattedDate, officialWhatsApp],
+      };
+
+    case "renewal_reminder_d0":
+      // Lembrete no dia do vencimento
+      // Template: "Olá, {{1}}. Informamos que, na data de hoje, ocorre o vencimento do seu cartão LASAC."
+      // Parâmetros: nome, número WhatsApp (wa.me/{{2}})
+      // IMPORTANTE: Este template NÃO usa data, apenas nome e número!
+      return {
+        name: "lembrete_vencimento_hoje",
+        parameters: [firstName, officialWhatsApp],
+      };
+
+    case "renewal_reminder_d30":
+      // Lembrete 30 dias após vencimento
+      // Template: "Olá, {{1}}. Identificamos que o seu cartão LASAC encontra-se vencido há mais de 30 dias."
+      // Parâmetros: nome, número WhatsApp (wa.me/{{2}})
+      // IMPORTANTE: Este template NÃO usa data, apenas nome e número!
+      return {
+        name: "lembrete_vencimento_30_dias",
+        parameters: [firstName, officialWhatsApp],
       };
 
     default:

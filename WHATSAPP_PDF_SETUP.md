@@ -237,3 +237,7 @@ Se continuar com problemas:
 3. Verificar status do template no Meta Business Manager
 4. Consultar documentação: https://developers.facebook.com/docs/whatsapp/cloud-api/guides/send-messages#media-messages
 
+
+
+
+

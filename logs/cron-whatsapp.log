@@ -1,0 +1,699 @@
+========================================
+Executando cron em: Mon Dec 22 14:26:34     2025
+========================================
+Need to install the following packages:
+tsx@4.21.0
+Ok to proceed? (y) 
+
+
+╔════════════════════════════════════════════════════════╗
+║     CRON: Lembretes de Renovação via WhatsApp         ║
+╚════════════════════════════════════════════════════════╝
+Executado em: 22/12/2025 14:26:44 (SP)
+Timezone: America/Sao_Paulo (UTC-3)
+⚠️  Datas no banco estão em UTC, convertendo automaticamente
+
+========================================
+[RENEWAL_D_7] Iniciando processamento
+========================================
+
+[D-7] Buscando pacientes com expirationDate entre 29/12/2025 00:00 (UTC: 2025-12-29 00:00)
+[RENEWAL_D_7] Nenhum paciente elegível encontrado
+
+========================================
+[RENEWAL_D_0] Iniciando processamento
+========================================
+
+[D0] Buscando pacientes com expirationDate = 22/12/2025 (UTC: 2025-12-22 00:00)
+[RENEWAL_D_0] Nenhum paciente elegível encontrado
+
+========================================
+[RENEWAL_D_30] Iniciando processamento
+========================================
+
+[D+30] Buscando pacientes com expirationDate = 22/11/2025 (UTC: 2025-11-22 00:00)
+[RENEWAL_D_30] Nenhum paciente elegível encontrado
+
+
+╔════════════════════════════════════════════════════════╗
+║            CRON FINALIZADO COM SUCESSO                ║
+╚════════════════════════════════════════════════════════╝
+Tempo total: 0.63s
+
+
+✅ Cron executado com sucesso
+Código de saída: 0
+
+========================================
+Executando cron em: Mon Dec 22 14:27:54     2025
+========================================
+
+
+╔════════════════════════════════════════════════════════╗
+║     CRON: Lembretes de Renovação via WhatsApp         ║
+╚════════════════════════════════════════════════════════╝
+Executado em: 22/12/2025 14:27:56 (SP)
+Timezone: America/Sao_Paulo (UTC-3)
+⚠️  Datas no banco estão em UTC, convertendo automaticamente
+
+========================================
+[RENEWAL_D_7] Iniciando processamento
+========================================
+
+[D-7] Buscando pacientes com expirationDate entre 29/12/2025 00:00 (UTC: 2025-12-29 00:00)
+[RENEWAL_D_7] Nenhum paciente elegível encontrado
+
+========================================
+[RENEWAL_D_0] Iniciando processamento
+========================================
+
+[D0] Buscando pacientes com expirationDate = 22/12/2025 (UTC: 2025-12-22 00:00)
+[RENEWAL_D_0] Nenhum paciente elegível encontrado
+
+========================================
+[RENEWAL_D_30] Iniciando processamento
+========================================
+
+[D+30] Buscando pacientes com expirationDate = 22/11/2025 (UTC: 2025-11-22 00:00)
+[RENEWAL_D_30] Nenhum paciente elegível encontrado
+
+
+╔════════════════════════════════════════════════════════╗
+║            CRON FINALIZADO COM SUCESSO                ║
+╚════════════════════════════════════════════════════════╝
+Tempo total: 0.61s
+
+
+✅ Cron executado com sucesso
+Código de saída: 0
+
+========================================
+Executando cron em: Mon Dec 22 14:28:16     2025
+========================================
+
+
+╔════════════════════════════════════════════════════════╗
+║     CRON: Lembretes de Renovação via WhatsApp         ║
+╚════════════════════════════════════════════════════════╝
+Executado em: 22/12/2025 14:28:18 (SP)
+Timezone: America/Sao_Paulo (UTC-3)
+⚠️  Datas no banco estão em UTC, convertendo automaticamente
+
+========================================
+[RENEWAL_D_7] Iniciando processamento
+========================================
+
+[D-7] Buscando pacientes com expirationDate entre 29/12/2025 00:00 (UTC: 2025-12-29 00:00)
+[RENEWAL_D_7] Nenhum paciente elegível encontrado
+
+========================================
+[RENEWAL_D_0] Iniciando processamento
+========================================
+
+[D0] Buscando pacientes com expirationDate = 22/12/2025 (UTC: 2025-12-22 00:00)
+[RENEWAL_D_0] Nenhum paciente elegível encontrado
+
+========================================
+[RENEWAL_D_30] Iniciando processamento
+========================================
+
+[D+30] Buscando pacientes com expirationDate = 22/11/2025 (UTC: 2025-11-22 00:00)
+[RENEWAL_D_30] Nenhum paciente elegível encontrado
+
+
+╔════════════════════════════════════════════════════════╗
+║            CRON FINALIZADO COM SUCESSO                ║
+╚════════════════════════════════════════════════════════╝
+Tempo total: 0.63s
+
+
+✅ Cron executado com sucesso
+Código de saída: 0
+
+========================================
+Executando cron em: Mon, Dec 22, 2025  2:31:10 PM
+========================================
+
+
+╔════════════════════════════════════════════════════════╗
+║     CRON: Lembretes de Renovação via WhatsApp         ║
+╚════════════════════════════════════════════════════════╝
+Executado em: 22/12/2025 14:31:12 (SP)
+Timezone: America/Sao_Paulo (UTC-3)
+⚠️  Datas no banco estão em UTC, convertendo automaticamente
+
+========================================
+[RENEWAL_D_7] Iniciando processamento
+========================================
+
+[D-7] Buscando pacientes com expirationDate entre 29/12/2025 00:00 (UTC: 2025-12-29 00:00)
+[RENEWAL_D_7] Nenhum paciente elegível encontrado
+
+========================================
+[RENEWAL_D_0] Iniciando processamento
+========================================
+
+[D0] Buscando pacientes com expirationDate = 22/12/2025 (UTC: 2025-12-22 00:00)
+[RENEWAL_D_0] Nenhum paciente elegível encontrado
+
+========================================
+[RENEWAL_D_30] Iniciando processamento
+========================================
+
+[D+30] Buscando pacientes com expirationDate = 22/11/2025 (UTC: 2025-11-22 00:00)
+[RENEWAL_D_30] Nenhum paciente elegível encontrado
+
+
+╔════════════════════════════════════════════════════════╗
+║            CRON FINALIZADO COM SUCESSO                ║
+╚════════════════════════════════════════════════════════╝
+Tempo total: 0.63s
+
+
+✅ Cron executado com sucesso
+Código de saída: 0
+
+========================================
+Executando cron em: Mon, Dec 22, 2025  2:32:17 PM
+========================================
+
+
+╔════════════════════════════════════════════════════════╗
+║     CRON: Lembretes de Renovação via WhatsApp         ║
+╚════════════════════════════════════════════════════════╝
+Executado em: 22/12/2025 14:32:19 (SP)
+Timezone: America/Sao_Paulo (UTC-3)
+⚠️  Datas no banco estão em UTC, convertendo automaticamente
+
+========================================
+[RENEWAL_D_7] Iniciando processamento
+========================================
+
+[D-7] Buscando pacientes com expirationDate entre 29/12/2025 00:00 (UTC: 2025-12-29 00:00)
+[RENEWAL_D_7] 1 pacientes elegíveis encontrados
+[DEV] Redirecionando envio de (87) 9****-2728 para (87) 9****-2728
+[RENEWAL_D_7] Enviando lembrete para Fabrício Ferreira ((87) 9****-2728)
+Tentativa 1/2 - Enviando template WhatsApp "lembrete_vencimento_7_dias" para 5587991372728
+✅ Template WhatsApp "lembrete_vencimento_7_dias" enviado com sucesso para 5587991372728 - ID: wamid.HBgMNTU4NzkxMzcyNzI4FQIAERgSQTFEMjcyNTZENTYzM0ZFODJGAA==
+
+[RENEWAL_D_7] ===== RESUMO =====
+[RENEWAL_D_7] Total processados: 1
+[RENEWAL_D_7] ✅ Sucesso: 1
+[RENEWAL_D_7] ❌ Falhas: 0
+
+========================================
+[RENEWAL_D_0] Iniciando processamento
+========================================
+
+[D0] Buscando pacientes com expirationDate = 22/12/2025 (UTC: 2025-12-22 00:00)
+[RENEWAL_D_0] 1 pacientes elegíveis encontrados
+[DEV] Redirecionando envio de (87) 9****-2728 para (87) 9****-2728
+[RENEWAL_D_0] Enviando lembrete para fabricio por link ((87) 9****-2728)
+Tentativa 1/2 - Enviando template WhatsApp "lembrete_vencimento_hoje" para 5587991372728
+Erro ao enviar template WhatsApp (tentativa 1): (#132001) Template name does not exist in the translation
+Tentativa 2/2 - Enviando template WhatsApp "lembrete_vencimento_hoje" para 5587991372728
+Erro ao enviar template WhatsApp (tentativa 2): (#132001) Template name does not exist in the translation
+
+[RENEWAL_D_0] ===== RESUMO =====
+[RENEWAL_D_0] Total processados: 1
+[RENEWAL_D_0] ✅ Sucesso: 0
+[RENEWAL_D_0] ❌ Falhas: 1
+
+[RENEWAL_D_0] Detalhes das falhas:
+  - fabricio por link ((87) 9****-2728): Falha no envio: (#132001) Template name does not exist in the translation
+
+========================================
+[RENEWAL_D_30] Iniciando processamento
+========================================
+
+[D+30] Buscando pacientes com expirationDate = 22/11/2025 (UTC: 2025-11-22 00:00)
+[RENEWAL_D_30] 1 pacientes elegíveis encontrados
+[DEV] Redirecionando envio de (87) 9****-3837 para (87) 9****-2728
+[RENEWAL_D_30] Enviando lembrete para teste eu ((87) 9****-2728)
+Tentativa 1/2 - Enviando template WhatsApp "lembrete_vencimento_30_dias" para 5587991372728
+✅ Template WhatsApp "lembrete_vencimento_30_dias" enviado com sucesso para 5587991372728 - ID: wamid.HBgMNTU4NzkxMzcyNzI4FQIAERgSOTk5MTc0Njc4OUJBRDcxODI4AA==
+
+[RENEWAL_D_30] ===== RESUMO =====
+[RENEWAL_D_30] Total processados: 1
+[RENEWAL_D_30] ✅ Sucesso: 1
+[RENEWAL_D_30] ❌ Falhas: 0
+
+
+╔════════════════════════════════════════════════════════╗
+║            CRON FINALIZADO COM SUCESSO                ║
+╚════════════════════════════════════════════════════════╝
+Tempo total: 6.67s
+
+
+✅ Cron executado com sucesso
+Código de saída: 0
+
+========================================
+Executando cron em: Mon, Dec 22, 2025 11:26:48 PM
+========================================
+
+
+╔════════════════════════════════════════════════════════╗
+║     CRON: Lembretes de Renovação via WhatsApp         ║
+╚════════════════════════════════════════════════════════╝
+Executado em: 22/12/2025 23:26:50 (SP)
+Timezone: America/Sao_Paulo (UTC-3)
+⚠️  Datas no banco estão em UTC, convertendo automaticamente
+
+========================================
+[RENEWAL_D_7] Iniciando processamento
+========================================
+
+[D-7] Buscando pacientes com expirationDate entre 29/12/2025 00:00 (UTC: 2025-12-29 00:00)
+[RENEWAL_D_7] 1 pacientes elegíveis encontrados
+[DEV] Redirecionando envio de (87) 9****-2728 para (87) 9****-2728
+[RENEWAL_D_7] Enviando lembrete para Fabrício Ferreira ((87) 9****-2728)
+Tentativa 1/2 - Enviando template WhatsApp "lembrete_vencimento_7_dias" para 5587991372728
+Erro ao enviar template WhatsApp (tentativa 1): Error validating access token: Session has expired on Monday, 22-Dec-25 11:00:00 PST. The current time is Monday, 22-Dec-25 18:26:51 PST.
+Tentativa 2/2 - Enviando template WhatsApp "lembrete_vencimento_7_dias" para 5587991372728
+Erro ao enviar template WhatsApp (tentativa 2): Error validating access token: Session has expired on Monday, 22-Dec-25 11:00:00 PST. The current time is Monday, 22-Dec-25 18:26:52 PST.
+
+[RENEWAL_D_7] ===== RESUMO =====
+[RENEWAL_D_7] Total processados: 1
+[RENEWAL_D_7] ✅ Sucesso: 0
+[RENEWAL_D_7] ❌ Falhas: 1
+
+[RENEWAL_D_7] Detalhes das falhas:
+  - Fabrício Ferreira ((87) 9****-2728): Falha no envio: Error validating access token: Session has expired on Monday, 22-Dec-25 11:00:00 PST. The current time is Monday, 22-Dec-25 18:26:52 PST.
+
+========================================
+[RENEWAL_D_0] Iniciando processamento
+========================================
+
+[D0] Buscando pacientes com expirationDate = 22/12/2025 (UTC: 2025-12-22 00:00)
+[RENEWAL_D_0] 1 pacientes elegíveis encontrados
+[DEV] Redirecionando envio de (87) 9****-2728 para (87) 9****-2728
+[RENEWAL_D_0] Enviando lembrete para fabricio por link ((87) 9****-2728)
+Tentativa 1/2 - Enviando template WhatsApp "lembrete_vencimento_hoje" para 5587991372728
+Erro ao enviar template WhatsApp (tentativa 1): Error validating access token: Session has expired on Monday, 22-Dec-25 11:00:00 PST. The current time is Monday, 22-Dec-25 18:26:54 PST.
+Tentativa 2/2 - Enviando template WhatsApp "lembrete_vencimento_hoje" para 5587991372728
+Erro ao enviar template WhatsApp (tentativa 2): Error validating access token: Session has expired on Monday, 22-Dec-25 11:00:00 PST. The current time is Monday, 22-Dec-25 18:26:55 PST.
+
+[RENEWAL_D_0] ===== RESUMO =====
+[RENEWAL_D_0] Total processados: 1
+[RENEWAL_D_0] ✅ Sucesso: 0
+[RENEWAL_D_0] ❌ Falhas: 1
+
+[RENEWAL_D_0] Detalhes das falhas:
+  - fabricio por link ((87) 9****-2728): Falha no envio: Error validating access token: Session has expired on Monday, 22-Dec-25 11:00:00 PST. The current time is Monday, 22-Dec-25 18:26:55 PST.
+
+========================================
+[RENEWAL_D_30] Iniciando processamento
+========================================
+
+[D+30] Buscando pacientes com expirationDate = 22/11/2025 (UTC: 2025-11-22 00:00)
+[RENEWAL_D_30] 1 pacientes elegíveis encontrados
+[DEV] Redirecionando envio de (87) 9****-3837 para (87) 9****-2728
+[RENEWAL_D_30] Enviando lembrete para teste eu ((87) 9****-2728)
+Tentativa 1/2 - Enviando template WhatsApp "lembrete_vencimento_30_dias" para 5587991372728
+Erro ao enviar template WhatsApp (tentativa 1): Error validating access token: Session has expired on Monday, 22-Dec-25 11:00:00 PST. The current time is Monday, 22-Dec-25 18:26:56 PST.
+Tentativa 2/2 - Enviando template WhatsApp "lembrete_vencimento_30_dias" para 5587991372728
+Erro ao enviar template WhatsApp (tentativa 2): Error validating access token: Session has expired on Monday, 22-Dec-25 11:00:00 PST. The current time is Monday, 22-Dec-25 18:26:57 PST.
+
+[RENEWAL_D_30] ===== RESUMO =====
+[RENEWAL_D_30] Total processados: 1
+[RENEWAL_D_30] ✅ Sucesso: 0
+[RENEWAL_D_30] ❌ Falhas: 1
+
+[RENEWAL_D_30] Detalhes das falhas:
+  - teste eu ((87) 9****-2728): Falha no envio: Error validating access token: Session has expired on Monday, 22-Dec-25 11:00:00 PST. The current time is Monday, 22-Dec-25 18:26:57 PST.
+
+
+╔════════════════════════════════════════════════════════╗
+║            CRON FINALIZADO COM SUCESSO                ║
+╚════════════════════════════════════════════════════════╝
+Tempo total: 7.98s
+
+
+✅ Cron executado com sucesso
+Código de saída: 0
+
+========================================
+Executando cron em: Mon, Dec 22, 2025 11:27:55 PM
+========================================
+
+
+╔════════════════════════════════════════════════════════╗
+║     CRON: Lembretes de Renovação via WhatsApp         ║
+╚════════════════════════════════════════════════════════╝
+Executado em: 22/12/2025 23:27:57 (SP)
+Timezone: America/Sao_Paulo (UTC-3)
+⚠️  Datas no banco estão em UTC, convertendo automaticamente
+
+========================================
+[RENEWAL_D_7] Iniciando processamento
+========================================
+
+[D-7] Buscando pacientes com expirationDate entre 29/12/2025 00:00 (UTC: 2025-12-29 00:00)
+[RENEWAL_D_7] Nenhum paciente elegível encontrado
+
+========================================
+[RENEWAL_D_0] Iniciando processamento
+========================================
+
+[D0] Buscando pacientes com expirationDate = 22/12/2025 (UTC: 2025-12-22 00:00)
+[RENEWAL_D_0] Nenhum paciente elegível encontrado
+
+========================================
+[RENEWAL_D_30] Iniciando processamento
+========================================
+
+[D+30] Buscando pacientes com expirationDate = 22/11/2025 (UTC: 2025-11-22 00:00)
+[RENEWAL_D_30] Nenhum paciente elegível encontrado
+
+
+╔════════════════════════════════════════════════════════╗
+║            CRON FINALIZADO COM SUCESSO                ║
+╚════════════════════════════════════════════════════════╝
+Tempo total: 0.59s
+
+
+✅ Cron executado com sucesso
+Código de saída: 0
+
+========================================
+Executando cron em: Mon, Dec 22, 2025 11:28:58 PM
+========================================
+
+
+╔════════════════════════════════════════════════════════╗
+║     CRON: Lembretes de Renovação via WhatsApp         ║
+╚════════════════════════════════════════════════════════╝
+Executado em: 22/12/2025 23:29:00 (SP)
+Timezone: America/Sao_Paulo (UTC-3)
+⚠️  Datas no banco estão em UTC, convertendo automaticamente
+
+========================================
+[RENEWAL_D_7] Iniciando processamento
+========================================
+
+[D-7] Buscando pacientes com expirationDate entre 29/12/2025 00:00 (UTC: 2025-12-29 00:00)
+[RENEWAL_D_7] 1 pacientes elegíveis encontrados
+[DEV] Redirecionando envio de (87) 9****-2728 para (87) 9****-2728
+[RENEWAL_D_7] Enviando lembrete para Fabrício Ferreira ((87) 9****-2728)
+Tentativa 1/2 - Enviando template WhatsApp "lembrete_vencimento_7_dias" para 5587991372728
+✅ Template WhatsApp "lembrete_vencimento_7_dias" enviado com sucesso para 5587991372728 - ID: wamid.HBgMNTU4NzkxMzcyNzI4FQIAERgSQUU3MTRGMURGQkVCOTBEMzQxAA==
+
+[RENEWAL_D_7] ===== RESUMO =====
+[RENEWAL_D_7] Total processados: 1
+[RENEWAL_D_7] ✅ Sucesso: 1
+[RENEWAL_D_7] ❌ Falhas: 0
+
+========================================
+[RENEWAL_D_0] Iniciando processamento
+========================================
+
+[D0] Buscando pacientes com expirationDate = 22/12/2025 (UTC: 2025-12-22 00:00)
+[RENEWAL_D_0] 1 pacientes elegíveis encontrados
+[DEV] Redirecionando envio de (87) 9****-2728 para (87) 9****-2728
+[RENEWAL_D_0] Enviando lembrete para fabricio por link ((87) 9****-2728)
+Tentativa 1/2 - Enviando template WhatsApp "lembrete_vencimento_hoje" para 5587991372728
+✅ Template WhatsApp "lembrete_vencimento_hoje" enviado com sucesso para 5587991372728 - ID: wamid.HBgMNTU4NzkxMzcyNzI4FQIAERgSRDk5QjcwRTAyNkJFRDc2Njc3AA==
+
+[RENEWAL_D_0] ===== RESUMO =====
+[RENEWAL_D_0] Total processados: 1
+[RENEWAL_D_0] ✅ Sucesso: 1
+[RENEWAL_D_0] ❌ Falhas: 0
+
+========================================
+[RENEWAL_D_30] Iniciando processamento
+========================================
+
+[D+30] Buscando pacientes com expirationDate = 22/11/2025 (UTC: 2025-11-22 00:00)
+[RENEWAL_D_30] 1 pacientes elegíveis encontrados
+[DEV] Redirecionando envio de (87) 9****-3837 para (87) 9****-2728
+[RENEWAL_D_30] Enviando lembrete para teste eu ((87) 9****-2728)
+Tentativa 1/2 - Enviando template WhatsApp "lembrete_vencimento_30_dias" para 5587991372728
+✅ Template WhatsApp "lembrete_vencimento_30_dias" enviado com sucesso para 5587991372728 - ID: wamid.HBgMNTU4NzkxMzcyNzI4FQIAERgSMjQ3QThBRjk0Q0IzNDc5NkY0AA==
+
+[RENEWAL_D_30] ===== RESUMO =====
+[RENEWAL_D_30] Total processados: 1
+[RENEWAL_D_30] ✅ Sucesso: 1
+[RENEWAL_D_30] ❌ Falhas: 0
+
+
+╔════════════════════════════════════════════════════════╗
+║            CRON FINALIZADO COM SUCESSO                ║
+╚════════════════════════════════════════════════════════╝
+Tempo total: 5.23s
+
+
+✅ Cron executado com sucesso
+Código de saída: 0
+
+========================================
+Executando cron em: Mon, Dec 22, 2025 11:45:19 PM
+========================================
+
+
+╔════════════════════════════════════════════════════════╗
+║     CRON: Lembretes de Renovação via WhatsApp         ║
+╚════════════════════════════════════════════════════════╝
+Executado em: 22/12/2025 23:45:21 (SP)
+Timezone: America/Sao_Paulo (UTC-3)
+⚠️  Datas no banco estão em UTC, convertendo automaticamente
+
+========================================
+[RENEWAL_D_7] Iniciando processamento
+========================================
+
+[D-7] Buscando pacientes com expirationDate entre 29/12/2025 00:00 (UTC: 2025-12-29 00:00)
+[RENEWAL_D_7] 1 pacientes elegíveis encontrados
+[DEV] Redirecionando envio de (87) 9****-2728 para (87) 9****-2728
+[RENEWAL_D_7] Enviando lembrete para Fabrício Ferreira ((87) 9****-2728)
+Tentativa 1/2 - Enviando template WhatsApp "lembrete_vencimento_7_dias" para 5587991372728
+✅ Template WhatsApp "lembrete_vencimento_7_dias" enviado com sucesso para 5587991372728 - ID: wamid.HBgMNTU4NzkxMzcyNzI4FQIAERgSRjM2OTcwMUQ1M0IxOUY1NDk0AA==
+
+[RENEWAL_D_7] ===== RESUMO =====
+[RENEWAL_D_7] Total processados: 1
+[RENEWAL_D_7] ✅ Sucesso: 1
+[RENEWAL_D_7] ❌ Falhas: 0
+
+========================================
+[RENEWAL_D_0] Iniciando processamento
+========================================
+
+[D0] Buscando pacientes com expirationDate = 22/12/2025 (UTC: 2025-12-22 00:00)
+[RENEWAL_D_0] 1 pacientes elegíveis encontrados
+[DEV] Redirecionando envio de (87) 9****-2728 para (87) 9****-2728
+[RENEWAL_D_0] Enviando lembrete para fabricio por link ((87) 9****-2728)
+Tentativa 1/2 - Enviando template WhatsApp "lembrete_vencimento_hoje" para 5587991372728
+✅ Template WhatsApp "lembrete_vencimento_hoje" enviado com sucesso para 5587991372728 - ID: wamid.HBgMNTU4NzkxMzcyNzI4FQIAERgSNTRDMEUzMkM4NUVGRTk4MURGAA==
+
+[RENEWAL_D_0] ===== RESUMO =====
+[RENEWAL_D_0] Total processados: 1
+[RENEWAL_D_0] ✅ Sucesso: 1
+[RENEWAL_D_0] ❌ Falhas: 0
+
+========================================
+[RENEWAL_D_30] Iniciando processamento
+========================================
+
+[D+30] Buscando pacientes com expirationDate = 22/11/2025 (UTC: 2025-11-22 00:00)
+[RENEWAL_D_30] 1 pacientes elegíveis encontrados
+[DEV] Redirecionando envio de (87) 9****-3837 para (87) 9****-2728
+[RENEWAL_D_30] Enviando lembrete para teste eu ((87) 9****-2728)
+Tentativa 1/2 - Enviando template WhatsApp "lembrete_vencimento_30_dias" para 5587991372728
+✅ Template WhatsApp "lembrete_vencimento_30_dias" enviado com sucesso para 5587991372728 - ID: wamid.HBgMNTU4NzkxMzcyNzI4FQIAERgSRDZFMTAyRThGQ0FERjE2MjI0AA==
+
+[RENEWAL_D_30] ===== RESUMO =====
+[RENEWAL_D_30] Total processados: 1
+[RENEWAL_D_30] ✅ Sucesso: 1
+[RENEWAL_D_30] ❌ Falhas: 0
+
+
+╔════════════════════════════════════════════════════════╗
+║            CRON FINALIZADO COM SUCESSO                ║
+╚════════════════════════════════════════════════════════╝
+Tempo total: 6.21s
+
+
+✅ Cron executado com sucesso
+Código de saída: 0
+
+========================================
+Executando cron em: Mon, Dec 22, 2025 11:50:06 PM
+========================================
+
+
+╔════════════════════════════════════════════════════════╗
+║     CRON: Lembretes de Renovação via WhatsApp         ║
+╚════════════════════════════════════════════════════════╝
+Executado em: 22/12/2025 23:50:08 (SP)
+Timezone: America/Sao_Paulo (UTC-3)
+⚠️  Datas no banco estão em UTC, convertendo automaticamente
+
+========================================
+[RENEWAL_D_7] Iniciando processamento
+========================================
+
+[D-7] Buscando pacientes com expirationDate entre 29/12/2025 00:00 (UTC: 2025-12-29 00:00)
+[RENEWAL_D_7] 1 pacientes elegíveis encontrados
+[DEV] Redirecionando envio de (87) 9****-2728 para (87) 9****-2728
+[RENEWAL_D_7] Enviando lembrete para Fabrício Ferreira ((87) 9****-2728)
+Tentativa 1/2 - Enviando template WhatsApp "lembrete_vencimento_7_dias" para 5587991372728
+✅ Template WhatsApp "lembrete_vencimento_7_dias" enviado com sucesso para 5587991372728 - ID: wamid.HBgMNTU4NzkxMzcyNzI4FQIAERgSNUQ1OTVFN0FDRTA1RDJBQTY4AA==
+
+[RENEWAL_D_7] ===== RESUMO =====
+[RENEWAL_D_7] Total processados: 1
+[RENEWAL_D_7] ✅ Sucesso: 1
+[RENEWAL_D_7] ❌ Falhas: 0
+
+========================================
+[RENEWAL_D_0] Iniciando processamento
+========================================
+
+[D0] Buscando pacientes com expirationDate = 22/12/2025 (UTC: 2025-12-22 00:00)
+[RENEWAL_D_0] Nenhum paciente elegível encontrado
+
+========================================
+[RENEWAL_D_30] Iniciando processamento
+========================================
+
+[D+30] Buscando pacientes com expirationDate = 22/11/2025 (UTC: 2025-11-22 00:00)
+[RENEWAL_D_30] 1 pacientes elegíveis encontrados
+[DEV] Redirecionando envio de (87) 9****-3837 para (87) 9****-2728
+[RENEWAL_D_30] Enviando lembrete para teste eu ((87) 9****-2728)
+Tentativa 1/2 - Enviando template WhatsApp "lembrete_vencimento_30_dias" para 5587991372728
+✅ Template WhatsApp "lembrete_vencimento_30_dias" enviado com sucesso para 5587991372728 - ID: wamid.HBgMNTU4NzkxMzcyNzI4FQIAERgSMkJGQ0UwRTQ0MDJCNkFCNkY2AA==
+
+[RENEWAL_D_30] ===== RESUMO =====
+[RENEWAL_D_30] Total processados: 1
+[RENEWAL_D_30] ✅ Sucesso: 1
+[RENEWAL_D_30] ❌ Falhas: 0
+
+
+╔════════════════════════════════════════════════════════╗
+║            CRON FINALIZADO COM SUCESSO                ║
+╚════════════════════════════════════════════════════════╝
+Tempo total: 3.52s
+
+
+✅ Cron executado com sucesso
+Código de saída: 0
+
+========================================
+Executando cron em: Tue, Dec 23, 2025 12:40:39 AM
+========================================
+
+
+╔════════════════════════════════════════════════════════╗
+║     CRON: Lembretes de Renovação via WhatsApp         ║
+╚════════════════════════════════════════════════════════╝
+Executado em: 23/12/2025 00:40:42 (SP)
+Timezone: America/Sao_Paulo (UTC-3)
+⚠️  Datas no banco estão em UTC, convertendo automaticamente
+
+========================================
+[RENEWAL_D_7] Iniciando processamento
+========================================
+
+[D-7] Buscando pacientes com expirationDate entre 30/12/2025 00:00 (UTC: 2025-12-30 00:00)
+[RENEWAL_D_7] Nenhum paciente elegível encontrado
+
+========================================
+[RENEWAL_D_0] Iniciando processamento
+========================================
+
+[D0] Buscando pacientes com expirationDate = 23/12/2025 (UTC: 2025-12-23 00:00)
+[RENEWAL_D_0] 6 pacientes elegíveis encontrados
+[DEV] Redirecionando envio de (87) 9****-2728 para (87) 9****-2728
+[RENEWAL_D_0] Enviando lembrete para Lindalva ((87) 9****-2728)
+Tentativa 1/2 - Enviando template WhatsApp "lembrete_vencimento_hoje" para 5587991372728
+✅ Template WhatsApp "lembrete_vencimento_hoje" enviado com sucesso para 5587991372728 - ID: wamid.HBgMNTU4NzkxMzcyNzI4FQIAERgSNEIyODczQUREOTUyMUU5NjQzAA==
+[DEV] Redirecionando envio de (87) 9****-2728 para (87) 9****-2728
+[RENEWAL_D_0] Enviando lembrete para Fabrício Ferreira ((87) 9****-2728)
+Tentativa 1/2 - Enviando template WhatsApp "lembrete_vencimento_hoje" para 5587991372728
+✅ Template WhatsApp "lembrete_vencimento_hoje" enviado com sucesso para 5587991372728 - ID: wamid.HBgMNTU4NzkxMzcyNzI4FQIAERgSRjczODRGQUE2Q0NGODkyODVFAA==
+[DEV] Redirecionando envio de (87) 9****-2728 para (87) 9****-2728
+[RENEWAL_D_0] Enviando lembrete para fabricio por link ((87) 9****-2728)
+Tentativa 1/2 - Enviando template WhatsApp "lembrete_vencimento_hoje" para 5587991372728
+✅ Template WhatsApp "lembrete_vencimento_hoje" enviado com sucesso para 5587991372728 - ID: wamid.HBgMNTU4NzkxMzcyNzI4FQIAERgSNzk1MTE5RTNDOTlCOTBERjExAA==
+[DEV] Redirecionando envio de (87) 9****-2728 para (87) 9****-2728
+[RENEWAL_D_0] Enviando lembrete para lindalva ((87) 9****-2728)
+Tentativa 1/2 - Enviando template WhatsApp "lembrete_vencimento_hoje" para 5587991372728
+✅ Template WhatsApp "lembrete_vencimento_hoje" enviado com sucesso para 5587991372728 - ID: wamid.HBgMNTU4NzkxMzcyNzI4FQIAERgSRkM1MDJEMjgyNTk5ODBCODkxAA==
+[DEV] Redirecionando envio de (87) 9****-3837 para (87) 9****-2728
+[RENEWAL_D_0] Enviando lembrete para teste eu ((87) 9****-2728)
+Tentativa 1/2 - Enviando template WhatsApp "lembrete_vencimento_hoje" para 5587991372728
+✅ Template WhatsApp "lembrete_vencimento_hoje" enviado com sucesso para 5587991372728 - ID: wamid.HBgMNTU4NzkxMzcyNzI4FQIAERgSQ0IwRTEwMjI1Njc1N0NCQTM3AA==
+[DEV] Redirecionando envio de (87) 9****-2728 para (87) 9****-2728
+[RENEWAL_D_0] Enviando lembrete para eu de link vendedor ((87) 9****-2728)
+Tentativa 1/2 - Enviando template WhatsApp "lembrete_vencimento_hoje" para 5587991372728
+✅ Template WhatsApp "lembrete_vencimento_hoje" enviado com sucesso para 5587991372728 - ID: wamid.HBgMNTU4NzkxMzcyNzI4FQIAERgSQ0ZBMjY4OTMxMzA2NEZEOTFFAA==
+
+[RENEWAL_D_0] ===== RESUMO =====
+[RENEWAL_D_0] Total processados: 6
+[RENEWAL_D_0] ✅ Sucesso: 6
+[RENEWAL_D_0] ❌ Falhas: 0
+
+========================================
+[RENEWAL_D_30] Iniciando processamento
+========================================
+
+[D+30] Buscando pacientes com expirationDate = 23/11/2025 (UTC: 2025-11-23 00:00)
+[RENEWAL_D_30] Nenhum paciente elegível encontrado
+
+
+╔════════════════════════════════════════════════════════╗
+║            CRON FINALIZADO COM SUCESSO                ║
+╚════════════════════════════════════════════════════════╝
+Tempo total: 9.46s
+
+
+✅ Cron executado com sucesso
+npm notice
+npm notice New minor version of npm available! 11.6.2 -> 11.7.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.7.0
+npm notice To update run: npm install -g npm@11.7.0
+npm notice
+Código de saída: 0
+
+========================================
+Executando cron em: Tue, Dec 23, 2025  1:34:09 AM
+========================================
+
+
+╔════════════════════════════════════════════════════════╗
+║     CRON: Lembretes de Renovação via WhatsApp         ║
+╚════════════════════════════════════════════════════════╝
+Executado em: 23/12/2025 01:34:11 (SP)
+Timezone: America/Sao_Paulo (UTC-3)
+⚠️  Datas no banco estão em UTC, convertendo automaticamente
+
+========================================
+[RENEWAL_D_7] Iniciando processamento
+========================================
+
+[D-7] Buscando pacientes com expirationDate entre 30/12/2025 00:00 (UTC: 2025-12-30 00:00)
+[RENEWAL_D_7] Nenhum paciente elegível encontrado
+
+========================================
+[RENEWAL_D_0] Iniciando processamento
+========================================
+
+[D0] Buscando pacientes com expirationDate = 23/12/2025 (UTC: 2025-12-23 00:00)
+[RENEWAL_D_0] Nenhum paciente elegível encontrado
+
+========================================
+[RENEWAL_D_30] Iniciando processamento
+========================================
+
+[D+30] Buscando pacientes com expirationDate = 23/11/2025 (UTC: 2025-11-23 00:00)
+[RENEWAL_D_30] Nenhum paciente elegível encontrado
+
+
+╔════════════════════════════════════════════════════════╗
+║            CRON FINALIZADO COM SUCESSO                ║
+╚════════════════════════════════════════════════════════╝
+Tempo total: 1.14s
+
+
+✅ Cron executado com sucesso
+Código de saída: 0
+

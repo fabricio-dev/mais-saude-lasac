@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:cron": "curl http://localhost:3000/api/test/cron"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",

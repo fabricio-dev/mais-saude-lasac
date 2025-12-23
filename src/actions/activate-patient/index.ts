@@ -13,6 +13,7 @@ import {
   patientsTable,
   sellersTable,
   usersToClinicsTable,
+  whatsappNotificationsTable,
 } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
@@ -154,6 +155,18 @@ export const activatePatient = actionClient
       .update(patientsTable)
       .set(updateData)
       .where(eq(patientsTable.id, parsedInput.patientId));
+
+    // Se for renovação (não primeira ativação), deletar notificações antigas
+    // Isso permite que o paciente receba novos lembretes no próximo ciclo
+    if (patient.activeAt !== null) {
+      await db
+        .delete(whatsappNotificationsTable)
+        .where(eq(whatsappNotificationsTable.patientId, parsedInput.patientId));
+
+      console.log(
+        `[RENOVAÇÃO] Notificações antigas deletadas para paciente ${parsedInput.patientId}`,
+      );
+    }
 
     // Buscar nome da clínica para incluir na mensagem
     let clinicName: string | undefined;

@@ -7,6 +7,7 @@ import {
   pgTable,
   text,
   timestamp,
+  unique,
   uuid,
 } from "drizzle-orm/pg-core";
 // schema para autenticação
@@ -135,6 +136,54 @@ export const patientsTable = pgTable("patients", {
   whatsappConsent: boolean("whatsapp_consent").notNull().default(true),
 });
 
+export const notificationTypeEnum = pgEnum("notification_type", [
+  "RENEWAL_D_7",
+  "RENEWAL_D_0",
+  "RENEWAL_D_30",
+]);
+
+export const whatsappNotificationStatusEnum = pgEnum(
+  "whatsapp_notification_status",
+  ["pending", "sent", "failed"],
+);
+
+export const whatsappNotificationsTable = pgTable(
+  "whatsapp_notifications",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+
+    patientId: uuid("patient_id")
+      .notNull()
+      .references(() => patientsTable.id, { onDelete: "cascade" }),
+
+    clinicId: uuid("clinic_id")
+      .notNull()
+      .references(() => clinicsTable.id, { onDelete: "cascade" }),
+
+    notificationType: notificationTypeEnum("notification_type").notNull(),
+
+    templateName: text("template_name").notNull(),
+
+    status: whatsappNotificationStatusEnum("status")
+      .notNull()
+      .default("pending"),
+
+    sentAt: timestamp("sent_at"),
+
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    unique("uq_patient_notification").on(
+      table.patientId,
+      table.notificationType,
+    ),
+  ],
+);
+
 /* 
 
 
@@ -162,6 +211,7 @@ export const clinicsTableRelation = relations(clinicsTable, ({ many }) => ({
   sellers: many(sellersTable),
   patients: many(patientsTable),
   usersToClinics: many(usersToClinicsTable),
+  whatsappNotifications: many(whatsappNotificationsTable),
 }));
 
 export const sellersTableRelation = relations(
@@ -175,16 +225,34 @@ export const sellersTableRelation = relations(
   }),
 );
 
-export const patientsTableRelation = relations(patientsTable, ({ one }) => ({
-  seller: one(sellersTable, {
-    fields: [patientsTable.sellerId],
-    references: [sellersTable.id],
+export const patientsTableRelation = relations(
+  patientsTable,
+  ({ one, many }) => ({
+    seller: one(sellersTable, {
+      fields: [patientsTable.sellerId],
+      references: [sellersTable.id],
+    }),
+    clinic: one(clinicsTable, {
+      fields: [patientsTable.clinicId],
+      references: [clinicsTable.id],
+    }),
+    whatsappNotifications: many(whatsappNotificationsTable),
   }),
-  clinic: one(clinicsTable, {
-    fields: [patientsTable.clinicId],
-    references: [clinicsTable.id],
+);
+
+export const whatsappNotificationsRelations = relations(
+  whatsappNotificationsTable,
+  ({ one }) => ({
+    patient: one(patientsTable, {
+      fields: [whatsappNotificationsTable.patientId],
+      references: [patientsTable.id],
+    }),
+    clinic: one(clinicsTable, {
+      fields: [whatsappNotificationsTable.clinicId],
+      references: [clinicsTable.id],
+    }),
   }),
-}));
+);
 
 export const usersToClinicsTable = pgTable("users_to_clinics", {
   userId: text("user_id")
