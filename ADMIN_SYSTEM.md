@@ -1,5 +1,5 @@
 # Sistema de Administração - Better Auth
-
+ teste
 Este documento explica como usar o sistema de verificação de admin/usuário comum implementado no projeto.
 
 ## 🚀 Funcionalidades Implementadas
