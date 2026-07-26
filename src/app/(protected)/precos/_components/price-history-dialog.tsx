@@ -1,5 +1,6 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -26,50 +27,75 @@ export interface CardPriceHistoryEntry {
   changedBy: { name: string } | null;
 }
 
+// "all" = histórico completo de todas as operações; null = dialog fechado
+export type PriceHistoryView =
+  | { operation: Operation; cardType: CardType }
+  | "all"
+  | null;
+
 interface PriceHistoryDialogProps {
-  combination: {
-    operation: Operation;
-    cardType: CardType;
-  } | null;
+  view: PriceHistoryView;
   history: CardPriceHistoryEntry[];
   onClose: () => void;
 }
 
 const PriceHistoryDialog = ({
-  combination,
+  view,
   history,
   onClose,
 }: PriceHistoryDialogProps) => {
-  const filteredHistory = combination
-    ? history.filter(
-        (entry) =>
-          entry.operation === combination.operation &&
-          entry.cardType === combination.cardType,
-      )
-    : [];
+  const isAll = view === "all";
+
+  const filteredHistory =
+    view === null
+      ? []
+      : isAll
+        ? history
+        : history.filter(
+            (entry) =>
+              entry.operation === view.operation &&
+              entry.cardType === view.cardType,
+          );
+
+  const title = isAll
+    ? "Histórico Completo de Preços"
+    : view
+      ? `Histórico — ${operationLabels[view.operation]} ${cardTypeLabels[view.cardType]}`
+      : "";
 
   return (
     <Dialog
-      open={!!combination}
+      open={!!view}
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
     >
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-amber-950">
-            {combination
-              ? `Histórico — ${operationLabels[combination.operation]} ${cardTypeLabels[combination.cardType]}`
-              : ""}
-          </DialogTitle>
+          <DialogTitle className="text-amber-950">{title}</DialogTitle>
           <DialogDescription className="text-amber-800">
-            Alterações de preço desta combinação, da mais recente para a mais
-            antiga.
+            {isAll
+              ? "Todas as alterações de preço, da mais recente para a mais antiga."
+              : "Alterações de preço desta combinação, da mais recente para a mais antiga."}
           </DialogDescription>
         </DialogHeader>
         <div className="max-h-[50vh] space-y-3 overflow-y-auto">
           {filteredHistory.map((entry) => (
             <div key={entry.id} className="rounded-md border p-3 text-sm">
+              {isAll && (
+                <div className="mb-2 flex items-center gap-2">
+                  <span className="font-medium text-amber-950">
+                    {operationLabels[entry.operation]}
+                  </span>
+                  <Badge
+                    variant={
+                      entry.cardType === "enterprise" ? "default" : "secondary"
+                    }
+                  >
+                    {cardTypeLabels[entry.cardType]}
+                  </Badge>
+                </div>
+              )}
               <div className="flex items-center justify-between">
                 <span className="font-medium">
                   {entry.previousAmountInCents === null ? (
@@ -110,7 +136,9 @@ const PriceHistoryDialog = ({
           ))}
           {filteredHistory.length === 0 && (
             <p className="py-4 text-center text-sm text-gray-500">
-              Nenhuma alteração registrada para esta combinação.
+              {isAll
+                ? "Nenhuma alteração de preço registrada."
+                : "Nenhuma alteração registrada para esta combinação."}
             </p>
           )}
         </div>

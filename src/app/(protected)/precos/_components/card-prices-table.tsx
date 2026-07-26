@@ -1,6 +1,6 @@
 "use client";
 
-import { Edit2 } from "lucide-react";
+import { Edit2, History } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
 import { useState } from "react";
 import { NumericFormat } from "react-number-format";
@@ -37,6 +37,7 @@ import {
 } from "./constants";
 import PriceHistoryDialog, {
   CardPriceHistoryEntry,
+  PriceHistoryView,
 } from "./price-history-dialog";
 
 interface CardPrice {
@@ -71,10 +72,7 @@ const CardPricesTable = ({
     operation: Operation;
     cardType: CardType;
   } | null>(null);
-  const [historyCombination, setHistoryCombination] = useState<{
-    operation: Operation;
-    cardType: CardType;
-  } | null>(null);
+  const [historyView, setHistoryView] = useState<PriceHistoryView>(null);
   const [amountInReais, setAmountInReais] = useState<number | undefined>(
     undefined,
   );
@@ -118,6 +116,12 @@ const CardPricesTable = ({
 
   return (
     <div className="rounded-lg border bg-white">
+      <div className="flex justify-end border-b p-4">
+        <Button variant="outline" onClick={() => setHistoryView("all")}>
+          <History className="mr-2 h-4 w-4" />
+          Mostrar Histórico
+        </Button>
+      </div>
       <Table>
         <TableHeader>
           <TableRow>
@@ -136,9 +140,7 @@ const CardPricesTable = ({
                 <TableCell className="font-medium">
                   <button
                     type="button"
-                    onClick={() =>
-                      setHistoryCombination({ operation, cardType })
-                    }
+                    onClick={() => setHistoryView({ operation, cardType })}
                     className="cursor-pointer underline-offset-4 hover:text-amber-800 hover:underline"
                     title="Ver histórico de preços"
                   >
@@ -240,9 +242,9 @@ const CardPricesTable = ({
       </Dialog>
 
       <PriceHistoryDialog
-        combination={historyCombination}
+        view={historyView}
         history={priceHistory}
-        onClose={() => setHistoryCombination(null)}
+        onClose={() => setHistoryView(null)}
       />
     </div>
   );
