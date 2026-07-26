@@ -1,6 +1,7 @@
 "use client";
 import {
   Building2,
+  CircleDollarSign,
   IdCard,
   LayoutDashboard,
   LogOut,
@@ -66,6 +67,12 @@ const baseItems = [
     title: "Relatórios",
     url: "/management",
     icon: Settings,
+    requiresAdmin: true,
+  },
+  {
+    title: "Preços",
+    url: "/precos",
+    icon: CircleDollarSign,
     requiresAdmin: true,
   },
   {

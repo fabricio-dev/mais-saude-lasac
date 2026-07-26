@@ -106,6 +106,47 @@ export const paymentTypeEnum = pgEnum("payment_type", [
   "cartao_debito",
 ]);
 
+export const priceOperationEnum = pgEnum("price_operation", [
+  "activation", // ativação (primeira adesão)
+  "renewal", // renovação (inclui renovação antecipada)
+]);
+
+// Tabela de preços por operação × tipo de cartão (4 combinações)
+export const cardPricesTable = pgTable(
+  "card_prices",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    operation: priceOperationEnum("operation").notNull(),
+    cardType: typeCardEnum("card_type").notNull(),
+    amountInCents: integer("amount_in_cents").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    unique("uq_card_price_operation_card_type").on(
+      table.operation,
+      table.cardType,
+    ),
+  ],
+);
+
+// Histórico de alterações de preços — 1 registro a cada mudança de valor
+export const cardPriceHistoryTable = pgTable("card_price_history", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  cardPriceId: uuid("card_price_id")
+    .notNull()
+    .references(() => cardPricesTable.id, { onDelete: "cascade" }),
+  // Snapshot da combinação para o histórico ser autossuficiente
+  operation: priceOperationEnum("operation").notNull(),
+  cardType: typeCardEnum("card_type").notNull(),
+  previousAmountInCents: integer("previous_amount_in_cents"), // null na primeira definição
+  newAmountInCents: integer("new_amount_in_cents").notNull(),
+  changedByUserId: text("changed_by_user_id").references(() => usersTable.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const patientsTable = pgTable("patients", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),
@@ -289,6 +330,27 @@ export const usersToClinicsTableRelation = relations(
     clinic: one(clinicsTable, {
       fields: [usersToClinicsTable.clinicId],
       references: [clinicsTable.id],
+    }),
+  }),
+);
+
+export const cardPricesTableRelation = relations(
+  cardPricesTable,
+  ({ many }) => ({
+    history: many(cardPriceHistoryTable),
+  }),
+);
+
+export const cardPriceHistoryTableRelation = relations(
+  cardPriceHistoryTable,
+  ({ one }) => ({
+    cardPrice: one(cardPricesTable, {
+      fields: [cardPriceHistoryTable.cardPriceId],
+      references: [cardPricesTable.id],
+    }),
+    changedBy: one(usersTable, {
+      fields: [cardPriceHistoryTable.changedByUserId],
+      references: [usersTable.id],
     }),
   }),
 );
