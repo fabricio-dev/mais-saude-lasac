@@ -79,8 +79,20 @@ export const upsertPatientSchema = z
     dependents6: z.string().optional(),
     contractDate: z.string().optional(), // Data do contrato (pode ir para activeAt ou reactivatedAt)
     whatsappConsent: z.boolean(),
+    paymentType: z
+      .enum(["pix", "dinheiro", "cartao_credito", "cartao_debito"])
+      .optional(),
   })
   .superRefine(async (data, ctx) => {
+    // Tipo de pagamento é obrigatório na criação de novos convênios
+    if (!data.id && !data.paymentType) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Tipo de pagamento é obrigatório",
+        path: ["paymentType"],
+      });
+    }
+
     // Validar data de vencimento apenas para novos pacientes
     if (!data.id && data.expirationDate) {
       if (!dayjs(data.expirationDate).isValid()) {

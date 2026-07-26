@@ -177,3 +177,4 @@ export const upsertPatient = actionClient
     revalidatePath("/vendedor/patients-seller");
     revalidatePath("/gerente/patients-gestor");
   });
+//CRIAR FUNCAO QUE É CHAMADA PARA ANVIAR MENSAGEM DE WHATSAPP PARA O CLIENTE

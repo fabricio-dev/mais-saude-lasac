@@ -133,6 +133,7 @@ export const activatePatient = actionClient
             isActive: true,
             expirationDate: newExpirationDate,
             updatedAt: now,
+            paymentType: parsedInput.paymentType,
           }
         : patient.expirationDate && patient.expirationDate > now
           ? {
@@ -141,6 +142,7 @@ export const activatePatient = actionClient
               reactivatedAt: now,
               isActive: true,
               updatedAt: now,
+              paymentType: parsedInput.paymentType,
             }
           : {
               // Atualizar a data de expiração
@@ -148,6 +150,7 @@ export const activatePatient = actionClient
               reactivatedAt: now,
               isActive: true,
               updatedAt: now,
+              paymentType: parsedInput.paymentType,
             };
 
     // Atualizar o paciente
@@ -209,7 +212,7 @@ export const activatePatient = actionClient
       process.env.NEXT_PUBLIC_APP_URL ||
       process.env.BETTER_AUTH_URL ||
       "https://seu-dominio.com";
-    const pdfUrl = `${appUrl}/docs/LISTA%20DE%20M%C3%89DICOS%20E%20BENEF%C3%8DCIOS%20LASAC.pdf`;
+    const pdfUrl = `${appUrl}/docs/LISTA%20DE%20M%C3%89DICOS%20E%20BENEF%C3%8DCIOS%20LASAC.pdf`; // ver a possibilidade de usar o s3 para o pdf
 
     // Enviar ambos os WhatsApp em paralelo (aguarda completar para evitar problemas na Vercel)
     await Promise.allSettled([

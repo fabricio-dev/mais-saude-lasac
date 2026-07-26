@@ -22,7 +22,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { patientsTable } from "@/db/schema";
+
+type PaymentType = "pix" | "dinheiro" | "cartao_credito" | "cartao_debito";
 
 import PrintCardComponent from "../../_components/print-card-component";
 import UpsertPatientForm from "./upsert-patient-form";
@@ -36,6 +46,9 @@ interface PatientCardProps {
 
 const PatientCard = ({ patient }: PatientCardProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [paymentType, setPaymentType] = useState<PaymentType | undefined>(
+    undefined,
+  );
 
   const activatePatientAction = useAction(activatePatient, {
     onSuccess: () => {
@@ -47,7 +60,8 @@ const PatientCard = ({ patient }: PatientCardProps) => {
   });
 
   const handleActivatePatient = () => {
-    activatePatientAction.execute({ patientId: patient.id });
+    if (!paymentType) return;
+    activatePatientAction.execute({ patientId: patient.id, paymentType });
   };
 
   const isPatientExpired = () => {
@@ -166,10 +180,34 @@ const PatientCard = ({ patient }: PatientCardProps) => {
                     {dayjs().add(1, "year").format("DD/MM/YYYY")}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
+                <div className="space-y-2">
+                  <Label>Tipo de Pagamento</Label>
+                  <Select
+                    value={paymentType}
+                    onValueChange={(value) =>
+                      setPaymentType(value as PaymentType)
+                    }
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Selecione o tipo de pagamento" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pix">PIX</SelectItem>
+                      <SelectItem value="dinheiro">DINHEIRO</SelectItem>
+                      <SelectItem value="cartao_credito">
+                        CARTÃO DE CRÉDITO
+                      </SelectItem>
+                      <SelectItem value="cartao_debito">
+                        CARTÃO DE DÉBITO
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleActivatePatient}
+                    disabled={!paymentType}
                     className="bg-green-600 hover:bg-green-700"
                   >
                     Confirmar Ativação

@@ -138,6 +138,9 @@ const formSchema = z
     dependents5: z.string().optional(),
     dependents6: z.string().optional(),
     whatsappConsent: z.boolean(),
+    paymentType: z
+      .enum(["pix", "dinheiro", "cartao_credito", "cartao_debito"])
+      .optional(),
   })
   .superRefine((data, ctx) => {
     if (
@@ -214,6 +217,7 @@ const UpsertPatientForm = ({
   const [checkingCPF, setCheckingCPF] = useState(false);
   const [loadingState, setLoadingState] = useState(false);
   const [loadingCardType, setLoadingCardType] = useState(false);
+  const [loadingPaymentType, setLoadingPaymentType] = useState(false);
   const [loadingSeller, setLoadingSeller] = useState(false);
   const [loadingClinic, setLoadingClinic] = useState(false);
 
@@ -243,7 +247,7 @@ const UpsertPatientForm = ({
       city: patient?.city ?? "",
       state: patient?.state ?? "",
 
-      cardType: patient?.cardType ?? "personal",
+      cardType: patient?.cardType ?? undefined,
       Enterprise: patient?.Enterprise ?? "",
       numberCards: patient?.numberCards?.toString() ?? "",
       sellerId: patient?.sellerId ?? sellerId,
@@ -256,6 +260,7 @@ const UpsertPatientForm = ({
       dependents5: patient?.dependents5 ?? "",
       dependents6: patient?.dependents6 ?? "",
       whatsappConsent: patient?.whatsappConsent ?? true,
+      paymentType: patient?.paymentType ?? undefined,
     },
   });
 
@@ -286,7 +291,7 @@ const UpsertPatientForm = ({
         city: patient?.city ?? "",
         state: patient?.state ?? "",
 
-        cardType: patient?.cardType ?? "personal",
+        cardType: patient?.cardType ?? undefined,
         Enterprise: patient?.Enterprise ?? "",
         numberCards: patient?.numberCards?.toString() ?? "",
         sellerId: patient?.sellerId ?? sellerId,
@@ -299,13 +304,15 @@ const UpsertPatientForm = ({
         dependents5: patient?.dependents5 ?? "",
         dependents6: patient?.dependents6 ?? "",
         whatsappConsent: patient?.whatsappConsent ?? true,
+        paymentType: patient?.paymentType ?? undefined,
       });
     }
 
     const loadData = async () => {
       try {
         // Carregar dados da clínica específica
-        const clinicsResponse = await fetch("/api/clinics");
+        // Usa /api/admin/clinics pois o usuário gestor não tem vínculo na users_to_clinics
+        const clinicsResponse = await fetch("/api/admin/clinics");
         if (clinicsResponse.ok) {
           const clinicsData = await clinicsResponse.json();
           const currentClinic = clinicsData.find(
@@ -338,6 +345,14 @@ const UpsertPatientForm = ({
   });
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
+    // Tipo de pagamento é obrigatório na criação de novos pacientes
+    if (!patient && !values.paymentType) {
+      form.setError("paymentType", {
+        message: "Tipo de pagamento é obrigatório",
+      });
+      return;
+    }
+
     upsertPatientAction.execute({
       ...values,
       numberCards: values.numberCards ? parseInt(values.numberCards) : 0,
@@ -633,6 +648,49 @@ const UpsertPatientForm = ({
                     <SelectContent>
                       <SelectItem value="enterprise">EMPRESA</SelectItem>
                       <SelectItem value="personal">INDIVIDUAL</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="paymentType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-amber-950">
+                    Tipo de Pagamento{" "}
+                    {loadingPaymentType && (
+                      <Loader2 className="ml-2 inline h-4 w-4 animate-spin" />
+                    )}
+                  </FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    onOpenChange={async (open) => {
+                      if (!open) {
+                        await simulateLoading(setLoadingPaymentType);
+                        setLoadingPaymentType(false);
+                      }
+                    }}
+                    value={field.value}
+                    disabled={loadingPaymentType}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o tipo de pagamento" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="pix">PIX</SelectItem>
+                      <SelectItem value="dinheiro">DINHEIRO</SelectItem>
+                      <SelectItem value="cartao_credito">
+                        CARTÃO DE CRÉDITO
+                      </SelectItem>
+                      <SelectItem value="cartao_debito">
+                        CARTÃO DE DÉBITO
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

@@ -99,6 +99,13 @@ export const statusAgreementEnum = pgEnum("status_agreement", [
   "pending", //pendente de assinatura para cliente que se auto cadastrar
 ]);
 
+export const paymentTypeEnum = pgEnum("payment_type", [
+  "pix",
+  "dinheiro",
+  "cartao_credito",
+  "cartao_debito",
+]);
+
 export const patientsTable = pgTable("patients", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),
@@ -134,6 +141,7 @@ export const patientsTable = pgTable("patients", {
   activeAt: timestamp("active_at"),
   reactivatedAt: timestamp("reactivated_at"),
   whatsappConsent: boolean("whatsapp_consent").notNull().default(true),
+  paymentType: paymentTypeEnum("payment_type"), // tipo do último pagamento (nullable: convênios antigos não têm o dado)
 });
 
 export const notificationTypeEnum = pgEnum("notification_type", [

@@ -208,6 +208,9 @@ const createFormSchema = (patient?: typeof patientsTable.$inferSelect) =>
       dependents6: z.string().optional(),
       contractDate: z.string().optional(), // Data do contrato (pode ir para activeAt ou reactivatedAt)
       whatsappConsent: z.boolean(),
+      paymentType: z
+        .enum(["pix", "dinheiro", "cartao_credito", "cartao_debito"])
+        .optional(),
     })
     .superRefine((data, ctx) => {
       if (
@@ -218,6 +221,15 @@ const createFormSchema = (patient?: typeof patientsTable.$inferSelect) =>
           code: z.ZodIssueCode.custom,
           message: "Nome da empresa é obrigatório para cartão empresarial",
           path: ["Enterprise"],
+        });
+      }
+
+      // Tipo de pagamento é obrigatório na criação de novos pacientes
+      if (!patient && !data.paymentType) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Tipo de pagamento é obrigatório",
+          path: ["paymentType"],
         });
       }
     });
@@ -283,6 +295,7 @@ const UpsertPatientForm = ({
   // Estados para loaders dos comboboxes
   const [loadingState, setLoadingState] = useState(false);
   const [loadingCardType, setLoadingCardType] = useState(false);
+  const [loadingPaymentType, setLoadingPaymentType] = useState(false);
   const [loadingSeller, setLoadingSeller] = useState(false);
   const [loadingClinic, setLoadingClinic] = useState(false);
 
@@ -304,7 +317,7 @@ const UpsertPatientForm = ({
       city: patient?.city ?? "",
       state: patient?.state ?? "",
 
-      cardType: patient?.cardType ?? "personal",
+      cardType: patient?.cardType ?? undefined,
       Enterprise: patient?.Enterprise ?? "",
       numberCards: patient?.numberCards?.toString() ?? "",
       sellerId: patient?.sellerId ?? "",
@@ -325,6 +338,7 @@ const UpsertPatientForm = ({
           ? dayjs(patient.activeAt).format("YYYY-MM-DD")
           : "",
       whatsappConsent: patient?.whatsappConsent ?? true,
+      paymentType: patient?.paymentType ?? undefined,
     },
   });
 
@@ -344,7 +358,7 @@ const UpsertPatientForm = ({
         city: patient?.city ?? "",
         state: patient?.state ?? "",
 
-        cardType: patient?.cardType ?? "personal",
+        cardType: patient?.cardType ?? undefined,
         Enterprise: patient?.Enterprise ?? "",
         numberCards: patient?.numberCards?.toString() ?? "",
         sellerId: patient?.sellerId ?? "",
@@ -365,6 +379,7 @@ const UpsertPatientForm = ({
             ? dayjs(patient.activeAt).format("YYYY-MM-DD")
             : "",
         whatsappConsent: patient?.whatsappConsent ?? true,
+        paymentType: patient?.paymentType ?? undefined,
       });
     }
     const loadData = async () => {
@@ -787,6 +802,51 @@ const UpsertPatientForm = ({
                     <SelectContent>
                       <SelectItem value="enterprise">EMPRESA</SelectItem>
                       <SelectItem value="personal">INDIVIDUAL</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="paymentType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-amber-950">
+                    Tipo de Pagamento{" "}
+                    {loadingPaymentType && (
+                      <Loader2 className="ml-2 inline h-4 w-4 animate-spin" />
+                    )}
+                  </FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    onOpenChange={(open) => {
+                      if (!open) {
+                        setLoadingPaymentType(true);
+                        setTimeout(() => {
+                          setLoadingPaymentType(false);
+                        }, 250);
+                      }
+                    }}
+                    defaultValue={field.value}
+                    disabled={loadingPaymentType}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione pagamento" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="pix">PIX</SelectItem>
+                      <SelectItem value="dinheiro">DINHEIRO</SelectItem>
+                      <SelectItem value="cartao_credito">
+                        CARTÃO DE CRÉDITO
+                      </SelectItem>
+                      <SelectItem value="cartao_debito">
+                        CARTÃO DE DÉBITO
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

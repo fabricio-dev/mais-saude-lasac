@@ -37,6 +37,7 @@ interface PatientActivation {
   expirationDate: Date | null;
   sellerName: string | null;
   clinicName: string | null;
+  paymentType: "pix" | "dinheiro" | "cartao_credito" | "cartao_debito" | null;
 }
 
 interface ManagementData {
@@ -470,6 +471,7 @@ export const getManagement = async ({
         expirationDate: patientsTable.expirationDate,
         sellerName: sellersTable.name,
         clinicName: clinicsTable.name,
+        paymentType: patientsTable.paymentType,
       })
       .from(patientsTable)
       .leftJoin(sellersTable, eq(patientsTable.sellerId, sellersTable.id))

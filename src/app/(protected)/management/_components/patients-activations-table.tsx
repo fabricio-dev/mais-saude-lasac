@@ -27,7 +27,15 @@ interface PatientActivation {
   expirationDate: Date | null;
   sellerName: string | null;
   clinicName: string | null;
+  paymentType: "pix" | "dinheiro" | "cartao_credito" | "cartao_debito" | null;
 }
+
+const paymentTypeLabels: Record<string, string> = {
+  pix: "PIX",
+  dinheiro: "DINHEIRO",
+  cartao_credito: "CARTÃO DE CRÉDITO",
+  cartao_debito: "CARTÃO DE DÉBITO",
+};
 
 interface PatientsActivationsTableProps {
   data: PatientActivation[];
@@ -61,7 +69,7 @@ const PatientsActivationsTable = ({
           <div className="space-y-3">
             {/* Table Header Skeleton */}
             <div className="flex space-x-4 border-b pb-2">
-              {Array.from({ length: 6 }).map((_, i) => (
+              {Array.from({ length: 7 }).map((_, i) => (
                 <div
                   key={i}
                   className="h-4 w-32 animate-pulse rounded bg-gray-200"
@@ -71,7 +79,7 @@ const PatientsActivationsTable = ({
             {/* Table Rows Skeleton */}
             {Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="flex space-x-4">
-                {Array.from({ length: 6 }).map((_, j) => (
+                {Array.from({ length: 7 }).map((_, j) => (
                   <div
                     key={j}
                     className="h-4 w-32 animate-pulse rounded bg-gray-200"
@@ -124,6 +132,7 @@ const PatientsActivationsTable = ({
                 <TableHead>Data de Vencimento</TableHead>
                 <TableHead>Vendedor</TableHead>
                 <TableHead>Unidade</TableHead>
+                <TableHead>Tipo de Pagamento</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -138,6 +147,11 @@ const PatientsActivationsTable = ({
                   <TableCell>{formatDate(patient.expirationDate)}</TableCell>
                   <TableCell>{patient.sellerName || "-"}</TableCell>
                   <TableCell>{patient.clinicName || "-"}</TableCell>
+                  <TableCell>
+                    {patient.paymentType
+                      ? paymentTypeLabels[patient.paymentType]
+                      : "-"}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

@@ -1,24 +1,29 @@
+import { eq, inArray } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
 import { db } from "@/db";
+import { usersTable } from "@/db/schema";
 
 export async function GET() {
   try {
-    // Buscar o usuário admin (deve existir apenas 1)
-    const adminUser = await db.query.usersTable.findFirst({
-      where: (user, { eq }) => eq(user.role, "admin"),
-    });
+    // Buscar todos os usuários admin (pode existir mais de 1)
+    const adminUsers = await db
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(eq(usersTable.role, "admin"));
 
-    if (!adminUser) {
+    if (adminUsers.length === 0) {
       return NextResponse.json(
         { error: "Usuário admin não encontrado" },
         { status: 404 },
       );
     }
 
-    // Buscar todas as clínicas do usuário admin através da tabela de relacionamento
+    const adminIds = adminUsers.map((user) => user.id);
+
+    // Buscar todas as clínicas vinculadas a qualquer admin através da tabela de relacionamento
     const userClinics = await db.query.usersToClinicsTable.findMany({
-      where: (userToClinic, { eq }) => eq(userToClinic.userId, adminUser.id),
+      where: (userToClinic) => inArray(userToClinic.userId, adminIds),
       with: {
         clinic: {
           columns: {
@@ -29,8 +34,14 @@ export async function GET() {
       },
     });
 
-    // Extrair apenas as clínicas dos resultados
-    const clinics = userClinics.map((userClinic) => userClinic.clinic);
+    // Extrair as clínicas e remover duplicadas (caso mais de um admin esteja vinculado à mesma clínica)
+    const clinicsMap = new Map<string, { id: string; name: string }>();
+    for (const userClinic of userClinics) {
+      if (userClinic.clinic) {
+        clinicsMap.set(userClinic.clinic.id, userClinic.clinic);
+      }
+    }
+    const clinics = Array.from(clinicsMap.values());
 
     // Ordenar por nome
     clinics.sort((a, b) => a.name.localeCompare(b.name));

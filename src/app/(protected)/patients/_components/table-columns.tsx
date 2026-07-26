@@ -40,10 +40,14 @@ interface Patient {
   reactivatedAt: Date | null;
   activeAt: Date | null;
   whatsappConsent: boolean;
+  paymentType: "pix" | "dinheiro" | "cartao_credito" | "cartao_debito" | null;
 }
 
 interface TableColumnsProps {
-  onActivate: (patientId: string) => void;
+  onActivate: (
+    patientId: string,
+    paymentType: "pix" | "dinheiro" | "cartao_credito" | "cartao_debito",
+  ) => void;
   onDelete: (patientId: string) => void;
   onPrintCard: (patient: Patient) => void;
   onPrintContract: (patient: Patient) => void;

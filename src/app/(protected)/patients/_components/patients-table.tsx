@@ -62,6 +62,7 @@ interface Patient {
   reactivatedAt: Date | null;
   activeAt: Date | null;
   whatsappConsent: boolean;
+  paymentType: "pix" | "dinheiro" | "cartao_credito" | "cartao_debito" | null;
 }
 
 interface PatientsTableProps {
@@ -92,8 +93,11 @@ export default function PatientsTable({ patients }: PatientsTableProps) {
     },
   });
 
-  const handleActivatePatient = (patientId: string) => {
-    activatePatientAction.execute({ patientId });
+  const handleActivatePatient = (
+    patientId: string,
+    paymentType: "pix" | "dinheiro" | "cartao_credito" | "cartao_debito",
+  ) => {
+    activatePatientAction.execute({ patientId, paymentType });
   };
 
   const handleDeletePatient = (patientId: string) => {

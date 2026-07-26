@@ -7,6 +7,7 @@ import {
   PrinterIcon,
   Trash2,
 } from "lucide-react";
+import { useState } from "react";
 
 import {
   AlertDialog,
@@ -35,6 +36,16 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+type PaymentType = "pix" | "dinheiro" | "cartao_credito" | "cartao_debito";
 
 import PrintCardComponent from "../../_components/print-card-component";
 import UpsertPatientForm from "./upsert-patient-form";
@@ -71,13 +82,14 @@ interface Patient {
   reactivatedAt: Date | null;
   activeAt: Date | null; // mudie aqui para o campo de ativação
   whatsappConsent: boolean;
+  paymentType: "pix" | "dinheiro" | "cartao_credito" | "cartao_debito" | null;
 }
 
 interface TableActionsProps {
   patient: Patient;
   isExpired: boolean;
   isPending: boolean;
-  onActivate: (patientId: string) => void;
+  onActivate: (patientId: string, paymentType: PaymentType) => void;
   onDelete: (patientId: string) => void;
   onPrintCard: (patient: Patient) => void;
   onPrintContract: (patient: Patient) => void;
@@ -92,6 +104,10 @@ export default function TableActions({
   //onPrintCard,
   onPrintContract,
 }: TableActionsProps) {
+  const [paymentType, setPaymentType] = useState<PaymentType | undefined>(
+    undefined,
+  );
+
   return (
     <div className="flex items-center">
       <DropdownMenu>
@@ -186,9 +202,39 @@ export default function TableActions({
                       : "Tem certeza que deseja Fazer a Renovação antecipada deste convenio?  Isso irá somar 1 ano a data de vencimento atual."}
                 </AlertDialogDescription>
               </AlertDialogHeader>
+              <div className="space-y-2">
+                <Label>Tipo de Pagamento</Label>
+                <Select
+                  value={paymentType}
+                  onValueChange={(value) =>
+                    setPaymentType(value as PaymentType)
+                  }
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Selecione o tipo de pagamento" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pix">PIX</SelectItem>
+                    <SelectItem value="dinheiro">DINHEIRO</SelectItem>
+                    <SelectItem value="cartao_credito">
+                      CARTÃO DE CRÉDITO
+                    </SelectItem>
+                    <SelectItem value="cartao_debito">
+                      CARTÃO DE DÉBITO
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={() => onActivate(patient.id)}>
+                <AlertDialogAction
+                  disabled={!paymentType}
+                  onClick={() => {
+                    if (paymentType) {
+                      onActivate(patient.id, paymentType);
+                    }
+                  }}
+                >
                   {isPending ? "Ativar" : "Renovar"}
                 </AlertDialogAction>
               </AlertDialogFooter>
