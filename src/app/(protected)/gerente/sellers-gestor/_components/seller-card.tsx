@@ -22,6 +22,11 @@ import {
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { sellersTable } from "@/db/schema";
+import {
+  buildConveniosBreakdown,
+  calcularFaturamento,
+  CardPrices,
+} from "@/helpers/currency";
 
 import GenerateLinkButton from "./generate-link-button";
 import UpsertSellerForm from "./upsert-seller-form";
@@ -31,9 +36,14 @@ interface SellerCardProps {
     patientsCount: number;
     clinicName: string | null;
     enterpriseCount: number;
+    novosCount: number;
+    novosEnterpriseCount: number;
+    renovadosCount: number;
+    renovadosEnterpriseCount: number;
   };
+  cardPrices: CardPrices;
 }
-const SellerCard = ({ seller }: SellerCardProps) => {
+const SellerCard = ({ seller, cardPrices }: SellerCardProps) => {
   const [isUpsertSellerFormOpen, setIsUpsertSellerFormOpen] = useState(false);
 
   const sellerInitials = seller.name
@@ -42,10 +52,16 @@ const SellerCard = ({ seller }: SellerCardProps) => {
     .map((name) => name[0])
     .join("");
 
-  // Calcular valor dos convênios vendidos (pacientes individual * R$ 100,00) + (pacientes de empresas * R$ 90,00)
-  const conveniosValue =
-    (seller.patientsCount - seller.enterpriseCount) * 100 +
-    seller.enterpriseCount * 90;
+  // Valor dos convênios vendidos, aplicando o preço cadastrado de cada combinação
+  const conveniosValue = calcularFaturamento(
+    buildConveniosBreakdown({
+      novos: seller.novosCount,
+      novosEmpresa: seller.novosEnterpriseCount,
+      renovados: seller.renovadosCount,
+      renovadosEmpresa: seller.renovadosEnterpriseCount,
+    }),
+    cardPrices,
+  );
 
   // Formatar valor como moeda brasileira
   const formatCurrency = (value: number): string => {

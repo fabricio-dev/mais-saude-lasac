@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatCurrencyInCents } from "@/helpers/currency";
+import { formatCurrency } from "@/helpers/currency";
 
 interface StatsCardsUnidadeProps {
   faturamentoTotal?: number;
@@ -23,8 +23,7 @@ interface StatsCardsUnidadeProps {
 }
 
 const StatsCardsUnidade = ({
-  totalPatients,
-  totalEnterprise,
+  faturamentoTotal = 0,
   //totalConvenios,
   conveniosVencidos,
   conveniosRenovados,
@@ -34,7 +33,7 @@ const StatsCardsUnidade = ({
   const stats = [
     {
       title: "Faturamento Total",
-      value: formatCurrencyInCents(totalPatients, totalEnterprise),
+      value: formatCurrency(faturamentoTotal),
       icon: DollarSign,
       color: "text-emerald-600",
       bgColor: "bg-emerald-50",

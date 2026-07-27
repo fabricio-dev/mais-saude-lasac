@@ -15,8 +15,13 @@ import {
   PageHeaderContent,
   PageTitle,
 } from "@/components/ui/page-container";
+import { getCardPrices } from "@/data/get-card-prices";
 import { getDashboardSellers } from "@/data/get-dashboard-sellers";
-import { formatCurrencyInCents } from "@/helpers/currency";
+import {
+  buildConveniosBreakdown,
+  calcularFaturamento,
+  formatCurrency,
+} from "@/helpers/currency";
 import { auth } from "@/lib/auth";
 
 import { patientsTableColumnsSimple } from "../../patients/_components/table-columns";
@@ -71,6 +76,8 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
     },
   });
 
+  const cardPrices = await getCardPrices();
+
   return (
     <PageContainer>
       <PageHeader>
@@ -86,9 +93,16 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
       </PageHeader>
       <PageContent>
         <StatsCards
-          totalRevenue={formatCurrencyInCents(
-            totalPatients.total + totalRenovados.total,
-            totalEnterprise.total + totalEnterpriseRenovated.total,
+          totalRevenue={formatCurrency(
+            calcularFaturamento(
+              buildConveniosBreakdown({
+                novos: totalPatients.total,
+                novosEmpresa: totalEnterprise.total,
+                renovados: totalRenovados.total,
+                renovadosEmpresa: totalEnterpriseRenovated.total,
+              }),
+              cardPrices,
+            ),
           )}
           totalPatients={totalPatients.total + totalRenovados.total}
           sellerClinic={sellerClinic}

@@ -15,8 +15,13 @@ import {
   PageHeaderContent,
   PageTitle,
 } from "@/components/ui/page-container";
+import { getCardPrices } from "@/data/get-card-prices";
 import { getDashboardGestor } from "@/data/get-dashboard-gestor";
-import { formatCurrencyInCents } from "@/helpers/currency";
+import {
+  buildConveniosBreakdown,
+  calcularFaturamento,
+  formatCurrency,
+} from "@/helpers/currency";
 import { auth } from "@/lib/auth";
 
 import { patientsTableColumnsSimple } from "../../patients/_components/table-columns";
@@ -79,6 +84,8 @@ async function DashboardGestor({ searchParams }: DashboardGestorPageProps) {
     },
   });
 
+  const cardPrices = await getCardPrices();
+
   return (
     <PageContainer>
       <PageHeader>
@@ -95,9 +102,16 @@ async function DashboardGestor({ searchParams }: DashboardGestorPageProps) {
       </PageHeader>
       <PageContent>
         <StatsCards
-          totalRevenue={formatCurrencyInCents(
-            totalPatients.total + totalPatientsRenovated.total,
-            totalEnterprise.total + totalEnterpriseRenovated.total,
+          totalRevenue={formatCurrency(
+            calcularFaturamento(
+              buildConveniosBreakdown({
+                novos: totalPatients.total,
+                novosEmpresa: totalEnterprise.total,
+                renovados: totalPatientsRenovated.total,
+                renovadosEmpresa: totalEnterpriseRenovated.total,
+              }),
+              cardPrices,
+            ),
           )}
           totalPatients={totalPatients.total + totalPatientsRenovated.total}
           totalSellers={totalSellers.total}

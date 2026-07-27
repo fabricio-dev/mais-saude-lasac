@@ -15,8 +15,13 @@ import {
   PageHeaderContent,
   PageTitle,
 } from "@/components/ui/page-container";
+import { getCardPrices } from "@/data/get-card-prices";
 import { getDashboard } from "@/data/get-dashboard";
-import { formatCurrencyInCents } from "@/helpers/currency";
+import {
+  buildConveniosBreakdown,
+  calcularFaturamento,
+  formatCurrency,
+} from "@/helpers/currency";
 import { auth } from "@/lib/auth";
 
 import { patientsTableColumnsSimple } from "../patients/_components/table-columns";
@@ -79,6 +84,8 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
     },
   });
 
+  const cardPrices = await getCardPrices();
+
   return (
     //  console.log(from, to),
     <PageContainer>
@@ -95,10 +102,16 @@ const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
       </PageHeader>
       <PageContent>
         <StatsCards
-          // TODO: recebe total de pacientes subitrai os que sao empresas e multiplica por 100 e soma com o total de empresas que multiplica por 90
-          totalRevenue={formatCurrencyInCents(
-            totalPatients.total + totalPatientsRenovated.total,
-            totalEnterprise.total + totalEnterpriseRenovated.total,
+          totalRevenue={formatCurrency(
+            calcularFaturamento(
+              buildConveniosBreakdown({
+                novos: totalPatients.total,
+                novosEmpresa: totalEnterprise.total,
+                renovados: totalPatientsRenovated.total,
+                renovadosEmpresa: totalEnterpriseRenovated.total,
+              }),
+              cardPrices,
+            ),
           )}
           totalPatients={totalPatients.total + totalPatientsRenovated.total}
           totalSellers={totalSellers.total}

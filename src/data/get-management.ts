@@ -16,6 +16,13 @@ import {
   sellersTable,
   usersToClinicsTable,
 } from "@/db/schema";
+import {
+  buildConveniosBreakdown,
+  calcularFaturamento,
+  CardPrices,
+} from "@/helpers/currency";
+
+import { getCardPrices } from "./get-card-prices";
 
 interface Params {
   from: string;
@@ -63,6 +70,7 @@ const getFaturamentoMensal = async (
   clinicIds: string[],
   from: string,
   to: string,
+  prices: CardPrices,
 ): Promise<
   { month: string; faturamento: number; isWithinPeriod?: boolean }[]
 > => {
@@ -186,16 +194,16 @@ const getFaturamentoMensal = async (
         ),
       );
 
-    // Calcular faturamento do mês usando a mesma lógica
-    const totalPatientsMonth_total =
-      (totalPatientsMonth?.total || 0) +
-      (totalPatientsRenovatedMonth?.total || 0);
-    const totalEnterpriseMonth_total =
-      (totalEnterpriseMonth?.total || 0) +
-      (totalEnterpriseRenovatedMonth?.total || 0);
-    const faturamentoMes =
-      (totalPatientsMonth_total - totalEnterpriseMonth_total) * 100 +
-      totalEnterpriseMonth_total * 90;
+    // Calcular faturamento do mês aplicando o preço de cada combinação
+    const faturamentoMes = calcularFaturamento(
+      buildConveniosBreakdown({
+        novos: totalPatientsMonth?.total || 0,
+        novosEmpresa: totalEnterpriseMonth?.total || 0,
+        renovados: totalPatientsRenovatedMonth?.total || 0,
+        renovadosEmpresa: totalEnterpriseRenovatedMonth?.total || 0,
+      }),
+      prices,
+    );
 
     // Mapeamento de meses para português
     const monthNames = {
@@ -449,16 +457,24 @@ export const getManagement = async ({
     const totalEnterpriseTotal =
       totalEnterprise.total + totalEnterpriseRenovated.total;
 
-    // Calcular faturamento total usando a mesma lógica do dashboard
-    const faturamentoTotal =
-      (totalPatientsTotal - totalEnterpriseTotal) * 100 +
-      totalEnterpriseTotal * 90;
+    // Calcular faturamento total aplicando o preço de cada combinação
+    const prices = await getCardPrices();
+    const faturamentoTotal = calcularFaturamento(
+      buildConveniosBreakdown({
+        novos: totalPatients.total,
+        novosEmpresa: totalEnterprise.total,
+        renovados: totalPatientsRenovated.total,
+        renovadosEmpresa: totalEnterpriseRenovated.total,
+      }),
+      prices,
+    );
 
     // Calcular faturamento mensal
     const faturamentoMensal = await getFaturamentoMensal(
       targetClinicIds,
       from,
       to,
+      prices,
     );
 
     // Buscar ativações de pacientes (novos e renovados) no período

@@ -5,6 +5,13 @@ import { and, count, eq, inArray, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import { patientsTable, sellersTable, usersToClinicsTable } from "@/db/schema";
+import {
+  buildConveniosBreakdown,
+  calcularFaturamento,
+  CardPrices,
+} from "@/helpers/currency";
+
+import { getCardPrices } from "./get-card-prices";
 
 // Configurar plugins do dayjs
 dayjs.extend(utc);
@@ -200,9 +207,17 @@ export async function getVendedores({
     const totalEnterpriseTotal =
       totalEnterprise.total + totalEnterpriseRenovados.total;
 
-    // Calcular faturamento usando a mesma lógica do get-management
-    const faturamentoTotal =
-      (totalVendas - totalEnterpriseTotal) * 100 + totalEnterpriseTotal * 90;
+    // Calcular faturamento aplicando o preço de cada combinação
+    const prices = await getCardPrices();
+    const faturamentoTotal = calcularFaturamento(
+      buildConveniosBreakdown({
+        novos: totalPatientsNovos.total,
+        novosEmpresa: totalEnterprise.total,
+        renovados: totalPatientsRenovados.total,
+        renovadosEmpresa: totalEnterpriseRenovados.total,
+      }),
+      prices,
+    );
 
     const ticketMedio = totalVendas > 0 ? faturamentoTotal / totalVendas : 0;
 
@@ -229,17 +244,25 @@ export async function getVendedores({
       const renovacoesVendedor = vendedorPatientsRenovados.length;
       const totalConvenios = novosConvenios + renovacoesVendedor;
 
-      // Convênios empresariais (soma de novos e renovados)
-      const conveniosEmpresariais =
-        vendedorPatientsNovos.filter((p) => p.cardType === "enterprise")
-          .length +
-        vendedorPatientsRenovados.filter((p) => p.cardType === "enterprise")
-          .length;
-      const conveniosIndividuais = totalConvenios - conveniosEmpresariais;
+      // Convênios empresariais separados por operação, para aplicar o preço correto
+      const novosEmpresa = vendedorPatientsNovos.filter(
+        (p) => p.cardType === "enterprise",
+      ).length;
+      const renovadosEmpresa = vendedorPatientsRenovados.filter(
+        (p) => p.cardType === "enterprise",
+      ).length;
+      const conveniosEmpresariais = novosEmpresa + renovadosEmpresa;
 
       // Calcular faturamento igual ao faturamento total
-      const faturamento =
-        conveniosIndividuais * 100 + conveniosEmpresariais * 90;
+      const faturamento = calcularFaturamento(
+        buildConveniosBreakdown({
+          novos: novosConvenios,
+          novosEmpresa,
+          renovados: renovacoesVendedor,
+          renovadosEmpresa,
+        }),
+        prices,
+      );
 
       // Meta mockada (pode ser implementada no banco depois)
       const meta = 100000; // Meta padrão
@@ -274,7 +297,11 @@ export async function getVendedores({
     const comissoesTotais = faturamentoTotal * 0.05;
 
     // Gerar faturamento mensal
-    const faturamentoMensal = generateMonthlyRevenue(patients, vendedorId);
+    const faturamentoMensal = generateMonthlyRevenue(
+      patients,
+      prices,
+      vendedorId,
+    );
 
     return {
       totalVendas,
@@ -310,6 +337,7 @@ function generateMonthlyRevenue(
     sellerId: string | null;
     [key: string]: unknown;
   }>,
+  prices: CardPrices,
   vendedorId?: string,
 ) {
   const monthlyData: { [key: string]: number } = {};
@@ -333,9 +361,17 @@ function generateMonthlyRevenue(
       monthlyData[monthKey] = 0;
     }
 
-    // Usar a mesma lógica de faturamento dos outros cálculos (sem multiplicar por numberCards)
-    const valorBase = patient.cardType === "enterprise" ? 90 : 100;
-    monthlyData[monthKey] += valorBase;
+    // Renovação quando há reactivatedAt; caso contrário é a ativação inicial
+    const operationPrices = patient.reactivatedAt
+      ? prices.renewal
+      : prices.activation;
+    const valorBase =
+      patient.cardType === "enterprise"
+        ? operationPrices.enterprise
+        : operationPrices.personal;
+
+    // Preços vêm em centavos; o gráfico trabalha em reais
+    monthlyData[monthKey] += valorBase / 100;
   });
 
   // Se não há dados mensais, retornar array vazio

@@ -19,6 +19,7 @@ import {
   PageHeaderContent,
   PageTitle,
 } from "@/components/ui/page-container";
+import { getCardPrices } from "@/data/get-card-prices";
 import { db } from "@/db";
 import { clinicsTable, patientsTable, sellersTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
@@ -139,6 +140,11 @@ const SellersGestorPage = async ({ searchParams }: SellersGestorPageProps) => {
       clinicName: clinicsTable.name,
       patientsCount: totalCondition,
       enterpriseCount: enterpriseTotalCondition,
+      // Separado por operação para aplicar o preço correto de cada combinação
+      novosCount: conveniosCondition,
+      novosEnterpriseCount: enterpriseCondition,
+      renovadosCount: conveniosRenovadosCondition,
+      renovadosEnterpriseCount: enterpriseRenovadosCondition,
       percentage: sellersTable.percentage,
       pixKey: sellersTable.pixKey,
       pixKeyType: sellersTable.pixKeyType,
@@ -155,6 +161,8 @@ const SellersGestorPage = async ({ searchParams }: SellersGestorPageProps) => {
     .where(whereCondition)
     .groupBy(sellersTable.id, clinicsTable.name)
     .orderBy(sql`${totalCondition} DESC`);
+
+  const cardPrices = await getCardPrices();
 
   return (
     <PageContainer>
@@ -180,7 +188,11 @@ const SellersGestorPage = async ({ searchParams }: SellersGestorPageProps) => {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {sellersWithPatientsCount.length > 0 ? (
             sellersWithPatientsCount.map((seller) => (
-              <SellerCard key={seller.id} seller={seller} />
+              <SellerCard
+                key={seller.id}
+                seller={seller}
+                cardPrices={cardPrices}
+              />
             ))
           ) : (
             <div className="col-span-full py-8 text-center">
