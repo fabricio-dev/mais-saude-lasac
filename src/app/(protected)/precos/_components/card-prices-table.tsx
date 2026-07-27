@@ -117,7 +117,11 @@ const CardPricesTable = ({
   return (
     <div className="rounded-lg border bg-white">
       <div className="flex justify-end border-b p-4">
-        <Button variant="outline" onClick={() => setHistoryView("all")}>
+        <Button
+          variant="outline"
+          onClick={() => setHistoryView("all")}
+          disabled
+        >
           <History className="mr-2 h-4 w-4" />
           Mostrar Histórico
         </Button>
@@ -138,14 +142,15 @@ const CardPricesTable = ({
             return (
               <TableRow key={`${operation}-${cardType}`}>
                 <TableCell className="font-medium">
-                  <button
+                  {/* <button
                     type="button"
                     onClick={() => setHistoryView({ operation, cardType })}
                     className="cursor-pointer underline-offset-4 hover:text-amber-800 hover:underline"
                     title="Ver histórico de preços"
                   >
                     {operationLabels[operation]}
-                  </button>
+                  </button>*/}
+                  {operationLabels[operation]}
                 </TableCell>
                 <TableCell>
                   <Badge
