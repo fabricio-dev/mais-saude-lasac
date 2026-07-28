@@ -723,7 +723,7 @@ const UpsertPatientForm = ({
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione o tipo de pagamento" />
+                        <SelectValue placeholder="Selecione pagamento" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
