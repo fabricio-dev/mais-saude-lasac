@@ -26,3 +26,11 @@ WHATSAPP_OFFICIAL_NUMBER=(11) 91234-5678
 # Gerar com: openssl rand -base64 32
 
 CRON_SECRET=seu_token_secreto_aleatorio_para_proteger_cron
+
+# Integração com o sistema de atendimento (whatsapp-ai)
+
+# Chave do header X-Api-Key da rota /api/integrations/v1/patient-lookup
+
+# Gerar com: openssl rand -hex 32
+
+INTEGRATION_API_KEY=chave_da_integracao_com_o_atendimento
