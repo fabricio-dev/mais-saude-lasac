@@ -1,0 +1,225 @@
+import { timingSafeEqual } from "node:crypto";
+
+import { eq, sql } from "drizzle-orm";
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+
+import { db } from "@/db";
+import { patientsTable } from "@/db/schema";
+
+// Consulta de cartão para o sistema de atendimento (whatsapp-ai).
+//
+// Leitura mínima: nome do titular, situação e validade do convênio. Sem dado
+// clínico, sem resultado de exame — quem chama é uma IA que responde ao
+// paciente no WhatsApp, e o que ela não recebe ela não tem como vazar.
+//
+// Quem é o titular, esta rota decide; o sistema de atendimento só transporta os
+// campos. São dois caminhos, e o segundo existe porque em plano de benefícios o
+// dependente consulta pelo CPF do titular, de um telefone que não está no
+// cadastro:
+//
+//   1. o telefone da conversa bate com o cadastro  → responde;
+//   2. não bate                                    → exige CPF **e** data de
+//      nascimento do titular, que é o que o dependente sabe e quem tem só um
+//      CPF vazado não sabe.
+//
+// "Não encontrei" responde 200 com corpo vazio, nunca 404: do outro lado, um
+// status fora da faixa 2xx é falha de rede e joga o paciente na fila humana,
+// enquanto o corpo vazio faz sair o texto de não encontrado.
+
+const VAZIO = { patient: null, agreement: null };
+
+const consultaSchema = z.object({
+  phone: z.string().min(10),
+  // Opcionais na rota, obrigatórios no caminho 2. Boa parte da base não tem CPF
+  // preenchido, e é por isso que a consulta por telefone continua de pé sozinha.
+  document: z.string().optional(),
+  birthDate: z.string().optional(),
+});
+
+const CAMPOS = {
+  name: patientsTable.name,
+  phoneNumber: patientsTable.phoneNumber,
+  birthDate: patientsTable.birthDate,
+  cardType: patientsTable.cardType,
+  isActive: patientsTable.isActive,
+  expirationDate: patientsTable.expirationDate,
+  // Formatada no Postgres de propósito: converter no Node passaria a data por
+  // fuso e moveria o vencimento um dia para trás em metade do país.
+  validUntil: sql<
+    string | null
+  >`to_char(${patientsTable.expirationDate}, 'YYYY-MM-DD')`,
+};
+
+type Candidato = {
+  name: string;
+  phoneNumber: string;
+  birthDate: string | null;
+  cardType: "enterprise" | "personal";
+  isActive: boolean;
+  expirationDate: Date | null;
+  validUntil: string | null;
+};
+
+type Telefone = { ddd: string; final: string };
+
+function chaveConfere(recebida: string | null): boolean {
+  const esperada = process.env.INTEGRATION_API_KEY;
+
+  if (!esperada || !recebida) return false;
+
+  const a = Buffer.from(recebida);
+  const b = Buffer.from(esperada);
+
+  // Comprimento diferente vaza pelo tamanho, não pelo tempo — e o
+  // timingSafeEqual lança quando os buffers não têm o mesmo tamanho.
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
+/**
+ * DDD + os 8 dígitos finais — o que sobrevive ao "55" e ao nono dígito.
+ *
+ * O formulário já grava só dígitos, sem código de país, e a única variação é o
+ * nono (87991372728 ou 8791372728). Do WhatsApp o número chega com o 55 e
+ * também com ou sem o nono, então são quatro combinações que precisam apontar
+ * para a mesma pessoa. O que não muda em nenhuma delas é o DDD e os 8 finais.
+ *
+ * A limpeza de não-dígitos é guarda para linha antiga, anterior à normalização:
+ * uma máscara gravada no passado casa igual, em vez de falhar calada.
+ */
+function nucleo(bruto: string): Telefone | null {
+  let digitos = bruto.replace(/\D/g, "");
+
+  if (digitos.length > 11 && digitos.startsWith("55")) {
+    digitos = digitos.slice(2);
+  }
+
+  if (digitos.length < 10) return null;
+
+  return { ddd: digitos.slice(0, 2), final: digitos.slice(-8) };
+}
+
+/**
+ * A data como o paciente digita, no formato da coluna.
+ *
+ * Quem preenche isso é o modelo, a partir do que a pessoa escreveu no WhatsApp:
+ * "12/05/1980", "12051980" e "1980-05-12" são a mesma data e todas chegam.
+ */
+function dataISO(bruto: string): string | null {
+  const iso = bruto.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (iso) return iso[0];
+
+  const digitos = bruto.replace(/\D/g, "");
+  if (digitos.length !== 8) return null;
+
+  return `${digitos.slice(4)}-${digitos.slice(2, 4)}-${digitos.slice(0, 2)}`;
+}
+
+const doMesmoNumero = (telefone: Telefone) => (candidato: Candidato) => {
+  const dele = nucleo(candidato.phoneNumber);
+  return dele?.ddd === telefone.ddd && dele.final === telefone.final;
+};
+
+/// Cadastro duplicado existe; entre as linhas da mesma pessoa vale a que vence
+/// por último, que é o cartão que ela tem na mão.
+const maisRecente = (a: Candidato, b: Candidato) =>
+  (b.expirationDate?.getTime() ?? 0) - (a.expirationDate?.getTime() ?? 0);
+
+function resposta(paciente: Candidato) {
+  const status = !paciente.isActive
+    ? "inativo"
+    : !paciente.expirationDate
+      ? null
+      : paciente.expirationDate.getTime() >= Date.now()
+        ? "ativo"
+        : "vencido";
+
+  return {
+    // Primeiro nome: o texto final é uma frase de WhatsApp, e nome completo no
+    // vocativo fica pesado.
+    patient: { name: paciente.name.trim().split(/\s+/)[0] },
+    agreement: {
+      status,
+      // Cartão inativo carrega uma validade que não vale mais: anunciá-la sairia
+      // como "está inativo — validade 20/05/2027", que se contradiz na frente
+      // do paciente. Sem a data, vale o texto de não encontrado e ele fala com
+      // uma pessoa, que é o desfecho certo para cartão desligado.
+      validUntil: status === "inativo" ? null : paciente.validUntil,
+      cardType:
+        paciente.cardType === "enterprise" ? "empresarial" : "individual",
+    },
+  };
+}
+
+export async function GET(request: NextRequest) {
+  if (!chaveConfere(request.headers.get("x-api-key"))) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(request.url);
+
+  const entrada = consultaSchema.safeParse({
+    phone: searchParams.get("phone") ?? "",
+    document: searchParams.get("document") ?? undefined,
+    birthDate: searchParams.get("birth_date") ?? undefined,
+  });
+
+  if (!entrada.success) {
+    return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+  }
+
+  const telefone = nucleo(entrada.data.phone);
+  const cpf = (entrada.data.document ?? "").replace(/\D/g, "");
+  const nascimento = entrada.data.birthDate
+    ? dataISO(entrada.data.birthDate)
+    : null;
+
+  if (!telefone) return NextResponse.json(VAZIO);
+
+  const confere = doMesmoNumero(telefone);
+
+  if (cpf.length === 11) {
+    const porCpf = await db
+      .select(CAMPOS)
+      .from(patientsTable)
+      .where(eq(patientsTable.cpfNumber, cpf))
+      .limit(5);
+
+    if (porCpf.length > 0) {
+      // Titular falando do próprio número: o telefone já provou quem é.
+      const doTitular = porCpf.filter(confere).sort(maisRecente)[0];
+      if (doTitular) return NextResponse.json(resposta(doTitular));
+
+      // Outro número — dependente, ou alguém com um CPF que não é dele. A data
+      // de nascimento decide, e cadastro sem data não passa: "não tenho como
+      // conferir" precisa responder como "não confere", senão a linha
+      // incompleta vira a porta de entrada.
+      const comData = porCpf
+        .filter((c) => nascimento !== null && c.birthDate === nascimento)
+        .sort(maisRecente)[0];
+
+      return NextResponse.json(comData ? resposta(comData) : VAZIO);
+    }
+  }
+
+  // Sem CPF, ou com um CPF que não está cadastrado: o identificador é o número
+  // que está falando.
+  const porTelefone = await db
+    .select(CAMPOS)
+    .from(patientsTable)
+    .where(
+      sql`right(regexp_replace(${patientsTable.phoneNumber}, '[^0-9]', '', 'g'), 8) = ${telefone.final}`,
+    )
+    .limit(10);
+
+  const daPessoa = porTelefone.filter(confere);
+  const titulares = new Set(daPessoa.map((c) => c.name.trim().toLowerCase()));
+
+  // Telefone de família, com titulares diferentes no mesmo número, não tem
+  // resposta certa — e resposta plausível e errada é pior que nenhuma, porque o
+  // paciente age sobre ela. Vazio aqui vira o texto de não encontrado, que manda
+  // falar com uma pessoa.
+  if (titulares.size !== 1) return NextResponse.json(VAZIO);
+
+  return NextResponse.json(resposta(daPessoa.sort(maisRecente)[0]));
+}
