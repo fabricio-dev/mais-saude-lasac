@@ -102,14 +102,28 @@ function nucleo(bruto: string): Telefone | null {
 /**
  * A data como o paciente digita, no formato da coluna.
  *
- * Quem preenche isso é o modelo, a partir do que a pessoa escreveu no WhatsApp:
- * "12/05/1980", "12051980" e "1980-05-12" são a mesma data e todas chegam.
+ * Quem preenche isso é o modelo, a partir do que a pessoa escreveu no WhatsApp,
+ * e ela escreve de todo jeito: "12/05/1980", "12/5/1980", "12-05-1980",
+ * "12051980" e "1980-05-12" são a mesma data. Aceitar as cinco custa uma regex
+ * e evita um transbordo por dígito a menos no separador.
+ *
+ * O que **não** é aceito é ambiguidade real: ano com dois dígitos, ou uma
+ * sequência que não fecha oito números. Aí a data não existe, e responder como
+ * se existisse acertaria o cadastro de outra pessoa.
  */
 function dataISO(bruto: string): string | null {
-  const iso = bruto.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (iso) return iso[0];
+  const doisDigitos = (parte: string) => parte.padStart(2, "0");
+  const texto = bruto.trim();
 
-  const digitos = bruto.replace(/\D/g, "");
+  const iso = texto.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (iso) return `${iso[1]}-${doisDigitos(iso[2])}-${doisDigitos(iso[3])}`;
+
+  const separada = texto.match(/^(\d{1,2})[/.\- ](\d{1,2})[/.\- ](\d{4})$/);
+  if (separada) {
+    return `${separada[3]}-${doisDigitos(separada[2])}-${doisDigitos(separada[1])}`;
+  }
+
+  const digitos = texto.replace(/\D/g, "");
   if (digitos.length !== 8) return null;
 
   return `${digitos.slice(4)}-${digitos.slice(2, 4)}-${digitos.slice(0, 2)}`;
