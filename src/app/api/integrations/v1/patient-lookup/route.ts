@@ -34,7 +34,7 @@ const consultaSchema = z.object({
   // Opcionais na rota, obrigatórios no caminho 2. Boa parte da base não tem CPF
   // preenchido, e é por isso que a consulta por telefone continua de pé sozinha.
   document: z.string().optional(),
-  birthDate: z.string().optional(),
+  birth_date: z.string().optional(),
 });
 
 const CAMPOS = {
@@ -165,18 +165,21 @@ function resposta(paciente: Candidato) {
   };
 }
 
-export async function GET(request: NextRequest) {
+/**
+ * Consulta por `POST`, apesar de ser leitura.
+ *
+ * O identificador vai no corpo porque query string entra no **log de acesso** —
+ * do Next, do proxy, da hospedagem — e o que se leria ali é CPF e telefone de
+ * paciente, guardados por quem não decidiu guardá-los. É a mesma leitura de
+ * antes; o que muda é onde o dado aparece depois.
+ */
+export async function POST(request: NextRequest) {
   if (!chaveConfere(request.headers.get("x-api-key"))) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const { searchParams } = new URL(request.url);
-
-  const entrada = consultaSchema.safeParse({
-    phone: searchParams.get("phone") ?? "",
-    document: searchParams.get("document") ?? undefined,
-    birthDate: searchParams.get("birth_date") ?? undefined,
-  });
+  const corpo: unknown = await request.json().catch(() => null);
+  const entrada = consultaSchema.safeParse(corpo);
 
   if (!entrada.success) {
     return NextResponse.json({ error: "invalid_request" }, { status: 400 });
@@ -184,8 +187,8 @@ export async function GET(request: NextRequest) {
 
   const telefone = nucleo(entrada.data.phone);
   const cpf = (entrada.data.document ?? "").replace(/\D/g, "");
-  const nascimento = entrada.data.birthDate
-    ? dataISO(entrada.data.birthDate)
+  const nascimento = entrada.data.birth_date
+    ? dataISO(entrada.data.birth_date)
     : null;
 
   if (!telefone) return NextResponse.json(VAZIO);
