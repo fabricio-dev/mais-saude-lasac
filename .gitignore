@@ -33,6 +33,14 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# dados de produção — nunca versionar (LGPD: base contém dados de saúde)
+*.dump
+*.bak
+*.sql.gz
+/src/scripts/*.xlsx
+/src/scripts/*.csv
+/logs/
+
 # vercel
 .vercel
 
