@@ -3,6 +3,7 @@
 import {
   CheckCircle,
   Edit2,
+  MessageCircle,
   MoreHorizontal,
   PrinterIcon,
   Trash2,
@@ -48,6 +49,7 @@ import {
 type PaymentType = "pix" | "dinheiro" | "cartao_credito" | "cartao_debito";
 
 import PrintCardComponent from "../../_components/print-card-component";
+import PatientWhatsAppNotifications from "./patient-whatsapp-notifications";
 import UpsertPatientForm from "./upsert-patient-form";
 
 interface Patient {
@@ -176,6 +178,24 @@ export default function TableActions({
               </DropdownMenuItem>
             </DropdownMenuSubContent>
           </DropdownMenuSub>
+
+          <Dialog>
+            <DialogTrigger asChild>
+              <DropdownMenuItem
+                onSelect={(e) => e.preventDefault()}
+                className="cursor-pointer"
+              >
+                <MessageCircle className="mr-2 h-4 w-4" />
+                Lembretes WhatsApp
+              </DropdownMenuItem>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <PatientWhatsAppNotifications
+                patientId={patient.id}
+                patientName={patient.name}
+              />
+            </DialogContent>
+          </Dialog>
 
           <AlertDialog>
             <AlertDialogTrigger asChild>

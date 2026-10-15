@@ -5,6 +5,7 @@ import {
   IdCard,
   LayoutDashboard,
   LogOut,
+  MessageCircle,
   Settings,
   Shield,
   Users,
@@ -73,6 +74,12 @@ const baseItems = [
     title: "Preços",
     url: "/precos",
     icon: CircleDollarSign,
+    requiresAdmin: true,
+  },
+  {
+    title: "WhatsApp",
+    url: "/whatsapp",
+    icon: MessageCircle,
     requiresAdmin: true,
   },
   {

@@ -19,6 +19,7 @@ export async function middleware(request: NextRequest) {
     "/patients",
     "/sellers",
     "/clinics",
+    "/whatsapp",
   ];
 
   // Rotas específicas para gestores
