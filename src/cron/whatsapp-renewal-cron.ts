@@ -2,10 +2,18 @@
  * Cron job para envio de lembretes de renovação via WhatsApp
  *
  * Regras de negócio:
- * 1. Enviar lembretes de renovação de convênio em 3 momentos:
- *    - D-7: 7 dias antes do vencimento
- *    - D0: No dia do vencimento
- *    - D+30: 30 dias após o vencimento
+ * 1. Enviar lembretes de renovação de convênio, cada um com recuperação para
+ *    quem ficou para trás porque o cron não rodou ou um dos sistemas (este ou
+ *    o whatsapp-ai) estava fora do ar:
+ *    - D-7: vence entre amanhã (D-1) e daqui a 7 dias. O aviso antecipado é o
+ *      que mais converte em renovação, então quem perdeu o dia 7 ainda recebe.
+ *    - D0: vence hoje. Só no dia — o texto diz "hoje".
+ *    - D0 atrasado: venceu há 1 a 29 dias sem ter recebido o D0
+ *      ("venceu em {{data}}"). Ligado por WHATSAPP_D0_LATE_ENABLED=true, depois
+ *      que o template lembrete_vencimento_atrasado for aprovado na Meta.
+ *    - D+30: venceu há 30 dias ou mais. No máximo WHATSAPP_D30_DAILY_LIMIT
+ *      (padrão 100) por execução, dos vencidos mais recentes para os mais
+ *      antigos: o número é o mesmo do atendimento, com teto diário da Meta.
  *
  * 2. Cada lembrete é enviado apenas UMA VEZ por paciente
  *    - O banco usa UNIQUE constraint (patientId, notificationType) como lock
@@ -27,7 +35,7 @@
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
-import { and, eq, gte, isNull, lte } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, lte } from "drizzle-orm";
 
 import { db } from "@/db";
 
@@ -52,13 +60,26 @@ import {
 /**
  * Tipos de lembrete de renovação
  */
-type RenewalType = "RENEWAL_D_7" | "RENEWAL_D_0" | "RENEWAL_D_30";
+type RenewalType =
+  | "RENEWAL_D_7"
+  | "RENEWAL_D_0"
+  | "RENEWAL_D_0_LATE"
+  | "RENEWAL_D_30";
+
+/** O template aprovado de cada lembrete (ver getTemplateConfig). */
+const TEMPLATE_TYPE = {
+  RENEWAL_D_7: "renewal_reminder_d7",
+  RENEWAL_D_0: "renewal_reminder_d0",
+  RENEWAL_D_0_LATE: "renewal_reminder_d0_late",
+  RENEWAL_D_30: "renewal_reminder_d30",
+} as const satisfies Record<RenewalType, string>;
 
 /** Rótulo de cada lembrete no relatório do atendimento. */
 const CATEGORY: Record<RenewalType, string> = {
   RENEWAL_D_7: "Vencimento em 7 dias",
   RENEWAL_D_0: "Vencimento hoje",
-  RENEWAL_D_30: "Vencido há 30 dias",
+  RENEWAL_D_0_LATE: "Vencido (aviso atrasado)",
+  RENEWAL_D_30: "Vencido há 30 dias ou mais",
 };
 
 /**
@@ -86,188 +107,130 @@ interface ProcessingResult {
   notificationType: RenewalType;
 }
 
+/** Início e fim de um dia relativo a hoje, em São Paulo, convertidos para UTC. */
+function daySP(offsetDays: number) {
+  const day = dayjs().tz("America/Sao_Paulo").add(offsetDays, "day");
+  return {
+    start: day.startOf("day").utc().toDate(),
+    end: day.endOf("day").utc().toDate(),
+    label: day.format("DD/MM/YYYY"),
+  };
+}
+
 /**
- * Busca pacientes elegíveis para lembrete D-7 (7 dias antes do vencimento)
- *
- * Critérios:
- * - expirationDate = hoje + 7 dias (no timezone de São Paulo, convertido para UTC)
- * - whatsappConsent = true
- * - isActive = true
- * - Ainda não recebeu lembrete D-7 (LEFT JOIN + isNull)
+ * Pacientes com consentimento, vencimento dentro de [from, to] e sem nenhuma
+ * das notificações em `notSent` — é a trava que impede reenvio.
  */
+async function findEligiblePatients(params: {
+  from?: Date;
+  to: Date;
+  notSent: RenewalType[];
+  onlyActive?: boolean;
+  /** Mais recentes primeiro, com teto: o acúmulo drena ao longo dos dias. */
+  limit?: number;
+}): Promise<EligiblePatient[]> {
+  const query = db
+    .select({
+      id: patientsTable.id,
+      name: patientsTable.name,
+      phoneNumber: patientsTable.phoneNumber,
+      expirationDate: patientsTable.expirationDate,
+      clinicId: patientsTable.clinicId,
+      clinicName: clinicsTable.name,
+      whatsappConsent: patientsTable.whatsappConsent,
+    })
+    .from(patientsTable)
+    .leftJoin(clinicsTable, eq(patientsTable.clinicId, clinicsTable.id))
+    .leftJoin(
+      whatsappNotificationsTable,
+      and(
+        eq(whatsappNotificationsTable.patientId, patientsTable.id),
+        inArray(whatsappNotificationsTable.notificationType, params.notSent),
+      ),
+    )
+    .where(
+      and(
+        params.onlyActive ? eq(patientsTable.isActive, true) : undefined,
+        eq(patientsTable.whatsappConsent, true),
+        params.from
+          ? gte(patientsTable.expirationDate, params.from)
+          : undefined,
+        lte(patientsTable.expirationDate, params.to),
+        isNull(whatsappNotificationsTable.id),
+      ),
+    )
+    .orderBy(desc(patientsTable.expirationDate))
+    .$dynamic();
+
+  const patients = await (params.limit ? query.limit(params.limit) : query);
+
+  return patients.map((p) => ({
+    id: p.id,
+    name: p.name,
+    phoneNumber: p.phoneNumber,
+    expirationDate: p.expirationDate!,
+    clinicId: p.clinicId!,
+    clinicName: p.clinicName!,
+    whatsappConsent: p.whatsappConsent,
+  }));
+}
+
+/** D-7: vence entre amanhã e daqui a 7 dias, e ainda não recebeu o D-7. */
 async function getEligiblePatientsForD7(): Promise<EligiblePatient[]> {
-  // Calcular a data no timezone de São Paulo e converter para UTC para comparar com o banco
-  const targetDateSP = dayjs()
-    .tz("America/Sao_Paulo")
-    .add(7, "days")
-    .startOf("day");
-  const targetDate = targetDateSP.utc().toDate();
-  const targetDateEnd = targetDateSP.endOf("day").utc().toDate();
+  const from = daySP(1);
+  const to = daySP(7);
+  console.log(`[D-7] Vencimento entre ${from.label} e ${to.label}`);
 
-  console.log(
-    `[D-7] Buscando pacientes com expirationDate entre ${targetDateSP.format("DD/MM/YYYY HH:mm")} (UTC: ${dayjs(targetDate).format("YYYY-MM-DD HH:mm")})`,
-  );
-
-  const patients = await db
-    .select({
-      id: patientsTable.id,
-      name: patientsTable.name,
-      phoneNumber: patientsTable.phoneNumber,
-      expirationDate: patientsTable.expirationDate,
-      clinicId: patientsTable.clinicId,
-      clinicName: clinicsTable.name,
-      whatsappConsent: patientsTable.whatsappConsent,
-    })
-    .from(patientsTable)
-    .leftJoin(clinicsTable, eq(patientsTable.clinicId, clinicsTable.id))
-    .leftJoin(
-      whatsappNotificationsTable,
-      and(
-        eq(whatsappNotificationsTable.patientId, patientsTable.id),
-        eq(whatsappNotificationsTable.notificationType, "RENEWAL_D_7"),
-      ),
-    )
-    .where(
-      and(
-        // Filtros do paciente
-        eq(patientsTable.isActive, true),
-        eq(patientsTable.whatsappConsent, true),
-        gte(patientsTable.expirationDate, targetDate),
-        lte(patientsTable.expirationDate, targetDateEnd),
-        // Garantir que não foi enviado ainda
-        isNull(whatsappNotificationsTable.id),
-      ),
-    );
-
-  return patients.map((p) => ({
-    id: p.id,
-    name: p.name,
-    phoneNumber: p.phoneNumber,
-    expirationDate: p.expirationDate!,
-    clinicId: p.clinicId!,
-    clinicName: p.clinicName!,
-    whatsappConsent: p.whatsappConsent,
-  }));
+  return findEligiblePatients({
+    from: from.start,
+    to: to.end,
+    notSent: ["RENEWAL_D_7"],
+    onlyActive: true,
+  });
 }
 
-/**
- * Busca pacientes elegíveis para lembrete D0 (no dia do vencimento)
- *
- * Critérios:
- * - expirationDate = hoje (no timezone de São Paulo, convertido para UTC)
- * - whatsappConsent = true
- * - isActive = true
- * - Ainda não recebeu lembrete D0
- */
+/** D0: vence hoje. Sem recuperação aqui — quem perder vai para o D0 atrasado. */
 async function getEligiblePatientsForD0(): Promise<EligiblePatient[]> {
-  // Calcular a data no timezone de São Paulo e converter para UTC
-  const todaySP = dayjs().tz("America/Sao_Paulo").startOf("day");
-  const today = todaySP.utc().toDate();
-  const todayEnd = todaySP.endOf("day").utc().toDate();
+  const today = daySP(0);
+  console.log(`[D0] Vencimento em ${today.label}`);
 
-  console.log(
-    `[D0] Buscando pacientes com expirationDate = ${todaySP.format("DD/MM/YYYY")} (UTC: ${dayjs(today).format("YYYY-MM-DD HH:mm")})`,
-  );
-
-  const patients = await db
-    .select({
-      id: patientsTable.id,
-      name: patientsTable.name,
-      phoneNumber: patientsTable.phoneNumber,
-      expirationDate: patientsTable.expirationDate,
-      clinicId: patientsTable.clinicId,
-      clinicName: clinicsTable.name,
-      whatsappConsent: patientsTable.whatsappConsent,
-    })
-    .from(patientsTable)
-    .leftJoin(clinicsTable, eq(patientsTable.clinicId, clinicsTable.id))
-    .leftJoin(
-      whatsappNotificationsTable,
-      and(
-        eq(whatsappNotificationsTable.patientId, patientsTable.id),
-        eq(whatsappNotificationsTable.notificationType, "RENEWAL_D_0"),
-      ),
-    )
-    .where(
-      and(
-        // eq(patientsTable.isActive, true),
-        eq(patientsTable.whatsappConsent, true),
-        gte(patientsTable.expirationDate, today),
-        lte(patientsTable.expirationDate, todayEnd),
-        isNull(whatsappNotificationsTable.id),
-      ),
-    );
-
-  return patients.map((p) => ({
-    id: p.id,
-    name: p.name,
-    phoneNumber: p.phoneNumber,
-    expirationDate: p.expirationDate!,
-    clinicId: p.clinicId!,
-    clinicName: p.clinicName!,
-    whatsappConsent: p.whatsappConsent,
-  }));
+  return findEligiblePatients({
+    from: today.start,
+    to: today.end,
+    notSent: ["RENEWAL_D_0"],
+  });
 }
 
-/**
- * Busca pacientes elegíveis para lembrete D+30 (30 dias após vencimento)
- *
- * Critérios:
- * - expirationDate = hoje - 30 dias (no timezone de São Paulo, convertido para UTC)
- * - whatsappConsent = true
- * - Ainda não recebeu lembrete D+30
- * - Pode estar inativo (paciente vencido)
- */
-async function getEligiblePatientsForD30(): Promise<EligiblePatient[]> {
-  // Calcular a data no timezone de São Paulo e converter para UTC
-  const targetDateSP = dayjs()
-    .tz("America/Sao_Paulo")
-    .subtract(30, "days")
-    .startOf("day");
-  const targetDate = targetDateSP.utc().toDate();
-  const targetDateEnd = targetDateSP.endOf("day").utc().toDate();
+/** D0 atrasado: venceu há 1 a 29 dias e não recebeu nem o D0 nem este. */
+async function getEligiblePatientsForD0Late(): Promise<EligiblePatient[]> {
+  const from = daySP(-29);
+  const to = daySP(-1);
+  console.log(`[D0 atrasado] Vencimento entre ${from.label} e ${to.label}`);
 
+  return findEligiblePatients({
+    from: from.start,
+    to: to.end,
+    notSent: ["RENEWAL_D_0", "RENEWAL_D_0_LATE"],
+  });
+}
+
+const D30_DAILY_LIMIT = Math.max(
+  1,
+  Number.parseInt(process.env.WHATSAPP_D30_DAILY_LIMIT ?? "", 10) || 100,
+);
+
+/** D+30: venceu há 30 dias ou mais e ainda não recebeu o D+30. */
+async function getEligiblePatientsForD30(): Promise<EligiblePatient[]> {
+  const to = daySP(-30);
   console.log(
-    `[D+30] Buscando pacientes com expirationDate = ${targetDateSP.format("DD/MM/YYYY")} (UTC: ${dayjs(targetDate).format("YYYY-MM-DD HH:mm")})`,
+    `[D+30] Vencimento até ${to.label}, no máximo ${D30_DAILY_LIMIT} nesta execução`,
   );
 
-  const patients = await db
-    .select({
-      id: patientsTable.id,
-      name: patientsTable.name,
-      phoneNumber: patientsTable.phoneNumber,
-      expirationDate: patientsTable.expirationDate,
-      clinicId: patientsTable.clinicId,
-      clinicName: clinicsTable.name,
-      whatsappConsent: patientsTable.whatsappConsent,
-    })
-    .from(patientsTable)
-    .leftJoin(clinicsTable, eq(patientsTable.clinicId, clinicsTable.id))
-    .leftJoin(
-      whatsappNotificationsTable,
-      and(
-        eq(whatsappNotificationsTable.patientId, patientsTable.id),
-        eq(whatsappNotificationsTable.notificationType, "RENEWAL_D_30"),
-      ),
-    )
-    .where(
-      and(
-        eq(patientsTable.whatsappConsent, true),
-        gte(patientsTable.expirationDate, targetDate),
-        lte(patientsTable.expirationDate, targetDateEnd),
-        isNull(whatsappNotificationsTable.id),
-      ),
-    );
-
-  return patients.map((p) => ({
-    id: p.id,
-    name: p.name,
-    phoneNumber: p.phoneNumber,
-    expirationDate: p.expirationDate!,
-    clinicId: p.clinicId!,
-    clinicName: p.clinicName!,
-    whatsappConsent: p.whatsappConsent,
-  }));
+  return findEligiblePatients({
+    to: to.end,
+    notSent: ["RENEWAL_D_30"],
+    limit: D30_DAILY_LIMIT,
+  });
 }
 
 /**
@@ -338,6 +301,25 @@ async function updateNotificationStatus(
 }
 
 /**
+ * Desfaz a trava de um envio que não chegou ao whatsapp-ai por falha
+ * passageira (sistema fora do ar, rede, configuração). A próxima execução
+ * encontra o paciente de novo, se ele ainda estiver na janela do lembrete.
+ */
+async function releaseNotificationLock(
+  patientId: string,
+  notificationType: RenewalType,
+): Promise<void> {
+  await db
+    .delete(whatsappNotificationsTable)
+    .where(
+      and(
+        eq(whatsappNotificationsTable.patientId, patientId),
+        eq(whatsappNotificationsTable.notificationType, notificationType),
+      ),
+    );
+}
+
+/**
  * Aplica proteção de ambiente DEV
  * Em DEV, só permite enviar para WHATSAPP_TEST_PHONE
  */
@@ -396,22 +378,7 @@ async function processPatient(
   // IMPORTANTE: getTemplateConfig retorna template pré-aprovado
   // Não criar texto livre, não inventar template
   // Mapear o tipo de notificação para o template correto
-  let templateType:
-    | "renewal_reminder_d7"
-    | "renewal_reminder_d0"
-    | "renewal_reminder_d30";
-
-  switch (notificationType) {
-    case "RENEWAL_D_7":
-      templateType = "renewal_reminder_d7";
-      break;
-    case "RENEWAL_D_0":
-      templateType = "renewal_reminder_d0";
-      break;
-    case "RENEWAL_D_30":
-      templateType = "renewal_reminder_d30";
-      break;
-  }
+  const templateType = TEMPLATE_TYPE[notificationType];
 
   const templateConfig = getTemplateConfig(templateType, {
     patientName: name,
@@ -462,9 +429,14 @@ async function processPatient(
   });
 
   // 6. Atualizar status no banco. Pulado (descadastro no atendimento) conta
-  // como não enviado: o paciente não recebeu.
+  // como não enviado: o paciente não recebeu, e não adianta tentar de novo.
+  // Falha passageira libera a trava para a próxima execução recuperar.
   const sent = result.success && result.status === "queued";
-  await updateNotificationStatus(id, notificationType, sent);
+  if (!result.success && result.retryable) {
+    await releaseNotificationLock(id, notificationType);
+  } else {
+    await updateNotificationStatus(id, notificationType, sent);
+  }
 
   return {
     patientId: id,
@@ -472,7 +444,8 @@ async function processPatient(
     phone: maskPhoneNumber(targetPhone),
     success: sent,
     reason: !result.success
-      ? `Falha no envio: ${result.error}`
+      ? `Falha no envio: ${result.error}` +
+        (result.retryable ? " (nova tentativa na próxima execução)" : "")
       : sent
         ? `Na fila do atendimento (ID: ${result.id})`
         : `Pulado pelo atendimento: ${result.reason}`,
@@ -558,10 +531,11 @@ async function processRenewalType(
 /**
  * Função principal do cron
  *
- * Executa os 3 tipos de lembrete em sequência:
- * 1. D-7 (7 dias antes)
- * 2. D0 (no dia)
- * 3. D+30 (30 dias depois)
+ * Executa os lembretes em sequência (janelas no cabeçalho do arquivo):
+ * 1. D-7 (vence em 1 a 7 dias)
+ * 2. D0 (vence hoje)
+ * 3. D0 atrasado (venceu há 1 a 29 dias, se ligado)
+ * 4. D+30 (venceu há 30 dias ou mais, com teto por execução)
  *
  * Uso:
  * - Pode ser chamada manualmente: await runWhatsAppRenewalCron()
@@ -590,6 +564,16 @@ export async function runWhatsAppRenewalCron(): Promise<void> {
     // Processar cada tipo de lembrete
     await processRenewalType("RENEWAL_D_7", getEligiblePatientsForD7);
     await processRenewalType("RENEWAL_D_0", getEligiblePatientsForD0);
+    if (process.env.WHATSAPP_D0_LATE_ENABLED === "true") {
+      await processRenewalType(
+        "RENEWAL_D_0_LATE",
+        getEligiblePatientsForD0Late,
+      );
+    } else {
+      console.log(
+        "\n[RENEWAL_D_0_LATE] Desligado (WHATSAPP_D0_LATE_ENABLED != true)",
+      );
+    }
     await processRenewalType("RENEWAL_D_30", getEligiblePatientsForD30);
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);

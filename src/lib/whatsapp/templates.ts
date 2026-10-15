@@ -146,6 +146,7 @@ export function getTemplateConfig(
     | "early_renewal"
     | "renewal_reminder_d7"
     | "renewal_reminder_d0"
+    | "renewal_reminder_d0_late"
     | "renewal_reminder_d30",
   params: MessageTemplateParams,
 ): TemplateConfig {
@@ -196,6 +197,15 @@ export function getTemplateConfig(
       return {
         name: "lembrete_vencimento_hoje",
         parameters: [firstName, officialWhatsApp],
+      };
+
+    case "renewal_reminder_d0_late":
+      // Recuperação do D0: o cron não rodou no dia do vencimento.
+      // Template: "Olá, {{1}}. Seu cartão LASAC venceu em {{2}}." + wa.me/{{3}}
+      // Parâmetros: nome, data de vencimento, número WhatsApp
+      return {
+        name: "lembrete_vencimento_atrasado",
+        parameters: [firstName, formattedDate, officialWhatsApp],
       };
 
     case "renewal_reminder_d30":

@@ -188,6 +188,8 @@ export const patientsTable = pgTable("patients", {
 export const notificationTypeEnum = pgEnum("notification_type", [
   "RENEWAL_D_7",
   "RENEWAL_D_0",
+  // Quem não recebeu o D0 no dia (cron fora do ar): "venceu em {{data}}".
+  "RENEWAL_D_0_LATE",
   "RENEWAL_D_30",
 ]);
 

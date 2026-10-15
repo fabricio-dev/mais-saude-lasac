@@ -43,7 +43,16 @@ export type SendTemplateResult =
       reason: string | null;
       duplicate: boolean;
     }
-  | { success: false; error: string };
+  | {
+      success: false;
+      error: string;
+      /**
+       * Vale tentar de novo numa próxima execução: rede, sistema fora do ar,
+       * configuração (chave, recurso desligado). Falso quando o pedido em si
+       * está errado (template, variáveis, telefone) — repetir não muda nada.
+       */
+      retryable: boolean;
+    };
 
 const MAX_ATTEMPTS = 3;
 const TIMEOUT_MS = 10_000;
@@ -64,7 +73,11 @@ export async function sendWhatsAppTemplate(
     console.log(
       `WhatsApp desabilitado. "${params.templateName}" não enviado para ${maskPhoneNumber(params.phoneNumber)}`,
     );
-    return { success: false, error: "WhatsApp está desabilitado no ambiente" };
+    return {
+      success: false,
+      error: "WhatsApp está desabilitado no ambiente",
+      retryable: true,
+    };
   }
 
   const baseUrl = process.env.WHATSAPP_AI_URL?.replace(/\/+$/, "");
@@ -74,6 +87,7 @@ export async function sendWhatsAppTemplate(
     return {
       success: false,
       error: "Configuração do sistema de atendimento ausente",
+      retryable: true,
     };
   }
 
@@ -140,13 +154,19 @@ export async function sendWhatsAppTemplate(
       lastError =
         data?.message ?? data?.error ?? `Erro HTTP ${response.status}`;
 
-      // Pedido recusado (chave, formato, template): repetir não muda nada.
+      // Pedido recusado: repetir agora não muda nada. Chave inválida (401) e
+      // recurso desligado (403) são configuração — voltam a funcionar quando
+      // alguém corrigir, então a próxima execução pode tentar de novo.
       const passageiro = response.status >= 500 || response.status === 429;
       if (!passageiro) {
         console.error(
           `Envio de "${params.templateName}" para ${destino} recusado: ${lastError}`,
         );
-        return { success: false, error: lastError };
+        return {
+          success: false,
+          error: lastError,
+          retryable: response.status === 401 || response.status === 403,
+        };
       }
     } catch (error) {
       lastError = error instanceof Error ? error.message : "Erro desconhecido";
@@ -158,5 +178,5 @@ export async function sendWhatsAppTemplate(
     if (attempt < MAX_ATTEMPTS) await wait(1000 * attempt);
   }
 
-  return { success: false, error: lastError };
+  return { success: false, error: lastError, retryable: true };
 }
