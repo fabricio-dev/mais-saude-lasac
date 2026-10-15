@@ -239,6 +239,17 @@ async function getEligiblePatientsForD30(
   });
 }
 
+function isUniqueViolation(error: unknown): boolean {
+  const code = (err: unknown) =>
+    typeof err === "object" && err !== null && "code" in err
+      ? (err as { code?: unknown }).code
+      : undefined;
+  return (
+    code(error) === "23505" ||
+    (error instanceof Error && code(error.cause) === "23505")
+  );
+}
+
 /**
  * Cria registro de notificação no banco (lock)
  *
@@ -264,12 +275,11 @@ async function createNotificationLock(
 
     return true;
   } catch (error) {
-    // Se falhar por UNIQUE constraint, é porque já existe
-    if (
-      error instanceof Error &&
-      (error.message.includes("unique") ||
-        error.message.includes("duplicate key"))
-    ) {
+    // Se falhar por UNIQUE constraint, é porque já existe. Pelo código do
+    // Postgres (23505): desde o drizzle-orm 0.44 o erro do driver chega
+    // embrulhado num DrizzleQueryError, em `cause`, e a mensagem de fora não
+    // diz mais "duplicate key".
+    if (isUniqueViolation(error)) {
       console.log(
         `[LOCK] Notificação ${notificationType} já existe para paciente ${patientId}`,
       );

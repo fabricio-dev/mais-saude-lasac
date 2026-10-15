@@ -62,7 +62,9 @@ const SingUpForm = () => {
           router.push("/dashboard");
         },
         onError: (ctx) => {
-          if (ctx.error.code === "USER_ALREADY_EXISTS") {
+          // A partir do better-auth 1.6 o cadastro responde
+          // USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL.
+          if (ctx.error.code?.startsWith("USER_ALREADY_EXISTS")) {
             toast.error("Email já cadastrado");
             return;
           }
