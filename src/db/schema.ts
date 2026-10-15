@@ -4,6 +4,7 @@ import {
   customType,
   date,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   text,
@@ -283,6 +284,28 @@ export const whatsappSettingsTable = pgTable("whatsapp_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
   updatedByUserId: text("updated_by_user_id").references(() => usersTable.id),
 });
+
+/**
+ * Qual modelo aprovado vai em cada mensagem e de onde vem cada variável,
+ * escolhido em /whatsapp. Uma linha por mensagem (`key`, ver
+ * src/lib/whatsapp/message-templates.ts); sem linha, vale o padrão de lá.
+ */
+export const whatsappMessageTemplatesTable = pgTable(
+  "whatsapp_message_templates",
+  {
+    key: text("key").primaryKey(),
+    templateName: text("template_name").notNull(),
+    templateLanguage: text("template_language").notNull().default("pt_BR"),
+    // [{ source, text? }] na ordem dos {{n}} do modelo.
+    params: jsonb("params")
+      .$type<{ source: string; text?: string }[]>()
+      .notNull()
+      .default([]),
+    headerDocument: boolean("header_document").notNull().default(false),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+    updatedByUserId: text("updated_by_user_id").references(() => usersTable.id),
+  },
+);
 
 const bytea = customType<{ data: Buffer }>({
   dataType() {
