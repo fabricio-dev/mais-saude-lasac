@@ -20,6 +20,47 @@
 > `WHATSAPP_API_URL`, `WHATSAPP_ACCESS_TOKEN` e `WHATSAPP_PHONE_NUMBER_ID` não são
 > mais lidas.
 
+## 🔮 Futuro: envio pelo próprio sistema, com app e número próprios
+
+> **Ainda não implementado** — registrado em outubro de 2026.
+
+Hoje o único caminho de envio é o whatsapp-ai. A ideia é oferecer uma
+**segunda opção**: o mais-saude enviando direto pela Meta, com app e número
+próprios, sem depender do whatsapp-ai. **O cliente escolhe na tela
+/whatsapp** qual dos dois caminhos usar.
+
+| | Pelo whatsapp-ai (atual) | Direto pelo próprio sistema (futuro) |
+|---|---|---|
+| Número | O mesmo do atendimento | Outro número, só para avisos |
+| App da Meta | O do whatsapp-ai | Um app próprio do mais-saude |
+| Resposta do paciente | Cai no atendimento, com o aviso na conversa | Não tem quem atenda — precisa de resposta automática apontando o número do atendimento |
+| Descadastro ("PARE") | Aplicado pelo whatsapp-ai | Precisa ser implementado aqui |
+| Entregue / lido | Relatório Envios automáticos do whatsapp-ai | Precisa de webhook e relatório aqui |
+| Dependência | whatsapp-ai no ar | Só a Meta |
+
+**O que já deixa isso mais fácil:**
+
+- Todo envio passa por `sendWhatsAppTemplate` (`src/lib/whatsapp/client.ts`).
+  A segunda opção vira outra implementação da mesma função, e o cron, o
+  cadastro e a ativação não mudam.
+- A configuração já mora na tela /whatsapp, e os segredos já são cifrados
+  (`src/lib/crypto.ts`): token e Phone Number ID do número próprio entram do
+  mesmo jeito que a chave do whatsapp-ai.
+- O `externalId` de cada envio e a trava `(paciente, lembrete)` continuam
+  valendo — a Meta não tem idempotência, então a trava passa a ser a única
+  proteção contra mensagem em dobro.
+
+**O que precisa existir antes de ligar:**
+
+1. Escolha do caminho na tela /whatsapp, com os campos de cada um.
+2. Envio direto pela Graph API (o código antigo, removido em outubro de 2026,
+   está no histórico do git como referência).
+3. Webhook de status da Meta para este sistema, para entregue, lido e falha.
+4. Descadastro próprio: quem responder "PARE" para de receber.
+5. Resposta automática a quem escrever no número de avisos, indicando o número
+   do atendimento — sem ela, a resposta do paciente se perde.
+6. Templates aprovados no WABA do número novo (os nomes podem ser os mesmos).
+
 ## 📋 Visão Geral
 
 Sistema de envio automático de mensagens WhatsApp quando um paciente é **criado**, **ativado** ou tem seu convênio **renovado**.
