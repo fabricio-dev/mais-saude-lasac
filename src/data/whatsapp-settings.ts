@@ -92,6 +92,20 @@ export function toInput(settings: WhatsAppSettings): WhatsAppSettingsInput {
   };
 }
 
+/**
+ * Garante a linha de configuração, nascendo com os valores do .env — e não com
+ * os padrões da tabela, que desligariam os envios (`enabled` nasce false).
+ * Quem grava só uma parte (a marca do dia, a conexão) passa por aqui antes.
+ */
+export async function ensureSettingsRow(): Promise<void> {
+  await db
+    .insert(whatsappSettingsTable)
+    .values({ id: SETTINGS_ID, ...toInput(defaultsFromEnv()) })
+    .onConflictDoNothing();
+}
+
+export const WHATSAPP_SETTINGS_ID = SETTINGS_ID;
+
 export async function saveWhatsAppSettings(
   input: WhatsAppSettingsInput,
   userId: string,
@@ -139,12 +153,7 @@ export async function claimScheduledRun(
   }
 
   // Sem linha salva (padrões do .env), cria a linha para guardar a marca.
-  if (settings.isDefault) {
-    await db
-      .insert(whatsappSettingsTable)
-      .values({ id: SETTINGS_ID, ...toInput(settings) })
-      .onConflictDoNothing();
-  }
+  if (settings.isDefault) await ensureSettingsRow();
 
   const claimed = await db
     .update(whatsappSettingsTable)
