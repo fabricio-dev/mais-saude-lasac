@@ -47,9 +47,9 @@ export type SendTemplateResult =
       success: false;
       error: string;
       /**
-       * Vale tentar de novo numa próxima execução: rede, sistema fora do ar,
-       * configuração (chave, recurso desligado). Falso quando o pedido em si
-       * está errado (template, variáveis, telefone) — repetir não muda nada.
+       * Vale tentar de novo numa próxima execução. Falso só para telefone
+       * inválido, que é do cadastro do paciente; todo o resto (rede, sistema
+       * fora do ar, template, variáveis, chave) se resolve com uma correção.
        */
       retryable: boolean;
     };
@@ -154,9 +154,10 @@ export async function sendWhatsAppTemplate(
       lastError =
         data?.message ?? data?.error ?? `Erro HTTP ${response.status}`;
 
-      // Pedido recusado: repetir agora não muda nada. Chave inválida (401) e
-      // recurso desligado (403) são configuração — voltam a funcionar quando
-      // alguém corrigir, então a próxima execução pode tentar de novo.
+      // Repetir agora não muda nada. Mas só o telefone inválido é do paciente:
+      // template pausado na Meta, variáveis erradas, chave ou recurso
+      // desligado atingem o lote inteiro e se resolvem com uma correção — a
+      // próxima execução tenta de novo, em vez de perder o lote do dia.
       const passageiro = response.status >= 500 || response.status === 429;
       if (!passageiro) {
         console.error(
@@ -165,7 +166,7 @@ export async function sendWhatsAppTemplate(
         return {
           success: false,
           error: lastError,
-          retryable: response.status === 401 || response.status === 403,
+          retryable: data?.error !== "invalid_phone",
         };
       }
     } catch (error) {

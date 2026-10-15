@@ -282,6 +282,7 @@ async function updateNotificationStatus(
   patientId: string,
   notificationType: RenewalType,
   success: boolean,
+  failureReason: string | null = null,
 ): Promise<void> {
   const status = success ? "sent" : "failed";
   const sentAt = success ? new Date() : null;
@@ -291,6 +292,7 @@ async function updateNotificationStatus(
     .set({
       status,
       sentAt,
+      failureReason: success ? null : failureReason,
     })
     .where(
       and(
@@ -341,10 +343,11 @@ function applyDevProtection(phoneNumber: string): string {
  * Processa um paciente: cria lock, envia WhatsApp e atualiza status
  *
  * Fluxo:
- * 1. Valida telefone
- * 2. Obtém template aprovado da Meta
- * 3. Cria lock no banco (INSERT com status = 'pending')
- * 4. Se lock falhar (já existe), pula paciente
+ * 1. Obtém template aprovado da Meta
+ * 2. Cria lock no banco (INSERT com status = 'pending')
+ * 3. Se lock falhar (já existe), pula paciente
+ * 4. Telefone inválido fica 'failed' com o motivo — sem o lock, o mesmo
+ *    paciente voltaria a cada execução e ocuparia o teto do D+30
  * 5. Aplica proteção DEV
  * 6. Pede o envio ao whatsapp-ai
  * 7. Atualiza status para 'sent' ou 'failed'
@@ -355,29 +358,11 @@ async function processPatient(
 ): Promise<ProcessingResult> {
   const { id, name, phoneNumber, expirationDate, clinicId, clinicName } =
     patient;
-
-  // 1. Validar telefone
   const formattedPhone = formatPhoneNumber(phoneNumber);
 
-  if (!isValidPhoneNumber(formattedPhone)) {
-    console.error(
-      `[${notificationType}] Telefone inválido para paciente ${name}: ${maskPhoneNumber(phoneNumber)}`,
-    );
-
-    return {
-      patientId: id,
-      patientName: name,
-      phone: maskPhoneNumber(phoneNumber),
-      success: false,
-      reason: "Telefone inválido",
-      notificationType,
-    };
-  }
-
-  // 2. Obter template aprovado da Meta
+  // 1. Obter template aprovado da Meta
   // IMPORTANTE: getTemplateConfig retorna template pré-aprovado
   // Não criar texto livre, não inventar template
-  // Mapear o tipo de notificação para o template correto
   const templateType = TEMPLATE_TYPE[notificationType];
 
   const templateConfig = getTemplateConfig(templateType, {
@@ -386,7 +371,7 @@ async function processPatient(
     clinicName: clinicName,
   });
 
-  // 3. Criar lock no banco (proteção contra duplicação)
+  // 2. Criar lock no banco (proteção contra duplicação)
   const lockCreated = await createNotificationLock(
     id,
     clinicId,
@@ -401,6 +386,28 @@ async function processPatient(
       phone: maskPhoneNumber(formattedPhone),
       success: false,
       reason: "Notificação já enviada anteriormente (lock)",
+      notificationType,
+    };
+  }
+
+  // 3. Validar telefone (com ou sem o 9 do celular)
+  if (!isValidPhoneNumber(phoneNumber)) {
+    console.error(
+      `[${notificationType}] Telefone inválido para paciente ${name}: ${maskPhoneNumber(phoneNumber)}`,
+    );
+    await updateNotificationStatus(
+      id,
+      notificationType,
+      false,
+      "Telefone inválido no cadastro",
+    );
+
+    return {
+      patientId: id,
+      patientName: name,
+      phone: maskPhoneNumber(phoneNumber),
+      success: false,
+      reason: "Telefone inválido",
       notificationType,
     };
   }
@@ -435,7 +442,16 @@ async function processPatient(
   if (!result.success && result.retryable) {
     await releaseNotificationLock(id, notificationType);
   } else {
-    await updateNotificationStatus(id, notificationType, sent);
+    await updateNotificationStatus(
+      id,
+      notificationType,
+      sent,
+      !result.success
+        ? result.error
+        : sent
+          ? null
+          : `Pulado pelo atendimento: ${result.reason}`,
+    );
   }
 
   return {

@@ -10,12 +10,14 @@
  * @returns Número formatado no padrão internacional (ex: 5511999999999)
  */
 export function formatPhoneNumber(phoneNumber: string): string {
-  // Remove todos os caracteres não numéricos
-  let cleaned = phoneNumber.replace(/\D/g, "");
+  const cleaned = phoneNumber.replace(/\D/g, "");
 
-  // Se não começar com 55 (código do Brasil), adicionar
-  if (!cleaned.startsWith("55")) {
-    cleaned = "55" + cleaned;
+  // Pelo tamanho, e não por "começa com 55": DDD 55 (RS) também começa com 55,
+  // e um celular de lá sem o código do país ficaria sem ele.
+  // 10 dígitos: DDD + 8 (fixo, ou celular cadastrado sem o 9)
+  // 11 dígitos: DDD + 9 + 8
+  if (cleaned.length === 10 || cleaned.length === 11) {
+    return "55" + cleaned;
   }
 
   return cleaned;
@@ -28,11 +30,13 @@ export function formatPhoneNumber(phoneNumber: string): string {
  * @returns true se o número for válido
  */
 export function isValidPhoneNumber(phoneNumber: string): boolean {
-  const cleaned = phoneNumber.replace(/\D/g, "");
+  const cleaned = formatPhoneNumber(phoneNumber);
 
-  // Telefone brasileiro deve ter 11 dígitos (DDD + 9 dígitos)
-  // Ou 13 dígitos com código do país (55 + DDD + 9 dígitos)
-  return cleaned.length === 11 || cleaned.length === 13;
+  // 55 + DDD + número, com ou sem o 9 do celular: o cadastro tem os dois
+  // jeitos, e o whatsapp-ai encontra a ficha do paciente pelas duas formas.
+  return (
+    cleaned.startsWith("55") && (cleaned.length === 12 || cleaned.length === 13)
+  );
 }
 
 /**

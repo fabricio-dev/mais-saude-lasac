@@ -221,6 +221,10 @@ export const whatsappNotificationsTable = pgTable(
 
     sentAt: timestamp("sent_at"),
 
+    // Por que ficou 'failed': telefone inválido ou paciente descadastrado no
+    // atendimento. Falha passageira não chega aqui — a trava é desfeita.
+    failureReason: text("failure_reason"),
+
     createdAt: timestamp("created_at").notNull().defaultNow(),
 
     updatedAt: timestamp("updated_at")
