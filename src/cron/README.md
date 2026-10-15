@@ -8,7 +8,12 @@ Sistema automatizado para envio de lembretes de renovação de convênio via Wha
 
 Tudo o que é decisão de negócio fica em **/whatsapp** (só admin): liga/desliga
 geral, cada lembrete, o teto diário do D+30, o número de contato dos lembretes,
-a hora e os dias do disparo, e o PDF da lista de parceiros. Enquanto a tela não
+a hora e os dias do disparo, o PDF da lista de parceiros, e **qual modelo
+aprovado sai em cada mensagem** e de onde vem cada variável (primeiro nome,
+vencimento, clínica, número de contato, texto fixo). Os modelos são criados no
+whatsapp-ai (Configurações → Modelos) e escolhidos em /whatsapp — trocar de
+modelo não exige mudar código. Sem escolha, valem os modelos de antes
+(`DEFAULT_MESSAGE_TEMPLATES` em `src/lib/whatsapp/message-templates.ts`). Enquanto a tela não
 for salva, valem os valores do `.env` (`src/data/whatsapp-settings.ts`).
 
 O crontab chama o script **de hora em hora** (`0 * * * *`). Ele dispara uma vez
