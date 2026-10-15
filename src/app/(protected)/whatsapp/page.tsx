@@ -17,13 +17,16 @@ import {
   PARTNERS_LIST_PATH,
 } from "@/data/partners-list-file";
 import { getWhatsAppConnectionView } from "@/data/whatsapp-connection";
+import { getMessageTemplates } from "@/data/whatsapp-message-templates";
 import {
   getWhatsAppSettings,
   toInput,
   type WhatsAppSettings,
 } from "@/data/whatsapp-settings";
 import { requireRole } from "@/lib/require-role";
+import { listWhatsAppAiTemplates } from "@/lib/whatsapp/client";
 
+import MessageTemplatesCard from "./_components/message-templates-card";
 import PartnersListUpload from "./_components/partners-list-upload";
 import WhatsAppConnectionCard from "./_components/whatsapp-connection-card";
 import WhatsAppSettingsForm from "./_components/whatsapp-settings-form";
@@ -67,11 +70,14 @@ function nextRun(settings: WhatsAppSettings): string | null {
 const WhatsAppPage = async () => {
   await requireRole("admin");
 
-  const [settings, partnersFile, connection] = await Promise.all([
-    getWhatsAppSettings(),
-    getPartnersListFileInfo(),
-    getWhatsAppConnectionView(),
-  ]);
+  const [settings, partnersFile, connection, messages, catalog] =
+    await Promise.all([
+      getWhatsAppSettings(),
+      getPartnersListFileInfo(),
+      getWhatsAppConnectionView(),
+      getMessageTemplates(),
+      listWhatsAppAiTemplates(),
+    ]);
 
   const proximo = nextRun(settings);
   const appUrl =
@@ -115,6 +121,12 @@ const WhatsAppPage = async () => {
           </Card>
 
           <WhatsAppConnectionCard connection={connection} />
+
+          <MessageTemplatesCard
+            messages={messages}
+            catalog={catalog}
+            officialNumber={settings.officialNumber}
+          />
 
           <WhatsAppSettingsForm
             defaultValues={{
