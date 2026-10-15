@@ -33,9 +33,12 @@ de cada tipo por ciclo.
 - **Status do paciente**: Pode estar inativo
 
 ### Falhas
-- **Passageira** (whatsapp-ai fora do ar, rede, chave ou recurso desligado): a trava é desfeita e a próxima execução tenta de novo, dentro da janela
-- **Pedido recusado** (template, variáveis): fica `failed` e não é repetido
-- **Pulado** (paciente descadastrado no atendimento): fica `failed` — não recebeu, e repetir não muda nada
+- **Telefone inválido** (do cadastro ou recusado pelo whatsapp-ai): fica `failed`, com o motivo em `failure_reason`, e não é repetido — é do paciente, e voltaria a cada execução ocupando o teto do D+30
+- **Pulado** (paciente descadastrado no atendimento): fica `failed` com o motivo — não recebeu, e repetir não muda nada
+- **Todo o resto** (whatsapp-ai fora do ar, rede, template pausado na Meta, variáveis erradas, chave ou recurso desligado): a trava é desfeita e a próxima execução tenta de novo, dentro da janela. São falhas que atingem o lote inteiro e se resolvem com uma correção
+
+### Telefone
+O cadastro guarda DDD + número, sem o código do país, com ou sem o 9 do celular (`87 9xxxxxxxx` ou `87 xxxxxxxx`). O cron acrescenta o `55` pelo tamanho (10 ou 11 dígitos) e aceita as duas formas; o whatsapp-ai encontra a ficha do paciente com ou sem o 9.
 
 ## Regras de Negócio
 
