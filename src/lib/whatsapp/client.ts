@@ -10,6 +10,8 @@
  * Chave: gerada em whatsapp-ai → Configurações → Integrações.
  */
 
+import { getWhatsAppSettings } from "@/data/whatsapp-settings";
+
 import { maskPhoneNumber } from "./utils";
 
 /** Arquivo do cabeçalho do template, por URL pública (só https). */
@@ -69,13 +71,14 @@ const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 export async function sendWhatsAppTemplate(
   params: SendTemplateParams,
 ): Promise<SendTemplateResult> {
-  if (process.env.WHATSAPP_ENABLED !== "true") {
+  const { enabled } = await getWhatsAppSettings();
+  if (!enabled) {
     console.log(
       `WhatsApp desabilitado. "${params.templateName}" não enviado para ${maskPhoneNumber(params.phoneNumber)}`,
     );
     return {
       success: false,
-      error: "WhatsApp está desabilitado no ambiente",
+      error: "Envios de WhatsApp desligados em /whatsapp",
       retryable: true,
     };
   }

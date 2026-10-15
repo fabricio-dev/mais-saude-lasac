@@ -9,11 +9,16 @@
  *      que mais converte em renovação, então quem perdeu o dia 7 ainda recebe.
  *    - D0: vence hoje. Só no dia — o texto diz "hoje".
  *    - D0 atrasado: venceu há 1 a 29 dias sem ter recebido o D0
- *      ("venceu em {{data}}"). Ligado por WHATSAPP_D0_LATE_ENABLED=true, depois
- *      que o template lembrete_vencimento_atrasado for aprovado na Meta.
- *    - D+30: venceu há 30 dias ou mais. No máximo WHATSAPP_D30_DAILY_LIMIT
- *      (padrão 100) por execução, dos vencidos mais recentes para os mais
- *      antigos: o número é o mesmo do atendimento, com teto diário da Meta.
+ *      ("venceu em {{data}}"). Ligado na tela depois que o template
+ *      lembrete_vencimento_atrasado for aprovado na Meta.
+ *    - D+30: venceu há 30 dias ou mais, com teto por execução, dos vencidos
+ *      mais recentes para os mais antigos: o número é o mesmo do atendimento,
+ *      com teto diário da Meta.
+ *
+ *    Cada lembrete liga e desliga na tela /whatsapp, onde também ficam o teto
+ *    do D+30, o número de contato e o horário e os dias do disparo. O crontab
+ *    chama este script de hora em hora; ele dispara uma vez por dia, na
+ *    primeira chamada a partir da hora escolhida (claimScheduledRun).
  *
  * 2. Cada lembrete é enviado apenas UMA VEZ por paciente
  *    - O banco usa UNIQUE constraint (patientId, notificationType) como lock
@@ -37,6 +42,10 @@ import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 import { and, desc, eq, gte, inArray, isNull, lte } from "drizzle-orm";
 
+import {
+  claimScheduledRun,
+  getWhatsAppSettings,
+} from "@/data/whatsapp-settings";
 import { db } from "@/db";
 
 // Configurar dayjs para trabalhar com timezones
@@ -214,22 +223,19 @@ async function getEligiblePatientsForD0Late(): Promise<EligiblePatient[]> {
   });
 }
 
-const D30_DAILY_LIMIT = Math.max(
-  1,
-  Number.parseInt(process.env.WHATSAPP_D30_DAILY_LIMIT ?? "", 10) || 100,
-);
-
 /** D+30: venceu há 30 dias ou mais e ainda não recebeu o D+30. */
-async function getEligiblePatientsForD30(): Promise<EligiblePatient[]> {
+async function getEligiblePatientsForD30(
+  limit: number,
+): Promise<EligiblePatient[]> {
   const to = daySP(-30);
   console.log(
-    `[D+30] Vencimento até ${to.label}, no máximo ${D30_DAILY_LIMIT} nesta execução`,
+    `[D+30] Vencimento até ${to.label}, no máximo ${limit} nesta execução`,
   );
 
   return findEligiblePatients({
     to: to.end,
     notSent: ["RENEWAL_D_30"],
-    limit: D30_DAILY_LIMIT,
+    limit: Math.max(1, limit),
   });
 }
 
@@ -355,6 +361,7 @@ function applyDevProtection(phoneNumber: string): string {
 async function processPatient(
   patient: EligiblePatient,
   notificationType: RenewalType,
+  officialNumber: string | null,
 ): Promise<ProcessingResult> {
   const { id, name, phoneNumber, expirationDate, clinicId, clinicName } =
     patient;
@@ -369,6 +376,7 @@ async function processPatient(
     patientName: name,
     expirationDate: expirationDate,
     clinicName: clinicName,
+    officialNumber,
   });
 
   // 2. Criar lock no banco (proteção contra duplicação)
@@ -475,6 +483,7 @@ async function processPatient(
 async function processRenewalType(
   type: RenewalType,
   getEligiblePatients: () => Promise<EligiblePatient[]>,
+  officialNumber: string | null,
 ): Promise<void> {
   console.log(`\n========================================`);
   console.log(`[${type}] Iniciando processamento`);
@@ -496,7 +505,7 @@ async function processRenewalType(
 
     for (const patient of patients) {
       try {
-        const result = await processPatient(patient, type);
+        const result = await processPatient(patient, type, officialNumber);
         results.push(result);
 
         // Pequeno delay entre envios para evitar rate limiting
@@ -557,40 +566,79 @@ async function processRenewalType(
  * - Pode ser chamada manualmente: await runWhatsAppRenewalCron()
  * - Ou configurada em um cron job externo (Vercel Cron, node-cron, etc)
  */
-export async function runWhatsAppRenewalCron(): Promise<void> {
+export type CronOutcome = { executed: boolean; reason?: string };
+
+export async function runWhatsAppRenewalCron({
+  force = false,
+}: {
+  /** Ignora hora, dia e "já disparou hoje" — para rodar à mão. */
+  force?: boolean;
+} = {}): Promise<CronOutcome> {
+  const settings = await getWhatsAppSettings();
+
+  if (!settings.enabled) {
+    console.log(
+      "⚠️  Envios de WhatsApp desligados em /whatsapp. Cron abortado.",
+    );
+    return { executed: false, reason: "envios desligados" };
+  }
+
+  if (!force) {
+    const decision = await claimScheduledRun(settings);
+    if (!decision.run) {
+      // Silencioso de propósito: o crontab chama de hora em hora, e 23 linhas
+      // por dia de "não é a hora" esconderiam a que importa no log.
+      return { executed: false, reason: decision.reason };
+    }
+  }
+
   console.log("\n");
   console.log("╔════════════════════════════════════════════════════════╗");
   console.log("║     CRON: Lembretes de Renovação via WhatsApp         ║");
   console.log("╚════════════════════════════════════════════════════════╝");
   console.log(
-    `Executado em: ${dayjs().tz("America/Sao_Paulo").format("DD/MM/YYYY HH:mm:ss")} (SP)`,
+    `Executado em: ${dayjs().tz("America/Sao_Paulo").format("DD/MM/YYYY HH:mm:ss")} (SP)` +
+      (force ? " — forçado" : ""),
   );
-  console.log(`Timezone: America/Sao_Paulo (UTC-3)`);
-  console.log(`⚠️  Datas no banco estão em UTC, convertendo automaticamente`);
 
   const startTime = Date.now();
+  const { officialNumber } = settings;
+
+  const etapas: Array<{
+    type: RenewalType;
+    enabled: boolean;
+    find: () => Promise<EligiblePatient[]>;
+  }> = [
+    {
+      type: "RENEWAL_D_7",
+      enabled: settings.reminderD7Enabled,
+      find: getEligiblePatientsForD7,
+    },
+    {
+      type: "RENEWAL_D_0",
+      enabled: settings.reminderD0Enabled,
+      find: getEligiblePatientsForD0,
+    },
+    {
+      type: "RENEWAL_D_0_LATE",
+      enabled: settings.reminderD0LateEnabled,
+      find: getEligiblePatientsForD0Late,
+    },
+    {
+      type: "RENEWAL_D_30",
+      enabled: settings.reminderD30Enabled,
+      find: () => getEligiblePatientsForD30(settings.d30DailyLimit),
+    },
+  ];
 
   try {
-    // Verificar se WhatsApp está habilitado
-    if (process.env.WHATSAPP_ENABLED !== "true") {
-      console.log("⚠️  WhatsApp está desabilitado. Cron abortado.");
-      return;
+    for (const etapa of etapas) {
+      if (!etapa.enabled) {
+        console.log(`\n[${etapa.type}] Desligado em /whatsapp`);
+        continue;
+      }
+      await processRenewalType(etapa.type, etapa.find, officialNumber);
     }
-
-    // Processar cada tipo de lembrete
-    await processRenewalType("RENEWAL_D_7", getEligiblePatientsForD7);
-    await processRenewalType("RENEWAL_D_0", getEligiblePatientsForD0);
-    if (process.env.WHATSAPP_D0_LATE_ENABLED === "true") {
-      await processRenewalType(
-        "RENEWAL_D_0_LATE",
-        getEligiblePatientsForD0Late,
-      );
-    } else {
-      console.log(
-        "\n[RENEWAL_D_0_LATE] Desligado (WHATSAPP_D0_LATE_ENABLED != true)",
-      );
-    }
-    await processRenewalType("RENEWAL_D_30", getEligiblePatientsForD30);
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
 
@@ -600,6 +648,7 @@ export async function runWhatsAppRenewalCron(): Promise<void> {
     console.log("╚════════════════════════════════════════════════════════╝");
     console.log(`Tempo total: ${duration}s`);
     console.log("\n");
+    return { executed: true };
   } catch (error) {
     console.error("\n❌ ERRO CRÍTICO NO CRON:", error);
     throw error;
@@ -607,13 +656,13 @@ export async function runWhatsAppRenewalCron(): Promise<void> {
 }
 
 /**
- * Script para execução standalone
- * Permite testar o cron manualmente: node --loader ts-node/esm src/cron/whatsapp-renewal-cron.ts
+ * Execução pelo crontab (run-cron.sh), de hora em hora.
+ * Para disparar agora, fora do horário: npx tsx src/cron/whatsapp-renewal-cron.ts --agora
  */
 if (require.main === module) {
-  runWhatsAppRenewalCron()
-    .then(() => {
-      console.log("✅ Cron executado com sucesso");
+  runWhatsAppRenewalCron({ force: process.argv.includes("--agora") })
+    .then((outcome) => {
+      if (outcome.executed) console.log("✅ Cron executado com sucesso");
       process.exit(0);
     })
     .catch((error) => {

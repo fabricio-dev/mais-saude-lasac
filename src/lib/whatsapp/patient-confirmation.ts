@@ -10,6 +10,8 @@ import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 
+import { PARTNERS_LIST_PATH } from "@/data/partners-list-file";
+
 import { sendWhatsAppTemplate } from "./client";
 import { getTemplateConfig } from "./templates";
 
@@ -23,9 +25,6 @@ const CATEGORY: Record<ConfirmationType, string> = {
   renewal: "Convênio renovado",
   early_renewal: "Renovação antecipada",
 };
-
-const PARTNERS_PDF_PATH =
-  "/docs/LISTA%20DE%20M%C3%89DICOS%20E%20BENEF%C3%8DCIOS%20LASAC.pdf";
 
 interface PatientConfirmationParams {
   patientId: string;
@@ -81,7 +80,7 @@ export async function sendPatientConfirmation({
       templateName: "lista_de_parceiros",
       parameters: [],
       document: {
-        link: `${appUrl}${PARTNERS_PDF_PATH}`,
+        link: `${appUrl}${PARTNERS_LIST_PATH}`,
         filename: "Lista de Parceiros - Mais Saúde.pdf",
       },
     });

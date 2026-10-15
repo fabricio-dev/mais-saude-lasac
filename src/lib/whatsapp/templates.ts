@@ -19,6 +19,8 @@ interface MessageTemplateParams {
   patientName: string;
   expirationDate: Date;
   clinicName?: string;
+  /** Número do wa.me nos lembretes (tela /whatsapp). Sem ele, o do .env. */
+  officialNumber?: string | null;
 }
 
 /**
@@ -157,7 +159,9 @@ export function getTemplateConfig(
   // Número oficial do WhatsApp (busca do .env para facilitar mudanças)
   // Remove formatação para usar em links wa.me/
   const officialWhatsAppRaw =
-    process.env.WHATSAPP_OFFICIAL_NUMBER || "5511912345678";
+    params.officialNumber ||
+    process.env.WHATSAPP_OFFICIAL_NUMBER ||
+    "5511912345678";
   const officialWhatsApp = formatPhoneNumber(officialWhatsAppRaw);
 
   switch (type) {

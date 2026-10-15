@@ -6,7 +6,7 @@
  *   {
  *     "crons": [{
  *       "path": "/api/cron/whatsapp-renewal",
- *       "schedule": "0 9 * * *"
+ *       "schedule": "0 * * * *"
  *     }]
  *   }
  *
@@ -33,26 +33,17 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Verificar se WhatsApp está habilitado
-  if (process.env.WHATSAPP_ENABLED !== "true") {
-    console.log("[API] WhatsApp desabilitado, cron não executado");
-    return NextResponse.json({
-      success: true,
-      message: "WhatsApp está desabilitado",
-      executed: false,
-    });
-  }
-
   try {
-    // Executar cron
-    await runWhatsAppRenewalCron();
-
-    console.log("[API] Cron executado com sucesso");
+    // Ligado/desligado, hora e dia vêm da tela /whatsapp: chamar esta rota de
+    // hora em hora é seguro — ela só dispara uma vez por dia.
+    const outcome = await runWhatsAppRenewalCron();
 
     return NextResponse.json({
       success: true,
-      message: "Cron de lembretes executado com sucesso",
-      executed: true,
+      executed: outcome.executed,
+      message: outcome.executed
+        ? "Cron de lembretes executado com sucesso"
+        : `Não disparou: ${outcome.reason}`,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
@@ -69,7 +60,3 @@ export async function GET(request: Request) {
     );
   }
 }
-
-
-
-
