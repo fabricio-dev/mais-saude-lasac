@@ -1,9 +1,8 @@
-import { timingSafeEqual } from "node:crypto";
-
 import { eq, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+import { verifyIntegrationApiKey } from "@/data/whatsapp-connection";
 import { db } from "@/db";
 import { patientsTable } from "@/db/schema";
 
@@ -62,19 +61,6 @@ type Candidato = {
 };
 
 type Telefone = { ddd: string; final: string };
-
-function chaveConfere(recebida: string | null): boolean {
-  const esperada = process.env.INTEGRATION_API_KEY;
-
-  if (!esperada || !recebida) return false;
-
-  const a = Buffer.from(recebida);
-  const b = Buffer.from(esperada);
-
-  // Comprimento diferente vaza pelo tamanho, não pelo tempo — e o
-  // timingSafeEqual lança quando os buffers não têm o mesmo tamanho.
-  return a.length === b.length && timingSafeEqual(a, b);
-}
 
 /**
  * DDD + os 8 dígitos finais — o que sobrevive ao "55" e ao nono dígito.
@@ -174,7 +160,9 @@ function resposta(paciente: Candidato) {
  * antes; o que muda é onde o dado aparece depois.
  */
 export async function POST(request: NextRequest) {
-  if (!chaveConfere(request.headers.get("x-api-key"))) {
+  // A chave gerada em /whatsapp (só o hash fica no banco); antes de gerar
+  // uma, a INTEGRATION_API_KEY do .env.
+  if (!(await verifyIntegrationApiKey(request.headers.get("x-api-key")))) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 

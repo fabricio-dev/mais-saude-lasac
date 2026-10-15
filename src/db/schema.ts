@@ -268,6 +268,18 @@ export const whatsappSettingsTable = pgTable("whatsapp_settings", {
   // Dia (São Paulo) da última execução — o cron roda de hora em hora e só
   // dispara uma vez por dia.
   lastRunOn: date("last_run_on", { mode: "string" }),
+
+  // Conexão com o sistema de atendimento (whatsapp-ai).
+  whatsappAiUrl: text("whatsapp_ai_url"),
+  // Chave gerada no whatsapp-ai. Cifrada (AES-256-GCM, lib/crypto.ts), e não
+  // em hash: o envio precisa dela de volta para mandar no Authorization.
+  whatsappAiApiKeyEncrypted: text("whatsapp_ai_api_key_encrypted"),
+  // Chave com que o whatsapp-ai consulta o cartão (/api/integrations/v1/
+  // patient-lookup). Só o hash: aqui ela é só conferida, nunca lida de volta.
+  integrationApiKeyHash: text("integration_api_key_hash"),
+  integrationApiKeyPrefix: text("integration_api_key_prefix"),
+  integrationApiKeyCreatedAt: timestamp("integration_api_key_created_at"),
+
   updatedAt: timestamp("updated_at").defaultNow(),
   updatedByUserId: text("updated_by_user_id").references(() => usersTable.id),
 });

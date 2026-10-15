@@ -16,6 +16,7 @@ import {
   getPartnersListFileInfo,
   PARTNERS_LIST_PATH,
 } from "@/data/partners-list-file";
+import { getWhatsAppConnectionView } from "@/data/whatsapp-connection";
 import {
   getWhatsAppSettings,
   toInput,
@@ -24,6 +25,7 @@ import {
 import { requireRole } from "@/lib/require-role";
 
 import PartnersListUpload from "./_components/partners-list-upload";
+import WhatsAppConnectionCard from "./_components/whatsapp-connection-card";
 import WhatsAppSettingsForm from "./_components/whatsapp-settings-form";
 
 dayjs.extend(utc);
@@ -65,9 +67,10 @@ function nextRun(settings: WhatsAppSettings): string | null {
 const WhatsAppPage = async () => {
   await requireRole("admin");
 
-  const [settings, partnersFile] = await Promise.all([
+  const [settings, partnersFile, connection] = await Promise.all([
     getWhatsAppSettings(),
     getPartnersListFileInfo(),
+    getWhatsAppConnectionView(),
   ]);
 
   const proximo = nextRun(settings);
@@ -110,6 +113,8 @@ const WhatsAppPage = async () => {
               ) : null}
             </CardContent>
           </Card>
+
+          <WhatsAppConnectionCard connection={connection} />
 
           <WhatsAppSettingsForm
             defaultValues={{

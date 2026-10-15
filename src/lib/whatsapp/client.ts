@@ -6,10 +6,12 @@
  * resposta dele cai no atendimento já com o aviso na conversa, e quem pediu
  * para sair no WhatsApp não recebe (o whatsapp-ai aplica o descadastro).
  *
- * Contrato: POST {WHATSAPP_AI_URL}/api/integrations/v1/messages
- * Chave: gerada em whatsapp-ai → Configurações → Integrações.
+ * Contrato: POST {endereço do whatsapp-ai}/api/integrations/v1/messages
+ * Endereço e chave: tela /whatsapp (a chave é gerada no whatsapp-ai, em
+ * Configurações → Integrações).
  */
 
+import { getWhatsAppAiCredentials } from "@/data/whatsapp-connection";
 import { getWhatsAppSettings } from "@/data/whatsapp-settings";
 
 import { maskPhoneNumber } from "./utils";
@@ -83,16 +85,28 @@ export async function sendWhatsAppTemplate(
     };
   }
 
-  const baseUrl = process.env.WHATSAPP_AI_URL?.replace(/\/+$/, "");
-  const apiKey = process.env.WHATSAPP_AI_API_KEY;
-  if (!baseUrl || !apiKey) {
-    console.error("WHATSAPP_AI_URL ou WHATSAPP_AI_API_KEY não configurados");
+  let credentials: Awaited<ReturnType<typeof getWhatsAppAiCredentials>>;
+  try {
+    credentials = await getWhatsAppAiCredentials();
+  } catch (error) {
+    // Chave cifrada que não abre: SETTINGS_ENCRYPTION_KEY ausente ou trocada.
+    console.error(
+      "Não foi possível ler a chave do sistema de atendimento:",
+      error,
+    );
+    credentials = null;
+  }
+  if (!credentials) {
+    console.error(
+      "Conexão com o sistema de atendimento não configurada em /whatsapp",
+    );
     return {
       success: false,
-      error: "Configuração do sistema de atendimento ausente",
+      error: "Conexão com o sistema de atendimento não configurada",
       retryable: true,
     };
   }
+  const { url: baseUrl, apiKey } = credentials;
 
   const body = JSON.stringify({
     externalId: params.externalId,
