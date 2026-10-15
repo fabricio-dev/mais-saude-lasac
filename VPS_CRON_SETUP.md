@@ -86,27 +86,22 @@ Verificar se:
 crontab -e
 ```
 
-Adicionar a linha (executar todo dia às 9h):
+Adicionar a linha (de hora em hora):
 
 ```cron
-# Lembretes de renovação WhatsApp - Todo dia às 9h
-0 9 * * * /caminho/para/mais-saude-lasac/run-cron.sh
+# Lembretes de renovação WhatsApp - de hora em hora
+0 * * * * /caminho/para/mais-saude-lasac/run-cron.sh
 ```
 
-**Outros horários:**
+O crontab chama de hora em hora, mas os lembretes saem **uma vez por dia**: a
+hora, os dias da semana, cada lembrete e o liga/desliga ficam na tela
+**/whatsapp** (só admin). Nas outras chamadas o script lê a configuração e sai.
+Trocar o horário na tela vale no mesmo dia, sem mexer no crontab.
 
-```cron
-# Todo dia às 9h
-0 9 * * * /caminho/para/run-cron.sh
+Para disparar agora, fora do horário (teste, recuperação manual):
 
-# Todo dia às 9h e 15h
-0 9,15 * * * /caminho/para/run-cron.sh
-
-# Segunda a sexta às 9h
-0 9 * * 1-5 /caminho/para/run-cron.sh
-
-# A cada 6 horas
-0 */6 * * * /caminho/para/run-cron.sh
+```bash
+npx tsx src/cron/whatsapp-renewal-cron.ts --agora
 ```
 
 ### 6. Verificar o Cron

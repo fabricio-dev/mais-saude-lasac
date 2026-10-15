@@ -7,6 +7,12 @@ GOOGLE_CLIENT_SECRET="xxxxxxxxxxxxxxxxxxx"
 
 # WhatsApp — enviado pelo sistema de atendimento (whatsapp-ai), no mesmo número
 
+# WHATSAPP_ENABLED, WHATSAPP_D0_LATE_ENABLED, WHATSAPP_D30_DAILY_LIMIT e
+
+# WHATSAPP_OFFICIAL_NUMBER são só o valor inicial: depois que a tela /whatsapp
+
+# for salva, valem os valores dela.
+
 WHATSAPP_ENABLED=true
 
 # Endereço do whatsapp-ai, sem barra no fim

@@ -4,6 +4,18 @@
 
 Sistema automatizado para envio de lembretes de renovação de convênio via WhatsApp Business API usando templates pré-aprovados pela Meta.
 
+## Configuração pela tela
+
+Tudo o que é decisão de negócio fica em **/whatsapp** (só admin): liga/desliga
+geral, cada lembrete, o teto diário do D+30, o número de contato dos lembretes,
+a hora e os dias do disparo, e o PDF da lista de parceiros. Enquanto a tela não
+for salva, valem os valores do `.env` (`src/data/whatsapp-settings.ts`).
+
+O crontab chama o script **de hora em hora** (`0 * * * *`). Ele dispara uma vez
+por dia, na primeira chamada a partir da hora escolhida, num dia permitido; a
+marca do dia é gravada antes de processar, então duas chamadas juntas não
+disparam as duas. `--agora` força o disparo fora do horário.
+
 ## Tipos de Lembrete
 
 Cada lembrete olha uma **janela**, não um dia só: se o cron não rodar, ou se este
