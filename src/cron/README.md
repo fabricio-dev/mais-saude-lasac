@@ -6,25 +6,36 @@ Sistema automatizado para envio de lembretes de renovação de convênio via Wha
 
 ## Tipos de Lembrete
 
-O sistema envia 3 tipos de lembrete automaticamente:
+Cada lembrete olha uma **janela**, não um dia só: se o cron não rodar, ou se este
+sistema ou o whatsapp-ai estiver fora do ar, a próxima execução recupera quem
+ficou para trás. A trava `UNIQUE(patientId, notificationType)` garante um aviso
+de cada tipo por ciclo.
 
-### 1. RENEWAL_D_7 - Lembrete D-7
-- **Quando**: 7 dias ANTES do vencimento
-- **Template**: `lembrete_vencimento_7_dias`
-- **Objetivo**: Alertar o paciente que o convênio vai vencer em breve
+### 1. RENEWAL_D_7 - Lembrete antes do vencimento
+- **Quando**: vence entre amanhã (D-1) e daqui a 7 dias, sem ter recebido o D-7
+- **Template**: `lembrete_vencimento_7_dias` (o texto leva a data, então vale em qualquer dia da janela)
+- **Objetivo**: o aviso antecipado é o que mais converte em renovação
 - **Status do paciente**: Ativo (`isActive = true`)
 
-### 2. RENEWAL_D_0 - Lembrete D0
-- **Quando**: NO DIA do vencimento
+### 2. RENEWAL_D_0 - Lembrete no dia
+- **Quando**: vence hoje. Só no dia — o texto diz "hoje"
 - **Template**: `lembrete_vencimento_hoje`
-- **Objetivo**: Lembrar que o convênio vence hoje
-- **Status do paciente**: Ativo (`isActive = true`)
 
-### 3. RENEWAL_D_30 - Lembrete D+30
-- **Quando**: 30 dias APÓS o vencimento
+### 3. RENEWAL_D_0_LATE - Recuperação do D0
+- **Quando**: venceu há 1 a 29 dias sem ter recebido o D0 nem este
+- **Template**: `lembrete_vencimento_atrasado` — parâmetros: nome, data de vencimento, número WhatsApp
+- **Ligado por**: `WHATSAPP_D0_LATE_ENABLED=true`, depois de o template ser aprovado na Meta
+
+### 4. RENEWAL_D_30 - Lembrete após vencimento
+- **Quando**: venceu há 30 dias ou mais, sem ter recebido o D+30
 - **Template**: `lembrete_vencimento_30_dias`
-- **Objetivo**: Oferecer renovação após vencimento
+- **Teto**: `WHATSAPP_D30_DAILY_LIMIT` por execução (padrão 100), dos vencidos mais recentes para os mais antigos. O número é o mesmo do atendimento, com limite diário na Meta — o acúmulo da primeira execução drena ao longo de alguns dias
 - **Status do paciente**: Pode estar inativo
+
+### Falhas
+- **Passageira** (whatsapp-ai fora do ar, rede, chave ou recurso desligado): a trava é desfeita e a próxima execução tenta de novo, dentro da janela
+- **Pedido recusado** (template, variáveis): fica `failed` e não é repetido
+- **Pulado** (paciente descadastrado no atendimento): fica `failed` — não recebeu, e repetir não muda nada
 
 ## Regras de Negócio
 
@@ -138,6 +149,13 @@ WHATSAPP_ENV=prod
 # Envio pelo whatsapp-ai (mesmo número do atendimento)
 WHATSAPP_AI_URL=https://atendimento.seudominio.com.br
 WHATSAPP_AI_API_KEY=wai_chave_gerada_no_whatsapp_ai
+
+# Recuperação do D0 ("venceu em {{data}}"): ligar depois de aprovar o template
+# lembrete_vencimento_atrasado na Meta
+WHATSAPP_D0_LATE_ENABLED=false
+
+# Teto de avisos D+30 por execução
+WHATSAPP_D30_DAILY_LIMIT=100
 
 # Telefone de teste (usado em dev)
 WHATSAPP_TEST_PHONE=5511999999999

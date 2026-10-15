@@ -16,6 +16,18 @@ WHATSAPP_AI_URL=https://atendimento.seudominio.com.br
 # Chave gerada em whatsapp-ai → Configurações → Integrações → Envio pelo seu sistema
 
 WHATSAPP_AI_API_KEY=wai_xxxxxxxxxxxxxxxxxxxxxxxx
+
+# Lembretes do cron
+
+# Aviso "venceu em {{data}}" para quem perdeu o D0 — ligar só depois de o template
+
+# lembrete_vencimento_atrasado estar aprovado na Meta
+
+WHATSAPP_D0_LATE_ENABLED=false
+
+# Máximo de avisos D+30 por execução (o acúmulo drena ao longo dos dias)
+
+WHATSAPP_D30_DAILY_LIMIT=100
 NEXT_PUBLIC_APP_URL=https://seudominio.com.br
 WHATSAPP_ENV=dev
 WHATSAPP_TEST_PHONE=kkkkkkkkkkk
