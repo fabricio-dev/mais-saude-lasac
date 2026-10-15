@@ -13,11 +13,19 @@ GOOGLE_CLIENT_SECRET="xxxxxxxxxxxxxxxxxxx"
 
 # WhatsApp — enviado pelo sistema de atendimento (whatsapp-ai), no mesmo número
 
-# WHATSAPP_ENABLED, WHATSAPP_D0_LATE_ENABLED, WHATSAPP_D30_DAILY_LIMIT e
+# WHATSAPP_ENABLED, WHATSAPP_D0_LATE_ENABLED, WHATSAPP_D30_DAILY_LIMIT,
 
-# WHATSAPP_OFFICIAL_NUMBER são só o valor inicial: depois que a tela /whatsapp
+# WHATSAPP_OFFICIAL_NUMBER, WHATSAPP_AI_URL, WHATSAPP_AI_API_KEY e
+
+# INTEGRATION_API_KEY são só o valor inicial: depois que a tela /whatsapp
 
 # for salva, valem os valores dela.
+
+# Cifra os segredos guardados pela tela /whatsapp. Gerar com: openssl rand -base64 32
+
+# Trocar esta chave obriga a colar de novo a chave de envio na tela.
+
+SETTINGS_ENCRYPTION_KEY=gerar_com_openssl_rand_base64_32
 
 WHATSAPP_ENABLED=true
 
