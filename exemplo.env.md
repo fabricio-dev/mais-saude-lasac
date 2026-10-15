@@ -2,6 +2,10 @@ DATABASE_URL=""
 BETTER_AUTH_SECRET="00000"
 BETTER_AUTH_URL=https://suaurl.com
 
+# Outros endereços pelos quais o sistema é aberto (ex.: com www), separados por vírgula.
+# Sem isso, quem entra por eles recebe "Invalid origin" ao sair (e, no better-auth 1.6, também ao entrar).
+BETTER_AUTH_TRUSTED_ORIGINS=https://www.suaurl.com
+
 GOOGLE_CLIENT_ID="xxxxxxxxxxx5onsa.apps.googleusercontent.com"
 GOOGLE_CLIENT_SECRET="xxxxxxxxxxxxxxxxxxx"
 

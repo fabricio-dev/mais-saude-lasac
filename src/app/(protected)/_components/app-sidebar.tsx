@@ -13,6 +13,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -157,6 +158,10 @@ export function AppSidebar() {
       fetchOptions: {
         onSuccess: () => {
           router.push("/authentication");
+        },
+        // Sem isso, um sign-out recusado (ex.: "Invalid origin") deixa o botão sem resposta
+        onError: () => {
+          toast.error("Não foi possível sair. Tente novamente.");
         },
       },
     });
