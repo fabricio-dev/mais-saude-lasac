@@ -2,7 +2,6 @@ import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 import { and, eq, ilike, inArray, or, sql } from "drizzle-orm";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
@@ -27,7 +26,7 @@ import {
   sellersTable,
   usersToClinicsTable,
 } from "@/db/schema";
-import { auth } from "@/lib/auth";
+import { requireRole } from "@/lib/require-role";
 
 import { DatePicker } from "../dashboard/_components/date-picker";
 import AddSellerButton from "./_components/add-seller-button";
@@ -42,16 +41,7 @@ interface SellersPageProps {
 }
 
 const SellersPage = async ({ searchParams }: SellersPageProps) => {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    redirect("/authentication");
-  }
-  if (session.user.role !== "admin") {
-    redirect("/vendedor/dashboard-seller");
-  }
+  const session = await requireRole("admin");
 
   // Aguardar searchParams antes de usar
   const { search, from, to } = await searchParams;

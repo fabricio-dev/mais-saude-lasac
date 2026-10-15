@@ -2,7 +2,6 @@ import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 import { and, eq, ilike, or, sql } from "drizzle-orm";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
@@ -22,7 +21,7 @@ import {
 import { getCardPrices } from "@/data/get-card-prices";
 import { db } from "@/db";
 import { clinicsTable, patientsTable, sellersTable } from "@/db/schema";
-import { auth } from "@/lib/auth";
+import { requireRole } from "@/lib/require-role";
 
 import { DatePicker } from "../dashboard-gestor/_components/date-picker";
 import AddSellerButton from "./_components/add-seller-button";
@@ -38,21 +37,7 @@ interface SellersGestorPageProps {
 }
 
 const SellersGestorPage = async ({ searchParams }: SellersGestorPageProps) => {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    redirect("/authentication");
-  }
-
-  if (session.user.role !== "gestor") {
-    if (session.user.role === "admin") {
-      redirect("/dashboard");
-    } else {
-      redirect("/vendedor/dashboard-seller");
-    }
-  }
+  const session = await requireRole("gestor");
 
   // Aguardar searchParams antes de usar
   const { search, from, to } = await searchParams;

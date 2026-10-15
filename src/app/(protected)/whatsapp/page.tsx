@@ -1,8 +1,6 @@
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,7 +21,7 @@ import {
   toInput,
   type WhatsAppSettings,
 } from "@/data/whatsapp-settings";
-import { auth } from "@/lib/auth";
+import { requireRole } from "@/lib/require-role";
 
 import PartnersListUpload from "./_components/partners-list-upload";
 import WhatsAppSettingsForm from "./_components/whatsapp-settings-form";
@@ -65,16 +63,7 @@ function nextRun(settings: WhatsAppSettings): string | null {
 }
 
 const WhatsAppPage = async () => {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    redirect("/authentication");
-  }
-  if (session.user.role !== "admin") {
-    redirect("/vendedor/dashboard-seller");
-  }
+  await requireRole("admin");
 
   const [settings, partnersFile] = await Promise.all([
     getWhatsAppSettings(),

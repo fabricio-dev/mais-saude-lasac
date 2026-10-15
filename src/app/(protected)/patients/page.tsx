@@ -14,7 +14,6 @@ import {
   type SQL,
   sql,
 } from "drizzle-orm";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
@@ -34,7 +33,7 @@ import {
 } from "@/components/ui/page-container";
 import { db } from "@/db";
 import { patientsTable, usersToClinicsTable } from "@/db/schema";
-import { auth } from "@/lib/auth";
+import { requireRole } from "@/lib/require-role";
 
 import AddPatientButton from "./_components/add-patient-button";
 import FiltersBar from "./_components/filters-bar";
@@ -51,16 +50,7 @@ interface PatientsPageProps {
 }
 
 const PatientsPage = async ({ searchParams }: PatientsPageProps) => {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    redirect("/authentication");
-  }
-  if (session.user.role !== "admin") {
-    redirect("/vendedor/dashboard-seller");
-  }
+  const session = await requireRole("admin");
 
   // Aguardar searchParams antes de usar
   const { search, filter, dateFrom, dateTo } = await searchParams;

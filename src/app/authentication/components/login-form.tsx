@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
+import { getHomePathForRole } from "@/lib/role-access";
 
 const loginSchema = z.object({
   email: z
@@ -58,13 +59,7 @@ const LoginForm = () => {
       },
       {
         onSuccess: () => {
-          if (session.data?.user.role === "admin") {
-            router.push("/dashboard");
-          } else if (session.data?.user.role === "gestor") {
-            router.push("/gerente/dashboard-gestor");
-          } else {
-            router.push("/vendedor/dashboard-seller");
-          }
+          router.push(getHomePathForRole(session.data?.user.role));
         },
         onError: () => {
           toast.error("Email ou senha inválidos");
@@ -74,19 +69,9 @@ const LoginForm = () => {
   };
 
   const handleGoogleLogin = async () => {
-    const getCallbackURL = () => {
-      if (session.data?.user.role === "admin") {
-        return "/dashboard";
-      } else if (session.data?.user.role === "gestor") {
-        return "/gerente/dashboard-gestor";
-      } else {
-        return "/vendedor/dashboard-seller";
-      }
-    };
-
     await authClient.signIn.social({
       provider: "google",
-      callbackURL: getCallbackURL(),
+      callbackURL: getHomePathForRole(session.data?.user.role),
       scopes: ["email", "profile"],
     });
   };

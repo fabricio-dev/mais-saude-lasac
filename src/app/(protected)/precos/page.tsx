@@ -1,5 +1,3 @@
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 
 import {
   PageContainer,
@@ -10,21 +8,12 @@ import {
   PageTitle,
 } from "@/components/ui/page-container";
 import { db } from "@/db";
-import { auth } from "@/lib/auth";
+import { requireRole } from "@/lib/require-role";
 
 import CardPricesTable from "./_components/card-prices-table";
 
 const PrecosPage = async () => {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    redirect("/authentication");
-  }
-  if (session.user.role !== "admin") {
-    redirect("/vendedor/dashboard-seller");
-  }
+  await requireRole("admin");
 
   const cardPrices = await db.query.cardPricesTable.findMany({
     orderBy: (cardPrices, { asc }) => [

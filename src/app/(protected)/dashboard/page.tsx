@@ -1,6 +1,5 @@
 import dayjs from "dayjs";
 import { Calendar } from "lucide-react";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
@@ -22,7 +21,7 @@ import {
   calcularFaturamento,
   formatCurrency,
 } from "@/helpers/currency";
-import { auth } from "@/lib/auth";
+import { requireRole } from "@/lib/require-role";
 
 import { patientsTableColumnsSimple } from "../patients/_components/table-columns";
 import { ConveniosChart } from "./_components/convenios-chart";
@@ -39,20 +38,7 @@ interface DashboardPageProps {
 }
 
 const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    redirect("/authentication");
-  }
-  if (session.user.role !== "admin") {
-    if (session.user.role === "gestor") {
-      redirect("/gerente/dashboard-gestor");
-    } else {
-      redirect("/vendedor/dashboard-seller");
-    }
-  }
+  const session = await requireRole("admin");
 
   if (!session?.user.clinic) {
     redirect("/clinics");

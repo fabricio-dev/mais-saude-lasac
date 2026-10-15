@@ -1,24 +1,12 @@
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import { PageContainer } from "@/components/ui/page-container";
-import { auth } from "@/lib/auth";
+import { requireRole } from "@/lib/require-role";
 
 import { AdminContent } from "./_components/admin-content";
 
 const AdminPage = async () => {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    redirect("/authentication");
-  }
-
-  if (session.user.role !== "admin") {
-    redirect("/vendedor/dashboard-seller");
-  }
+  await requireRole("admin");
 
   return (
     <PageContainer>

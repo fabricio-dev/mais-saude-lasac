@@ -1,5 +1,4 @@
 import dayjs from "dayjs";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
@@ -7,7 +6,7 @@ import { PageContainer, PageContent } from "@/components/ui/page-container";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getManagement } from "@/data/get-management";
 import { getVendedores } from "@/data/get-vendedores";
-import { auth } from "@/lib/auth";
+import { requireRole } from "@/lib/require-role";
 
 import RelatorioUnidades from "./_components/relatorio-unidades";
 import RelatorioVendedores from "./_components/relatorio-vendedores";
@@ -23,20 +22,7 @@ interface ManagementPageProps {
 }
 
 const ManagementPage = async ({ searchParams }: ManagementPageProps) => {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    redirect("/authentication");
-  }
-  if (session.user.role !== "admin") {
-    if (session.user.role === "gestor") {
-      redirect("/gerente/dashboard-gestor");
-    } else {
-      redirect("/vendedor/dashboard-seller");
-    }
-  }
+  const session = await requireRole("admin");
 
   if (!session?.user.clinic?.id) {
     redirect("/clinics");

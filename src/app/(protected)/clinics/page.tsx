@@ -1,6 +1,4 @@
 import { and, eq, ilike } from "drizzle-orm";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import {
@@ -14,7 +12,7 @@ import {
 } from "@/components/ui/page-container";
 import { db } from "@/db";
 import { clinicsTable, usersToClinicsTable } from "@/db/schema";
-import { auth } from "@/lib/auth";
+import { requireRole } from "@/lib/require-role";
 
 import AddClinicButton from "./_components/add-clinic-button";
 import ClinicCard from "./_components/clinic-card";
@@ -27,16 +25,7 @@ interface ClinicsPageProps {
 }
 
 const ClinicsPage = async ({ searchParams }: ClinicsPageProps) => {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    redirect("/authentication");
-  }
-  if (session.user.role !== "admin") {
-    redirect("/vendedor/dashboard-seller");
-  }
+  const session = await requireRole("admin");
 
   // Aguardar searchParams antes de usar
   const { search } = await searchParams;

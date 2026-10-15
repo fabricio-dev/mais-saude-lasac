@@ -1,6 +1,5 @@
 import dayjs from "dayjs";
 import { Calendar } from "lucide-react";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
@@ -22,7 +21,7 @@ import {
   calcularFaturamento,
   formatCurrency,
 } from "@/helpers/currency";
-import { auth } from "@/lib/auth";
+import { requireRole } from "@/lib/require-role";
 
 import { patientsTableColumnsSimple } from "../../patients/_components/table-columns";
 import { ConveniosChart } from "./_components/convenios-chart";
@@ -40,16 +39,7 @@ interface DashboardPageProps {
 // TODO: Verificar se o vendedor tem acesso ao dashboard
 
 const DashboardPage = async ({ searchParams }: DashboardPageProps) => {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    redirect("/authentication");
-  }
-  if (session.user.role !== "user") {
-    redirect("/dashboard");
-  }
+  const session = await requireRole("user");
 
   const { from, to } = await searchParams;
 

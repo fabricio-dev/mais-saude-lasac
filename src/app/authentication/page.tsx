@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { auth } from "@/lib/auth";
+import { getHomePathForRole } from "@/lib/role-access";
 
 import LoginForm from "./components/login-form";
 import SingUpForm from "./components/sing-up-form";
@@ -13,13 +14,7 @@ const AuthenticationPage = async () => {
   });
 
   if (session?.user) {
-    if (session?.user.role === "admin") {
-      redirect("/dashboard");
-    } else if (session?.user.role === "gestor") {
-      redirect("/gerente/dashboard-gestor");
-    } else {
-      redirect("/vendedor/dashboard-seller");
-    }
+    redirect(getHomePathForRole(session.user.role));
   }
 
   return (
