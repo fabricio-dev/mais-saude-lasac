@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { createPatient } from "@/actions/create-patient";
 import { createPatientSchema } from "@/actions/create-patient/schema";
+import { getExternalSellers } from "@/data/get-external-sellers";
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,18 +11,14 @@ export async function POST(request: NextRequest) {
     // Buscar um vendedor "cadastro-externo" para a clínica selecionada
     let sellerId = body.sellerId;
 
+    // Direto no banco, e não por HTTP para /api/public/sellers: a chamada ao
+    // próprio servidor dependia de NEXTAUTH_URL, que não existe neste projeto,
+    // e caía em localhost:3000.
     if (!sellerId && body.clinicId) {
       try {
-        const sellersResponse = await fetch(
-          `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/public/sellers?clinicId=${body.clinicId}`,
-          { method: "GET" },
-        );
-
-        if (sellersResponse.ok) {
-          const sellers = await sellersResponse.json();
-          if (sellers.length > 0) {
-            sellerId = sellers[0].id;
-          }
+        const sellers = await getExternalSellers(String(body.clinicId));
+        if (sellers.length > 0) {
+          sellerId = sellers[0].id;
         }
       } catch (error) {
         console.error("Erro ao buscar vendedor:", error);

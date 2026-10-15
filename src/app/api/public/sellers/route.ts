@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { db } from "@/db";
+import { getExternalSellers } from "@/data/get-external-sellers";
 
 export async function GET(request: Request) {
   try {
@@ -14,20 +14,7 @@ export async function GET(request: Request) {
       );
     }
 
-    // Buscar vendedores da clínica especificada com nome "Cadastro-externo" (case-insensitive)
-    const sellers = await db.query.sellersTable.findMany({
-      where: (seller, { eq, and, ilike }) =>
-        and(
-          eq(seller.clinicId, clinicId),
-          ilike(seller.name, "%cadastro-externo%"),
-        ),
-      columns: {
-        id: true,
-        name: true,
-        clinicId: true,
-      },
-      orderBy: (seller, { asc }) => asc(seller.name),
-    });
+    const sellers = await getExternalSellers(clinicId);
 
     return NextResponse.json(sellers);
   } catch (error) {
