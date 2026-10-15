@@ -1,5 +1,25 @@
 # 📱 Integração WhatsApp - Documentação
 
+> **Desde outubro de 2026 o envio passa pelo whatsapp-ai**, o sistema de
+> atendimento que usa o mesmo número. Este sistema não chama mais a Meta: ele
+> pede o envio em `POST {WHATSAPP_AI_URL}/api/integrations/v1/messages`, com a
+> chave gerada no whatsapp-ai em Configurações → Integrações → Envio pelo seu
+> sistema. Com isso:
+>
+> - cada mensagem aparece na ficha do paciente e em **Envios automáticos** no
+>   whatsapp-ai, com entregue, lido e respondido;
+> - a resposta do paciente cai no atendimento, já com o aviso na conversa;
+> - quem pediu para sair no WhatsApp não recebe (o envio volta como `skipped`).
+>
+> Os templates continuam sendo os mesmos, aprovados na Meta para o número. As
+> seções abaixo sobre Phone Number ID e Access Token valem agora para a conexão
+> do número **no whatsapp-ai**, não aqui.
+>
+> Variáveis deste sistema: `WHATSAPP_ENABLED`, `WHATSAPP_AI_URL`,
+> `WHATSAPP_AI_API_KEY` (e, no cron, `WHATSAPP_ENV` e `WHATSAPP_TEST_PHONE`).
+> `WHATSAPP_API_URL`, `WHATSAPP_ACCESS_TOKEN` e `WHATSAPP_PHONE_NUMBER_ID` não são
+> mais lidas.
+
 ## 📋 Visão Geral
 
 Sistema de envio automático de mensagens WhatsApp quando um paciente é **criado**, **ativado** ou tem seu convênio **renovado**.

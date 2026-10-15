@@ -135,10 +135,9 @@ WHATSAPP_ENABLED=true
 # Ambiente (dev ou prod)
 WHATSAPP_ENV=prod
 
-# API do WhatsApp
-WHATSAPP_API_URL=https://graph.facebook.com/v17.0
-WHATSAPP_ACCESS_TOKEN=seu_token_aqui
-WHATSAPP_PHONE_NUMBER_ID=seu_phone_id_aqui
+# Envio pelo whatsapp-ai (mesmo número do atendimento)
+WHATSAPP_AI_URL=https://atendimento.seudominio.com.br
+WHATSAPP_AI_API_KEY=wai_chave_gerada_no_whatsapp_ai
 
 # Telefone de teste (usado em dev)
 WHATSAPP_TEST_PHONE=5511999999999

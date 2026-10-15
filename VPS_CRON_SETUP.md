@@ -39,9 +39,8 @@ DATABASE_URL=postgresql://user:password@localhost:5432/database
 # WhatsApp
 WHATSAPP_ENABLED=true
 WHATSAPP_ENV=prod
-WHATSAPP_API_URL=https://graph.facebook.com/v22.0
-WHATSAPP_ACCESS_TOKEN=seu_token_permanente
-WHATSAPP_PHONE_NUMBER_ID=seu_phone_id
+WHATSAPP_AI_URL=https://atendimento.seu-dominio.com
+WHATSAPP_AI_API_KEY=wai_chave_gerada_no_whatsapp_ai
 WHATSAPP_OFFICIAL_NUMBER=5587991372728
 
 # Outros
