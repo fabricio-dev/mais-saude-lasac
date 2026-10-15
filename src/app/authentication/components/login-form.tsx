@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
-import { getHomePathForRole } from "@/lib/role-access";
+import { AUTHENTICATION_PATH, getHomePathForRole } from "@/lib/role-access";
 
 const loginSchema = z.object({
   email: z
@@ -42,7 +42,6 @@ const loginSchema = z.object({
 
 const LoginForm = () => {
   const router = useRouter();
-  const session = authClient.useSession();
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -58,8 +57,9 @@ const LoginForm = () => {
         password: values.password,
       },
       {
-        onSuccess: () => {
-          router.push(getHomePathForRole(session.data?.user.role));
+        // O papel vem da sessão que o login acabou de criar
+        onSuccess: (ctx) => {
+          router.push(getHomePathForRole(ctx.data.user.role));
         },
         onError: () => {
           toast.error("Email ou senha inválidos");
@@ -71,7 +71,8 @@ const LoginForm = () => {
   const handleGoogleLogin = async () => {
     await authClient.signIn.social({
       provider: "google",
-      callbackURL: getHomePathForRole(session.data?.user.role),
+      // O papel só existe depois do retorno do Google: /authentication redireciona por ele
+      callbackURL: AUTHENTICATION_PATH,
       scopes: ["email", "profile"],
     });
   };

@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
+import { getHomePathForRole } from "@/lib/role-access";
 
 const registerSchema = z.object({
   name: z.string().trim().min(3, { message: "Nome e obrigatório" }),
@@ -58,8 +59,8 @@ const SingUpForm = () => {
         name: values.name,
       },
       {
-        onSuccess: () => {
-          router.push("/dashboard");
+        onSuccess: (ctx) => {
+          router.push(getHomePathForRole(ctx.data.user.role));
         },
         onError: (ctx) => {
           // A partir do better-auth 1.6 o cadastro responde
