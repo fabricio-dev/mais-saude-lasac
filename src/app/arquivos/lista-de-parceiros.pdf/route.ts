@@ -1,10 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-import {
-  getPartnersListFile,
-  PARTNERS_LIST_FALLBACK,
-} from "@/data/partners-list-file";
+import { getPartnersListFile } from "@/data/partners-list-file";
 
 /**
  * A lista de parceiros em PDF. Pública: quem baixa é a Meta, na hora de
@@ -20,9 +17,16 @@ export async function GET() {
 
   const content =
     stored?.content ??
-    (await readFile(path.join(process.cwd(), PARTNERS_LIST_FALLBACK)).catch(
-      () => null,
-    ));
+    // Caminho literal, e não montado por variável: o Turbopack rastreia o que
+    // o servidor lê, e um caminho dinâmico levaria o projeto inteiro junto.
+    (await readFile(
+      path.join(
+        process.cwd(),
+        "public",
+        "docs",
+        "LISTA DE MÉDICOS E BENEFÍCIOS LASAC.pdf",
+      ),
+    ).catch(() => null));
   if (!content) return new Response("Not found", { status: 404 });
 
   return new Response(new Uint8Array(content), {

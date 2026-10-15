@@ -8,10 +8,6 @@ const FILE_ID = "default";
 /** Caminho público do PDF — é este link que vai no WhatsApp. */
 export const PARTNERS_LIST_PATH = "/arquivos/lista-de-parceiros.pdf";
 
-/** O arquivo que vem no código, usado enquanto nenhum foi enviado pela tela. */
-export const PARTNERS_LIST_FALLBACK =
-  "public/docs/LISTA DE MÉDICOS E BENEFÍCIOS LASAC.pdf";
-
 export type PartnersListFileInfo = {
   fileName: string;
   sizeBytes: number;
