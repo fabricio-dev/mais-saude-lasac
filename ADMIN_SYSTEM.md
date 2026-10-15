@@ -38,7 +38,7 @@ export const MyComponent = () => {
 
 ### 2. Proteger Rotas
 
-O middleware já está configurado para proteger automaticamente:
+O proxy (`proxy.ts`, o antigo middleware) já está configurado para proteger automaticamente:
 
 - **Rotas protegidas**: `/dashboard`, `/patients`, `/sellers`, `/clinics`
 - **Rotas admin**: `/admin`, `/management`
