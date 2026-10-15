@@ -17,11 +17,7 @@ import {
 } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
-import {
-  sendWhatsAppTemplateAsync,
-  sendWhatsAppTemplateWithDocumentAsync,
-} from "@/lib/whatsapp/client";
-import { getTemplateConfig } from "@/lib/whatsapp/templates";
+import { sendPatientConfirmation } from "@/lib/whatsapp/patient-confirmation";
 
 import { activatePatientSchema } from "./schema";
 
@@ -200,42 +196,13 @@ export const activatePatient = actionClient
           ? newExpirationDateAntecipated
           : newExpirationDate;
 
-    // Preparar template do WhatsApp com parâmetros
-    const templateConfig = getTemplateConfig(messageType, {
+    await sendPatientConfirmation({
+      patientId: patient.id,
       patientName: patient.name,
+      phoneNumber: patient.phoneNumber,
+      type: messageType,
       expirationDate: finalExpirationDate,
       clinicName,
-    });
-
-    // Preparar URL do PDF
-    const appUrl =
-      process.env.NEXT_PUBLIC_APP_URL ||
-      process.env.BETTER_AUTH_URL ||
-      "https://seu-dominio.com";
-    const pdfUrl = `${appUrl}/docs/LISTA%20DE%20M%C3%89DICOS%20E%20BENEF%C3%8DCIOS%20LASAC.pdf`; // ver a possibilidade de usar o s3 para o pdf
-
-    // Enviar ambos os WhatsApp em paralelo (aguarda completar para evitar problemas na Vercel)
-    await Promise.allSettled([
-      // 1. Enviar template de confirmação
-      sendWhatsAppTemplateAsync({
-        phoneNumber: patient.phoneNumber,
-        templateName: templateConfig.name,
-        parameters: templateConfig.parameters,
-      }),
-      // 2. Enviar PDF após 3 segundos
-      sendWhatsAppTemplateWithDocumentAsync(
-        {
-          phoneNumber: patient.phoneNumber,
-          templateName: "lista_de_parceiros",
-          documentUrl: pdfUrl,
-        },
-        500, // 500ms de delay
-      ),
-    ]).catch((error) => {
-      console.error(
-        `Erro ao enviar mensagens WhatsApp para paciente ${patient.id}:`,
-        error,
-      );
     });
 
     revalidatePath("/patients");

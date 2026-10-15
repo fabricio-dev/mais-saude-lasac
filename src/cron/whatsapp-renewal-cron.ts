@@ -19,8 +19,9 @@
  *    - SELECT pacientes elegíveis
  *    - INSERT em whatsapp_notifications (status = 'pending') como lock
  *    - Se falhar por UNIQUE constraint, pula (já foi enviado)
- *    - SEND via WhatsApp Cloud API usando templates aprovados
- *    - UPDATE status para 'sent' ou 'failed'
+ *    - SEND pelo whatsapp-ai (mesmo número do atendimento), que aplica o
+ *      descadastro e registra o envio na ficha do paciente
+ *    - UPDATE status para 'sent' (na fila do atendimento) ou 'failed'
  */
 
 import dayjs from "dayjs";
@@ -52,6 +53,13 @@ import {
  * Tipos de lembrete de renovação
  */
 type RenewalType = "RENEWAL_D_7" | "RENEWAL_D_0" | "RENEWAL_D_30";
+
+/** Rótulo de cada lembrete no relatório do atendimento. */
+const CATEGORY: Record<RenewalType, string> = {
+  RENEWAL_D_7: "Vencimento em 7 dias",
+  RENEWAL_D_0: "Vencimento hoje",
+  RENEWAL_D_30: "Vencido há 30 dias",
+};
 
 /**
  * Paciente elegível para receber lembrete
@@ -356,7 +364,7 @@ function applyDevProtection(phoneNumber: string): string {
  * 3. Cria lock no banco (INSERT com status = 'pending')
  * 4. Se lock falhar (já existe), pula paciente
  * 5. Aplica proteção DEV
- * 6. Envia via WhatsApp Cloud API
+ * 6. Pede o envio ao whatsapp-ai
  * 7. Atualiza status para 'sent' ou 'failed'
  */
 async function processPatient(
@@ -433,28 +441,41 @@ async function processPatient(
   // 4. Aplicar proteção DEV (redirecionar para número de teste)
   const targetPhone = applyDevProtection(formattedPhone);
 
-  // 5. Enviar via WhatsApp Cloud API (usando templates aprovados)
+  // 5. Pedir o envio ao whatsapp-ai (templates aprovados, mesmo número)
   console.log(
     `[${notificationType}] Enviando lembrete para ${name} (${maskPhoneNumber(targetPhone)})`,
   );
 
+  // A validade entra no id: depois de uma renovação, o próximo ciclo é outro
+  // envio — e rodar o cron duas vezes no mesmo dia não manda duas vezes.
+  const ciclo = dayjs(expirationDate)
+    .tz("America/Sao_Paulo")
+    .format("YYYY-MM-DD");
+
   const result = await sendWhatsAppTemplate({
+    externalId: `${notificationType}:${id}:${ciclo}`,
     phoneNumber: targetPhone,
+    patientName: name,
+    category: CATEGORY[notificationType],
     templateName: templateConfig.name,
     parameters: templateConfig.parameters,
   });
 
-  // 6. Atualizar status no banco
-  await updateNotificationStatus(id, notificationType, result.success);
+  // 6. Atualizar status no banco. Pulado (descadastro no atendimento) conta
+  // como não enviado: o paciente não recebeu.
+  const sent = result.success && result.status === "queued";
+  await updateNotificationStatus(id, notificationType, sent);
 
   return {
     patientId: id,
     patientName: name,
     phone: maskPhoneNumber(targetPhone),
-    success: result.success,
-    reason: result.success
-      ? `Enviado com sucesso (ID: ${result.messageId})`
-      : `Falha no envio: ${result.error}`,
+    success: sent,
+    reason: !result.success
+      ? `Falha no envio: ${result.error}`
+      : sent
+        ? `Na fila do atendimento (ID: ${result.id})`
+        : `Pulado pelo atendimento: ${result.reason}`,
     notificationType,
   };
 }

@@ -10,11 +10,7 @@ import { db } from "@/db";
 import { clinicsTable, patientsTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { actionClient } from "@/lib/next-safe-action";
-import {
-  sendWhatsAppTemplateAsync,
-  sendWhatsAppTemplateWithDocumentAsync,
-} from "@/lib/whatsapp/client";
-import { getTemplateConfig } from "@/lib/whatsapp/templates";
+import { sendPatientConfirmation } from "@/lib/whatsapp/patient-confirmation";
 
 import { upsertPatientSchema } from "./schema";
 
@@ -120,7 +116,10 @@ export const upsertPatient = actionClient
           : getActivationDate(),
       };
 
-      await db.insert(patientsTable).values(newPatientData);
+      const [created] = await db
+        .insert(patientsTable)
+        .values(newPatientData)
+        .returning({ id: patientsTable.id });
 
       // Enviar WhatsApp de boas-vindas para o novo paciente
       // Buscar nome da clínica para incluir na mensagem
@@ -134,42 +133,13 @@ export const upsertPatient = actionClient
         clinicName = clinicResult[0]?.name;
       }
 
-      // Preparar template do WhatsApp (primeira ativação)
-      const templateConfig = getTemplateConfig("activation", {
+      await sendPatientConfirmation({
+        patientId: created.id,
         patientName: parsedInput.name,
-        expirationDate: expirationDate,
+        phoneNumber: parsedInput.phoneNumber,
+        type: "activation",
+        expirationDate,
         clinicName,
-      });
-
-      // Preparar URL do PDF
-      const appUrl =
-        process.env.NEXT_PUBLIC_APP_URL ||
-        process.env.BETTER_AUTH_URL ||
-        "https://maissaudelasac.com.br";
-      const pdfUrl = `${appUrl}/docs/LISTA%20DE%20M%C3%89DICOS%20E%20BENEF%C3%8DCIOS%20LASAC.pdf`;
-
-      // Enviar ambos os WhatsApp em paralelo (aguarda completar para evitar problemas na Vercel)
-      await Promise.allSettled([
-        // 1. Enviar template de confirmação
-        sendWhatsAppTemplateAsync({
-          phoneNumber: parsedInput.phoneNumber,
-          templateName: templateConfig.name,
-          parameters: templateConfig.parameters,
-        }),
-        // 2. Enviar PDF após 3 segundos
-        sendWhatsAppTemplateWithDocumentAsync(
-          {
-            phoneNumber: parsedInput.phoneNumber,
-            templateName: "lista_de_parceiros",
-            documentUrl: pdfUrl,
-          },
-          500, // 500ms de delay
-        ),
-      ]).catch((error) => {
-        console.error(
-          `Erro ao enviar mensagens WhatsApp para novo paciente ${parsedInput.name}:`,
-          error,
-        );
       });
     }
 

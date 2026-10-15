@@ -1,0 +1,95 @@
+/**
+ * Confirmação de ativação/renovação do convênio por WhatsApp: o template de
+ * confirmação e, em seguida, a lista de parceiros em PDF.
+ *
+ * Usada pelo cadastro (upsert-patient) e pela ativação (activate-patient), que
+ * mandam a mesma dupla de mensagens.
+ */
+
+import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
+
+import { sendWhatsAppTemplate } from "./client";
+import { getTemplateConfig } from "./templates";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+export type ConfirmationType = "activation" | "renewal" | "early_renewal";
+
+const CATEGORY: Record<ConfirmationType, string> = {
+  activation: "Convênio ativado",
+  renewal: "Convênio renovado",
+  early_renewal: "Renovação antecipada",
+};
+
+const PARTNERS_PDF_PATH =
+  "/docs/LISTA%20DE%20M%C3%89DICOS%20E%20BENEF%C3%8DCIOS%20LASAC.pdf";
+
+interface PatientConfirmationParams {
+  patientId: string;
+  patientName: string;
+  phoneNumber: string;
+  type: ConfirmationType;
+  expirationDate: Date;
+  clinicName?: string;
+}
+
+export async function sendPatientConfirmation({
+  patientId,
+  patientName,
+  phoneNumber,
+  type,
+  expirationDate,
+  clinicName,
+}: PatientConfirmationParams): Promise<void> {
+  const templateConfig = getTemplateConfig(type, {
+    patientName,
+    expirationDate,
+    clinicName,
+  });
+
+  // A nova validade entra no id: cada ciclo de renovação é um envio novo, e
+  // repetir a mesma ativação (duplo clique, retry) não manda duas vezes.
+  const ciclo = dayjs(expirationDate)
+    .tz("America/Sao_Paulo")
+    .format("YYYY-MM-DD");
+
+  const appUrl =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.BETTER_AUTH_URL ||
+    "https://maissaudelasac.com.br";
+
+  try {
+    // Em sequência, e não em paralelo: a confirmação precisa chegar antes do
+    // PDF, e a ordem dos pedidos é a ordem da fila no whatsapp-ai.
+    await sendWhatsAppTemplate({
+      externalId: `${type}:${patientId}:${ciclo}`,
+      phoneNumber,
+      patientName,
+      category: CATEGORY[type],
+      templateName: templateConfig.name,
+      parameters: templateConfig.parameters,
+    });
+
+    await sendWhatsAppTemplate({
+      externalId: `lista_de_parceiros:${patientId}:${ciclo}`,
+      phoneNumber,
+      patientName,
+      category: "Lista de parceiros",
+      templateName: "lista_de_parceiros",
+      parameters: [],
+      document: {
+        link: `${appUrl}${PARTNERS_PDF_PATH}`,
+        filename: "Lista de Parceiros - Mais Saúde.pdf",
+      },
+    });
+  } catch (error) {
+    // O WhatsApp é aviso: falhar aqui não pode desfazer a ativação.
+    console.error(
+      `Erro ao enviar confirmação por WhatsApp para paciente ${patientId}:`,
+      error,
+    );
+  }
+}

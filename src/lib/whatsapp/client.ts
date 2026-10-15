@@ -1,565 +1,162 @@
 /**
- * Cliente para WhatsApp Business API (Meta)
- * Documentação: https://developers.facebook.com/docs/whatsapp/cloud-api
+ * Envio de WhatsApp pelo sistema de atendimento (whatsapp-ai).
+ *
+ * O número é o mesmo do atendimento, e o envio é pedido ao whatsapp-ai em vez
+ * de ir direto para a Meta: assim a mensagem aparece na ficha do paciente, a
+ * resposta dele cai no atendimento já com o aviso na conversa, e quem pediu
+ * para sair no WhatsApp não recebe (o whatsapp-ai aplica o descadastro).
+ *
+ * Contrato: POST {WHATSAPP_AI_URL}/api/integrations/v1/messages
+ * Chave: gerada em whatsapp-ai → Configurações → Integrações.
  */
 
-interface WhatsAppTextMessage {
-  messaging_product: "whatsapp";
-  to: string;
-  type: "text";
-  text: {
-    body: string;
-  };
+import { maskPhoneNumber } from "./utils";
+
+/** Arquivo do cabeçalho do template, por URL pública (só https). */
+interface TemplateDocument {
+  link: string;
+  filename: string;
 }
 
-interface WhatsAppTemplateMessage {
-  messaging_product: "whatsapp";
-  to: string;
-  type: "template";
-  template: {
-    name: string;
-    language: {
-      code: string;
-    };
-    components: Array<{
-      type: string;
-      parameters: Array<{
-        type: string;
-        text: string;
-      }>;
-    }>;
-  };
-}
-
-interface WhatsAppResponse {
-  messaging_product: string;
-  contacts: Array<{
-    input: string;
-    wa_id: string;
-  }>;
-  messages: Array<{
-    id: string;
-  }>;
-}
-
-interface WhatsAppError {
-  error: {
-    message: string;
-    type: string;
-    code: number;
-    error_data?: {
-      details: string;
-    };
-  };
-}
-
-interface SendMessageParams {
+export interface SendTemplateParams {
+  /**
+   * Identifica o envio. O mesmo valor nunca envia duas vezes — é o que deixa
+   * repetir a chamada com segurança depois de timeout.
+   */
+  externalId: string;
   phoneNumber: string;
-  message: string;
-  maxRetries?: number;
-}
-
-interface SendTemplateParams {
-  phoneNumber: string;
+  /** Preenche a ficha do paciente no atendimento, quando ela está sem nome. */
+  patientName?: string;
+  /** Rótulo do envio no relatório do atendimento ("Vencimento em 7 dias"). */
+  category: string;
   templateName: string;
   parameters: string[];
-  maxRetries?: number;
+  document?: TemplateDocument;
 }
 
-interface SendTemplateWithDocumentParams {
-  phoneNumber: string;
-  templateName: string;
-  documentUrl: string;
-  maxRetries?: number;
-}
-
-interface SendMessageResult {
-  success: boolean;
-  messageId?: string;
-  error?: string;
-}
-
-/**
- * Envia uma mensagem usando template pré-aprovado do WhatsApp Business API
- * Esta é a forma OFICIAL e RECOMENDADA para enviar mensagens
- */
-export async function sendWhatsAppTemplate({
-  phoneNumber,
-  templateName,
-  parameters,
-  maxRetries = 2,
-}: SendTemplateParams): Promise<SendMessageResult> {
-  // Verificar se WhatsApp está habilitado
-  if (process.env.WHATSAPP_ENABLED !== "true") {
-    console.log(
-      "WhatsApp desabilitado. Template não enviado para:",
-      phoneNumber,
-    );
-    return {
-      success: false,
-      error: "WhatsApp está desabilitado no ambiente",
-    };
-  }
-
-  // Validar configurações
-  const apiUrl = process.env.WHATSAPP_API_URL;
-  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
-  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-
-  if (!apiUrl || !accessToken || !phoneNumberId) {
-    console.error("Configurações do WhatsApp incompletas");
-    return {
-      success: false,
-      error: "Configurações do WhatsApp não encontradas",
-    };
-  }
-
-  // Formatar número de telefone (remover caracteres especiais)
-  const formattedPhone = phoneNumber.replace(/\D/g, "");
-
-  if (!formattedPhone || formattedPhone.length < 10) {
-    console.error("Número de telefone inválido:", phoneNumber);
-    return {
-      success: false,
-      error: "Número de telefone inválido",
-    };
-  }
-
-  // Preparar mensagem com template
-  const payload: WhatsAppTemplateMessage = {
-    messaging_product: "whatsapp",
-    to: formattedPhone,
-    type: "template",
-    template: {
-      name: templateName,
-      language: {
-        code: "pt_BR",
-      },
-      components: [
-        {
-          type: "body",
-          parameters: parameters.map((param) => ({
-            type: "text",
-            text: param,
-          })),
-        },
-      ],
-    },
-  };
-
-  // Tentar enviar com retries
-  let lastError: string | undefined;
-
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      console.log(
-        `Tentativa ${attempt}/${maxRetries} - Enviando template WhatsApp "${templateName}" para ${formattedPhone}`,
-      );
-
-      const response = await fetch(`${apiUrl}/${phoneNumberId}/messages`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const errorData = (await response.json()) as WhatsAppError;
-        lastError =
-          errorData.error?.message ||
-          `Erro HTTP ${response.status}: ${response.statusText}`;
-        console.error(
-          `Erro ao enviar template WhatsApp (tentativa ${attempt}):`,
-          lastError,
-        );
-
-        // Se for erro de parâmetro inválido ou template não encontrado, não tentar novamente
-        if (
-          errorData.error?.code === 100 ||
-          errorData.error?.code === 131026 ||
-          errorData.error?.code === 132000
-        ) {
-          return {
-            success: false,
-            error: lastError,
-          };
-        }
-
-        // Esperar antes de tentar novamente
-        if (attempt < maxRetries) {
-          await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
-        }
-        continue;
-      }
-
-      const data = (await response.json()) as WhatsAppResponse;
-      const messageId = data.messages?.[0]?.id;
-
-      console.log(
-        `✅ Template WhatsApp "${templateName}" enviado com sucesso para ${formattedPhone} - ID: ${messageId}`,
-      );
-
-      return {
-        success: true,
-        messageId,
-      };
-    } catch (error) {
-      lastError = error instanceof Error ? error.message : "Erro desconhecido";
-      console.error(
-        `Erro ao enviar template WhatsApp (tentativa ${attempt}):`,
-        lastError,
-      );
-
-      // Esperar antes de tentar novamente
-      if (attempt < maxRetries) {
-        await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
-      }
+export type SendTemplateResult =
+  | {
+      success: true;
+      /** `queued`: vai sair. `skipped`: paciente descadastrado ou bloqueado. */
+      status: "queued" | "skipped";
+      id: string;
+      reason: string | null;
+      duplicate: boolean;
     }
-  }
+  | { success: false; error: string };
 
-  return {
-    success: false,
-    error: lastError || "Falha ao enviar template após todas as tentativas",
-  };
-}
+const MAX_ATTEMPTS = 3;
+const TIMEOUT_MS = 10_000;
 
-/**
- * Envia uma mensagem de texto via WhatsApp Business API
- * ⚠️ ATENÇÃO: Mensagens de texto livre só funcionam dentro de janela de 24h
- * Para notificações, use sendWhatsAppTemplate()
- */
-export async function sendWhatsAppMessage({
-  phoneNumber,
-  message,
-  maxRetries = 2,
-}: SendMessageParams): Promise<SendMessageResult> {
-  // Verificar se WhatsApp está habilitado
-  if (process.env.WHATSAPP_ENABLED !== "true") {
-    console.log(
-      "WhatsApp desabilitado. Mensagem não enviada para:",
-      phoneNumber,
-    );
-    return {
-      success: false,
-      error: "WhatsApp está desabilitado no ambiente",
-    };
-  }
-
-  // Validar configurações
-  const apiUrl = process.env.WHATSAPP_API_URL;
-  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
-  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-
-  if (!apiUrl || !accessToken || !phoneNumberId) {
-    console.error("Configurações do WhatsApp incompletas");
-    return {
-      success: false,
-      error: "Configurações do WhatsApp não encontradas",
-    };
-  }
-
-  // Formatar número de telefone (remover caracteres especiais)
-  const formattedPhone = phoneNumber.replace(/\D/g, "");
-
-  if (!formattedPhone || formattedPhone.length < 10) {
-    console.error("Número de telefone inválido:", phoneNumber);
-    return {
-      success: false,
-      error: "Número de telefone inválido",
-    };
-  }
-
-  // Preparar mensagem de texto
-  const payload: WhatsAppTextMessage = {
-    messaging_product: "whatsapp",
-    to: formattedPhone,
-    type: "text",
-    text: {
-      body: message,
-    },
-  };
-
-  // Tentar enviar com retries
-  let lastError: string | undefined;
-
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      console.log(
-        `Tentativa ${attempt}/${maxRetries} - Enviando WhatsApp para ${formattedPhone}`,
-      );
-
-      const response = await fetch(`${apiUrl}/${phoneNumberId}/messages`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const errorData = (await response.json()) as WhatsAppError;
-        lastError =
-          errorData.error?.message ||
-          `Erro HTTP ${response.status}: ${response.statusText}`;
-        console.error(
-          `Erro ao enviar WhatsApp (tentativa ${attempt}):`,
-          lastError,
-        );
-
-        // Se for erro de parâmetro inválido, não tentar novamente
-        if (errorData.error?.code === 100 || errorData.error?.code === 131026) {
-          return {
-            success: false,
-            error: lastError,
-          };
-        }
-
-        // Esperar antes de tentar novamente
-        if (attempt < maxRetries) {
-          await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
-        }
-        continue;
-      }
-
-      const data = (await response.json()) as WhatsAppResponse;
-      const messageId = data.messages?.[0]?.id;
-
-      console.log(
-        `✅ WhatsApp enviado com sucesso para ${formattedPhone} - ID: ${messageId}`,
-      );
-
-      return {
-        success: true,
-        messageId,
-      };
-    } catch (error) {
-      lastError = error instanceof Error ? error.message : "Erro desconhecido";
-      console.error(
-        `Erro ao enviar WhatsApp (tentativa ${attempt}):`,
-        lastError,
-      );
-
-      // Esperar antes de tentar novamente
-      if (attempt < maxRetries) {
-        await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
-      }
-    }
-  }
-
-  return {
-    success: false,
-    error: lastError || "Falha ao enviar mensagem após todas as tentativas",
-  };
-}
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
- * Envia um template de forma assíncrona (não bloqueia o processo)
- * Útil para não bloquear a ativação do paciente caso o WhatsApp falhe
- * RECOMENDADO para notificações automáticas
+ * Pede o envio de um template aprovado ao whatsapp-ai.
+ *
+ * Tenta de novo só quando o problema pode ser passageiro (rede, timeout, 5xx,
+ * 429). Repetir é seguro porque o `externalId` é o mesmo: o whatsapp-ai devolve
+ * o primeiro envio em vez de mandar outro.
  */
-export function sendWhatsAppTemplateAsync(
+export async function sendWhatsAppTemplate(
   params: SendTemplateParams,
-): Promise<SendMessageResult> {
-  // Executar em background sem bloquear
-  return sendWhatsAppTemplate(params).catch((error) => {
-    console.error("Erro crítico ao enviar template WhatsApp:", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Erro desconhecido",
-    };
-  });
-}
-
-/**
- * Envia uma mensagem de texto de forma assíncrona (não bloqueia o processo)
- * ⚠️ ATENÇÃO: Só funciona dentro de janela de 24h após cliente responder
- */
-export function sendWhatsAppMessageAsync(
-  params: SendMessageParams,
-): Promise<SendMessageResult> {
-  // Executar em background sem bloquear
-  return sendWhatsAppMessage(params).catch((error) => {
-    console.error("Erro crítico ao enviar WhatsApp:", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Erro desconhecido",
-    };
-  });
-}
-
-/**
- * Envia um template com documento (PDF) via WhatsApp Business API
- * Usado para enviar lista de parceiros após ativação
- */
-export async function sendWhatsAppTemplateWithDocument({
-  phoneNumber,
-  templateName,
-  documentUrl,
-  maxRetries = 2,
-}: SendTemplateWithDocumentParams): Promise<SendMessageResult> {
-  // Verificar se WhatsApp está habilitado
+): Promise<SendTemplateResult> {
   if (process.env.WHATSAPP_ENABLED !== "true") {
     console.log(
-      "WhatsApp desabilitado. Documento não enviado para:",
-      phoneNumber,
+      `WhatsApp desabilitado. "${params.templateName}" não enviado para ${maskPhoneNumber(params.phoneNumber)}`,
     );
+    return { success: false, error: "WhatsApp está desabilitado no ambiente" };
+  }
+
+  const baseUrl = process.env.WHATSAPP_AI_URL?.replace(/\/+$/, "");
+  const apiKey = process.env.WHATSAPP_AI_API_KEY;
+  if (!baseUrl || !apiKey) {
+    console.error("WHATSAPP_AI_URL ou WHATSAPP_AI_API_KEY não configurados");
     return {
       success: false,
-      error: "WhatsApp está desabilitado no ambiente",
+      error: "Configuração do sistema de atendimento ausente",
     };
   }
 
-  // Validar configurações
-  const apiUrl = process.env.WHATSAPP_API_URL;
-  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
-  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-
-  if (!apiUrl || !accessToken || !phoneNumberId) {
-    console.error("Configurações do WhatsApp incompletas");
-    return {
-      success: false,
-      error: "Configurações do WhatsApp não encontradas",
-    };
-  }
-
-  // Formatar número de telefone
-  const formattedPhone = phoneNumber.replace(/\D/g, "");
-
-  if (!formattedPhone || formattedPhone.length < 10) {
-    console.error("Número de telefone inválido:", phoneNumber);
-    return {
-      success: false,
-      error: "Número de telefone inválido",
-    };
-  }
-
-  // Preparar template com documento
-  const payload = {
-    messaging_product: "whatsapp",
-    to: formattedPhone,
-    type: "template",
+  const body = JSON.stringify({
+    externalId: params.externalId,
+    to: params.phoneNumber,
+    name: params.patientName,
+    category: params.category,
     template: {
-      name: templateName,
-      language: {
-        code: "pt_BR",
-      },
-      components: [
-        {
-          type: "header",
-          parameters: [
-            {
-              type: "document",
-              document: {
-                link: documentUrl,
-                filename: "Lista de Parceiros - Mais Saúde.pdf",
-              },
-            },
-          ],
-        },
-      ],
+      name: params.templateName,
+      language: "pt_BR",
+      params: params.parameters,
     },
-  };
+    ...(params.document
+      ? {
+          header: {
+            type: "document",
+            link: params.document.link,
+            filename: params.document.filename,
+          },
+        }
+      : {}),
+  });
 
-  // Tentar enviar com retries
-  let lastError: string | undefined;
+  const destino = maskPhoneNumber(params.phoneNumber);
+  let lastError = "Falha ao enviar após todas as tentativas";
 
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     try {
-      console.log(
-        `Tentativa ${attempt}/${maxRetries} - Enviando documento WhatsApp "${templateName}" para ${formattedPhone}`,
-      );
-
-      const response = await fetch(`${apiUrl}/${phoneNumberId}/messages`, {
+      const response = await fetch(`${baseUrl}/api/integrations/v1/messages`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${apiKey}`,
         },
-        body: JSON.stringify(payload),
+        body,
+        signal: AbortSignal.timeout(TIMEOUT_MS),
       });
 
-      if (!response.ok) {
-        const errorData = (await response.json()) as WhatsAppError;
-        lastError =
-          errorData.error?.message ||
-          `Erro HTTP ${response.status}: ${response.statusText}`;
-        console.error(
-          `Erro ao enviar documento WhatsApp (tentativa ${attempt}):`,
-          lastError,
+      const data = (await response.json().catch(() => null)) as {
+        id?: string;
+        status?: "queued" | "skipped";
+        reason?: string | null;
+        duplicate?: boolean;
+        error?: string;
+        message?: string;
+      } | null;
+
+      if (response.ok && data?.id && data.status) {
+        console.log(
+          `✅ "${params.templateName}" para ${destino}: ${data.status}` +
+            (data.reason ? ` (${data.reason})` : "") +
+            (data.duplicate ? " — já enviado antes" : ""),
         );
-
-        // Se for erro de parâmetro inválido ou template não encontrado, não tentar novamente
-        if (
-          errorData.error?.code === 100 ||
-          errorData.error?.code === 131026 ||
-          errorData.error?.code === 132000
-        ) {
-          return {
-            success: false,
-            error: lastError,
-          };
-        }
-
-        // Esperar antes de tentar novamente
-        if (attempt < maxRetries) {
-          await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
-        }
-        continue;
+        return {
+          success: true,
+          status: data.status,
+          id: data.id,
+          reason: data.reason ?? null,
+          duplicate: data.duplicate ?? false,
+        };
       }
 
-      const data = (await response.json()) as WhatsAppResponse;
-      const messageId = data.messages?.[0]?.id;
+      lastError =
+        data?.message ?? data?.error ?? `Erro HTTP ${response.status}`;
 
-      console.log(
-        `✅ Documento WhatsApp "${templateName}" enviado com sucesso para ${formattedPhone} - ID: ${messageId}`,
-      );
-
-      return {
-        success: true,
-        messageId,
-      };
+      // Pedido recusado (chave, formato, template): repetir não muda nada.
+      const passageiro = response.status >= 500 || response.status === 429;
+      if (!passageiro) {
+        console.error(
+          `Envio de "${params.templateName}" para ${destino} recusado: ${lastError}`,
+        );
+        return { success: false, error: lastError };
+      }
     } catch (error) {
       lastError = error instanceof Error ? error.message : "Erro desconhecido";
-      console.error(
-        `Erro ao enviar documento WhatsApp (tentativa ${attempt}):`,
-        lastError,
-      );
-
-      // Esperar antes de tentar novamente
-      if (attempt < maxRetries) {
-        await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
-      }
     }
+
+    console.error(
+      `Tentativa ${attempt}/${MAX_ATTEMPTS} de "${params.templateName}" para ${destino} falhou: ${lastError}`,
+    );
+    if (attempt < MAX_ATTEMPTS) await wait(1000 * attempt);
   }
 
-  return {
-    success: false,
-    error: lastError || "Falha ao enviar documento após todas as tentativas",
-  };
-}
-
-/**
- * Envia um template com documento de forma assíncrona
- * Com delay opcional antes do envio
- */
-export async function sendWhatsAppTemplateWithDocumentAsync(
-  params: SendTemplateWithDocumentParams,
-  delayMs = 0,
-): Promise<SendMessageResult> {
-  // Aguardar delay se especificado
-  if (delayMs > 0) {
-    await new Promise((resolve) => setTimeout(resolve, delayMs));
-  }
-
-  // Executar em background sem bloquear
-  return sendWhatsAppTemplateWithDocument(params).catch((error) => {
-    console.error("Erro crítico ao enviar documento WhatsApp:", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Erro desconhecido",
-    };
-  });
+  return { success: false, error: lastError };
 }
