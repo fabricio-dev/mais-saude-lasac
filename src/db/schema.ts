@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 import {
   boolean,
+  customType,
   date,
   integer,
   pgEnum,
@@ -238,6 +239,58 @@ export const whatsappNotificationsTable = pgTable(
     ),
   ],
 );
+
+/**
+ * Configuração dos envios de WhatsApp, editada em /whatsapp. Uma linha só
+ * (id "default"); enquanto ela não existe, valem os padrões do .env
+ * (src/data/whatsapp-settings.ts).
+ */
+export const whatsappSettingsTable = pgTable("whatsapp_settings", {
+  id: text("id").primaryKey().default("default"),
+  enabled: boolean("enabled").notNull().default(false),
+  reminderD7Enabled: boolean("reminder_d7_enabled").notNull().default(true),
+  reminderD0Enabled: boolean("reminder_d0_enabled").notNull().default(true),
+  // "Venceu em {{data}}" — só depois de o template ser aprovado na Meta.
+  reminderD0LateEnabled: boolean("reminder_d0_late_enabled")
+    .notNull()
+    .default(false),
+  reminderD30Enabled: boolean("reminder_d30_enabled").notNull().default(true),
+  d30DailyLimit: integer("d30_daily_limit").notNull().default(100),
+  // Número do wa.me nos lembretes, como o cadastro: DDD + número.
+  officialNumber: text("official_number"),
+  // Hora cheia (0–23, São Paulo) em que o cron dispara os lembretes.
+  sendHour: integer("send_hour").notNull().default(9),
+  // Dias da semana (0 = domingo … 6 = sábado).
+  sendDays: integer("send_days")
+    .array()
+    .notNull()
+    .default([0, 1, 2, 3, 4, 5, 6]),
+  // Dia (São Paulo) da última execução — o cron roda de hora em hora e só
+  // dispara uma vez por dia.
+  lastRunOn: date("last_run_on", { mode: "string" }),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedByUserId: text("updated_by_user_id").references(() => usersTable.id),
+});
+
+const bytea = customType<{ data: Buffer }>({
+  dataType() {
+    return "bytea";
+  },
+});
+
+/**
+ * A lista de parceiros em PDF enviada depois da ativação. No banco, e não em
+ * public/: arquivo posto em public/ depois do build não é servido em produção.
+ * Servida em /arquivos/lista-de-parceiros.pdf.
+ */
+export const partnersListFileTable = pgTable("partners_list_file", {
+  id: text("id").primaryKey().default("default"),
+  content: bytea("content").notNull(),
+  fileName: text("file_name").notNull(),
+  sizeBytes: integer("size_bytes").notNull(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  updatedByUserId: text("updated_by_user_id").references(() => usersTable.id),
+});
 
 /* 
 
