@@ -11,9 +11,11 @@ import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 
 import { PARTNERS_LIST_PATH } from "@/data/partners-list-file";
+import { getMessageTemplates } from "@/data/whatsapp-message-templates";
+import { getWhatsAppSettings } from "@/data/whatsapp-settings";
 
 import { sendWhatsAppTemplate } from "./client";
-import { getTemplateConfig } from "./templates";
+import { buildTemplateParameters } from "./message-templates";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -43,12 +45,6 @@ export async function sendPatientConfirmation({
   expirationDate,
   clinicName,
 }: PatientConfirmationParams): Promise<void> {
-  const templateConfig = getTemplateConfig(type, {
-    patientName,
-    expirationDate,
-    clinicName,
-  });
-
   // A nova validade entra no id: cada ciclo de renovação é um envio novo, e
   // repetir a mesma ativação (duplo clique, retry) não manda duas vezes.
   const ciclo = dayjs(expirationDate)
@@ -61,6 +57,20 @@ export async function sendPatientConfirmation({
     "https://maissaudelasac.com.br";
 
   try {
+    // Os modelos escolhidos em /whatsapp para a confirmação e para a lista.
+    const [templates, settings] = await Promise.all([
+      getMessageTemplates(),
+      getWhatsAppSettings(),
+    ]);
+    const context = {
+      patientName,
+      expirationDate,
+      clinicName,
+      officialNumber: settings.officialNumber,
+    };
+    const confirmation = templates[type];
+    const partners = templates.partners_list;
+
     // Em sequência, e não em paralelo: a confirmação precisa chegar antes do
     // PDF, e a ordem dos pedidos é a ordem da fila no whatsapp-ai.
     await sendWhatsAppTemplate({
@@ -68,8 +78,9 @@ export async function sendPatientConfirmation({
       phoneNumber,
       patientName,
       category: CATEGORY[type],
-      templateName: templateConfig.name,
-      parameters: templateConfig.parameters,
+      templateName: confirmation.templateName,
+      language: confirmation.templateLanguage,
+      parameters: buildTemplateParameters(confirmation.params, context),
     });
 
     await sendWhatsAppTemplate({
@@ -77,12 +88,17 @@ export async function sendPatientConfirmation({
       phoneNumber,
       patientName,
       category: "Lista de parceiros",
-      templateName: "lista_de_parceiros",
-      parameters: [],
-      document: {
-        link: `${appUrl}${PARTNERS_LIST_PATH}`,
-        filename: "Lista de Parceiros - Mais Saúde.pdf",
-      },
+      templateName: partners.templateName,
+      language: partners.templateLanguage,
+      parameters: buildTemplateParameters(partners.params, context),
+      ...(partners.headerDocument
+        ? {
+            document: {
+              link: `${appUrl}${PARTNERS_LIST_PATH}`,
+              filename: "Lista de Parceiros - Mais Saúde.pdf",
+            },
+          }
+        : {}),
     });
   } catch (error) {
     // O WhatsApp é aviso: falhar aqui não pode desfazer a ativação.

@@ -42,6 +42,7 @@ import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 import { and, desc, eq, gte, inArray, isNull, lte } from "drizzle-orm";
 
+import { getMessageTemplates } from "@/data/whatsapp-message-templates";
 import {
   claimScheduledRun,
   getWhatsAppSettings,
@@ -59,7 +60,11 @@ import {
   // whatsappNotificationStatusEnum,
 } from "@/db/schema";
 import { sendWhatsAppTemplate } from "@/lib/whatsapp/client";
-import { getTemplateConfig } from "@/lib/whatsapp/templates";
+import {
+  buildTemplateParameters,
+  type MessageKey,
+  type MessageTemplateConfig,
+} from "@/lib/whatsapp/message-templates";
 import {
   formatPhoneNumber,
   isValidPhoneNumber,
@@ -75,13 +80,19 @@ type RenewalType =
   | "RENEWAL_D_0_LATE"
   | "RENEWAL_D_30";
 
-/** O template aprovado de cada lembrete (ver getTemplateConfig). */
-const TEMPLATE_TYPE = {
-  RENEWAL_D_7: "renewal_reminder_d7",
-  RENEWAL_D_0: "renewal_reminder_d0",
-  RENEWAL_D_0_LATE: "renewal_reminder_d0_late",
-  RENEWAL_D_30: "renewal_reminder_d30",
-} as const satisfies Record<RenewalType, string>;
+/** A mensagem de cada lembrete — o modelo dela é escolhido em /whatsapp. */
+const MESSAGE_KEY = {
+  RENEWAL_D_7: "reminder_d7",
+  RENEWAL_D_0: "reminder_d0",
+  RENEWAL_D_0_LATE: "reminder_d0_late",
+  RENEWAL_D_30: "reminder_d30",
+} as const satisfies Record<RenewalType, MessageKey>;
+
+/** O que todo paciente de um lembrete compartilha numa execução. */
+type ReminderSend = {
+  template: MessageTemplateConfig;
+  officialNumber: string | null;
+};
 
 /** Rótulo de cada lembrete no relatório do atendimento. */
 const CATEGORY: Record<RenewalType, string> = {
@@ -371,23 +382,23 @@ function applyDevProtection(phoneNumber: string): string {
 async function processPatient(
   patient: EligiblePatient,
   notificationType: RenewalType,
-  officialNumber: string | null,
+  { template, officialNumber }: ReminderSend,
 ): Promise<ProcessingResult> {
   const { id, name, phoneNumber, expirationDate, clinicId, clinicName } =
     patient;
   const formattedPhone = formatPhoneNumber(phoneNumber);
 
-  // 1. Obter template aprovado da Meta
-  // IMPORTANTE: getTemplateConfig retorna template pré-aprovado
-  // Não criar texto livre, não inventar template
-  const templateType = TEMPLATE_TYPE[notificationType];
-
-  const templateConfig = getTemplateConfig(templateType, {
-    patientName: name,
-    expirationDate: expirationDate,
-    clinicName: clinicName,
-    officialNumber,
-  });
+  // 1. O modelo escolhido em /whatsapp e os valores deste paciente
+  const templateConfig = {
+    name: template.templateName,
+    language: template.templateLanguage,
+    parameters: buildTemplateParameters(template.params, {
+      patientName: name,
+      expirationDate,
+      clinicName,
+      officialNumber,
+    }),
+  };
 
   // 2. Criar lock no banco (proteção contra duplicação)
   const lockCreated = await createNotificationLock(
@@ -450,6 +461,7 @@ async function processPatient(
     patientName: name,
     category: CATEGORY[notificationType],
     templateName: templateConfig.name,
+    language: templateConfig.language,
     parameters: templateConfig.parameters,
   });
 
@@ -493,7 +505,7 @@ async function processPatient(
 async function processRenewalType(
   type: RenewalType,
   getEligiblePatients: () => Promise<EligiblePatient[]>,
-  officialNumber: string | null,
+  send: ReminderSend,
 ): Promise<void> {
   console.log(`\n========================================`);
   console.log(`[${type}] Iniciando processamento`);
@@ -515,7 +527,7 @@ async function processRenewalType(
 
     for (const patient of patients) {
       try {
-        const result = await processPatient(patient, type, officialNumber);
+        const result = await processPatient(patient, type, send);
         results.push(result);
 
         // Pequeno delay entre envios para evitar rate limiting
@@ -613,6 +625,9 @@ export async function runWhatsAppRenewalCron({
 
   const startTime = Date.now();
   const { officialNumber } = settings;
+  // Uma leitura por execução: todos os pacientes de um lembrete saem com o
+  // mesmo modelo, mesmo que alguém o troque na tela no meio do disparo.
+  const templates = await getMessageTemplates();
 
   const etapas: Array<{
     type: RenewalType;
@@ -647,7 +662,10 @@ export async function runWhatsAppRenewalCron({
         console.log(`\n[${etapa.type}] Desligado em /whatsapp`);
         continue;
       }
-      await processRenewalType(etapa.type, etapa.find, officialNumber);
+      await processRenewalType(etapa.type, etapa.find, {
+        template: templates[MESSAGE_KEY[etapa.type]],
+        officialNumber,
+      });
     }
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);

@@ -34,6 +34,8 @@ export interface SendTemplateParams {
   /** Rótulo do envio no relatório do atendimento ("Vencimento em 7 dias"). */
   category: string;
   templateName: string;
+  /** Idioma do modelo aprovado. Padrão pt_BR. */
+  language?: string;
   parameters: string[];
   document?: TemplateDocument;
 }
@@ -115,7 +117,7 @@ export async function sendWhatsAppTemplate(
     category: params.category,
     template: {
       name: params.templateName,
-      language: "pt_BR",
+      language: params.language ?? "pt_BR",
       params: params.parameters,
     },
     ...(params.document
@@ -197,4 +199,70 @@ export async function sendWhatsAppTemplate(
   }
 
   return { success: false, error: lastError, retryable: true };
+}
+
+/** Um modelo aprovado na conta do WhatsApp, como o whatsapp-ai o descreve. */
+export type WhatsAppAiTemplate = {
+  name: string;
+  language: string;
+  category: string;
+  body: string;
+  footer: string | null;
+  /** `DOCUMENT`, `IMAGE`, `VIDEO`, `TEXT` ou nulo quando não tem cabeçalho. */
+  headerFormat: string | null;
+  variables: number;
+  examples: string[];
+  buttons: { type: string; text: string }[];
+  /** Motivo de o whatsapp-ai não conseguir enviar este modelo, quando há. */
+  unsupported: string | null;
+};
+
+export type ListTemplatesResult =
+  | { ok: true; templates: WhatsAppAiTemplate[] }
+  | { ok: false; message: string };
+
+/** Os modelos aprovados, para a escolha na tela /whatsapp. */
+export async function listWhatsAppAiTemplates(): Promise<ListTemplatesResult> {
+  let credentials: Awaited<ReturnType<typeof getWhatsAppAiCredentials>>;
+  try {
+    credentials = await getWhatsAppAiCredentials();
+  } catch {
+    credentials = null;
+  }
+  if (!credentials) {
+    return {
+      ok: false,
+      message: "Configure a conexão com o sistema de atendimento primeiro.",
+    };
+  }
+
+  try {
+    const response = await fetch(
+      `${credentials.url}/api/integrations/v1/templates`,
+      {
+        headers: { Authorization: `Bearer ${credentials.apiKey}` },
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+        cache: "no-store",
+      },
+    );
+    const data = (await response.json().catch(() => null)) as {
+      templates?: WhatsAppAiTemplate[];
+      message?: string;
+    } | null;
+
+    if (!response.ok || !data?.templates) {
+      return {
+        ok: false,
+        message:
+          data?.message ??
+          `O sistema de atendimento respondeu ${response.status}.`,
+      };
+    }
+    return { ok: true, templates: data.templates };
+  } catch {
+    return {
+      ok: false,
+      message: "Não foi possível falar com o sistema de atendimento.",
+    };
+  }
 }
