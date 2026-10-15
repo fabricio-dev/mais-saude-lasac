@@ -8,10 +8,6 @@ import * as schema from "@/db/schema";
 import { usersToClinicsTable } from "@/db/schema";
 
 export const auth = betterAuth({
-  // A origem do BETTER_AUTH_URL já é confiável; aqui entram as outras (ex.: com www)
-  trustedOrigins: process.env.BETTER_AUTH_TRUSTED_ORIGINS?.split(",")
-    .map((origin) => origin.trim())
-    .filter(Boolean),
   database: drizzleAdapter(db, {
     provider: "pg",
     schema: {

@@ -2,7 +2,9 @@ DATABASE_URL=""
 BETTER_AUTH_SECRET="00000"
 BETTER_AUTH_URL=https://suaurl.com
 
-# Outros endereços pelos quais o sistema é aberto (ex.: com www), separados por vírgula.
+# Outros endereços pelos quais o sistema é aberto (ex.: com www). O better-auth lê esta
+# variável sozinho. Separados por vírgula, SEM espaço e sem vírgula sobrando: ele não apara,
+# e no 1.4.5 um item vazio derruba o sistema ao iniciar.
 # Sem isso, quem entra por eles recebe "Invalid origin" ao sair (e, no better-auth 1.6, também ao entrar).
 BETTER_AUTH_TRUSTED_ORIGINS=https://www.suaurl.com
 
