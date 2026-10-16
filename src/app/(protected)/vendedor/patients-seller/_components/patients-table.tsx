@@ -5,7 +5,6 @@ import {
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
   SortingState,
   useReactTable,
@@ -18,7 +17,7 @@ import { toast } from "sonner";
 import { activatePatient } from "@/actions/activate-patient";
 import { deletePatient } from "@/actions/delete-patient";
 import { PrintableContrato } from "@/app/(protected)/_components/contrato-component";
-import { Button } from "@/components/ui/button";
+import PatientsPagination from "@/app/(protected)/_components/patients-pagination";
 import {
   Table,
   TableBody,
@@ -67,12 +66,16 @@ interface Patient {
 
 interface PatientsTableProps {
   patients: Patient[];
+  currentPage: number;
+  totalPages: number;
   sellerId: string;
   clinicId: string;
 }
 
 const PatientsTable = ({
   patients,
+  currentPage,
+  totalPages,
   sellerId,
   clinicId,
 }: PatientsTableProps) => {
@@ -167,7 +170,6 @@ const PatientsTable = ({
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
@@ -175,11 +177,6 @@ const PatientsTable = ({
       sorting,
       columnFilters,
       columnVisibility,
-    },
-    initialState: {
-      pagination: {
-        pageSize: 12,
-      },
     },
   });
 
@@ -250,24 +247,7 @@ const PatientsTable = ({
 
       <div className="flex items-center justify-end space-x-2 py-4">
         <div className="text-muted-foreground flex-1 text-sm"></div>
-        <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Anterior
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Próxima
-          </Button>
-        </div>
+        <PatientsPagination currentPage={currentPage} totalPages={totalPages} />
       </div>
 
       {/* Componente para impressão de contrato */}

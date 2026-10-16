@@ -1,7 +1,17 @@
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
-import { and, between, eq, gte, isNotNull, lte, type SQL } from "drizzle-orm";
+import {
+  and,
+  between,
+  desc,
+  eq,
+  gte,
+  isNotNull,
+  lte,
+  type SQL,
+  sql,
+} from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
@@ -18,6 +28,7 @@ import {
   PageHeaderContent,
   PageTitle,
 } from "@/components/ui/page-container";
+import { getPatientsPage, parsePageParam } from "@/data/get-patients-page";
 import { db } from "@/db";
 import { patientsTable, sellersTable } from "@/db/schema";
 import { buildPatientSearchCondition } from "@/helpers/patient-search";
@@ -35,6 +46,7 @@ interface PatientsGestorPageProps {
     filter?: string;
     dateFrom?: string;
     dateTo?: string;
+    page?: string;
   }>;
 }
 
@@ -44,7 +56,7 @@ const PatientsGestorPage = async ({
   const session = await requireRole("gestor");
 
   // Aguardar searchParams antes de usar
-  const { search, filter, dateFrom, dateTo } = await searchParams;
+  const { search, filter, dateFrom, dateTo, page } = await searchParams;
   const isShowingExpired = filter === "expired";
 
   // Buscar o gestor na tabela de vendedores para obter a clínica
@@ -119,57 +131,23 @@ const PatientsGestorPage = async ({
       : searchConditions;
   }
 
-  // Buscar todos os pacientes
-  const allPatients = await db.query.patientsTable.findMany({
-    where: whereCondition,
-    with: {
-      seller: true,
-      clinic: true,
-    },
-    orderBy: (patients, { desc }) => [
-      isShowingExpired ? desc(patients.activeAt) : desc(patients.updatedAt),
-    ],
-  });
+  // Pacientes da clínica do gestor primeiro, depois os das outras clínicas
+  const ownClinicFirst = sql`case when ${patientsTable.clinicId} = ${gestor.clinicId} then 0 else 1 end`;
+  const statusOrder = isShowingExpired
+    ? [
+        // Vencidos: nunca ativados (pendentes) primeiro, depois os de ativação mais recente
+        sql`${patientsTable.activeAt} desc nulls first`,
+        desc(patientsTable.updatedAt),
+      ]
+    : [desc(patientsTable.updatedAt)];
 
-  // Separar por clínica: clínica do gestor primeiro, depois outras
-  const gestorClinicPatients = allPatients.filter(
-    (patient) => patient.clinicId === gestor.clinicId,
-  );
-  const otherClinicsPatients = allPatients.filter(
-    (patient) => patient.clinicId !== gestor.clinicId,
-  );
-
-  // Função para ordenar pacientes vencidos (activeAt nulo primeiro)
-  const sortExpiredPatients = (patients: typeof allPatients) => {
-    if (!isShowingExpired) return patients;
-
-    return patients.sort((a, b) => {
-      // Se um tem activeAt nulo e outro não, nulo vem primeiro
-      if (!a.activeAt && b.activeAt) return -1;
-      if (a.activeAt && !b.activeAt) return 1;
-
-      // Se ambos são nulos ou ambos têm valor, ordenar por updatedAt desc
-      if (!a.activeAt && !b.activeAt) {
-        return (
-          new Date(b.updatedAt || 0).getTime() -
-          new Date(a.updatedAt || 0).getTime()
-        );
-      }
-
-      // Se ambos têm activeAt, ordenar por activeAt desc
-      return (
-        new Date(b.activeAt || 0).getTime() -
-        new Date(a.activeAt || 0).getTime()
-      );
+  // Buscar só a página atual
+  const { patients, totalCount, totalPages, currentPage } =
+    await getPatientsPage({
+      where: whereCondition,
+      orderBy: [ownClinicFirst, ...statusOrder],
+      page: parsePageParam(page),
     });
-  };
-
-  // Aplicar ordenação especial para vencidos e combinar
-  const sortedGestorPatients = sortExpiredPatients(gestorClinicPatients);
-  const sortedOtherPatients = sortExpiredPatients(otherClinicsPatients);
-
-  // Combinar: clínica do gestor primeiro, depois outras
-  const patients = [...sortedGestorPatients, ...sortedOtherPatients];
 
   return (
     <PageContainer>
@@ -212,12 +190,10 @@ const PatientsGestorPage = async ({
 
           <div className="w-full">
             <PatientsTable
-              patients={patients.map((patient) => ({
-                ...patient,
-                birthDate: patient.birthDate
-                  ? new Date(patient.birthDate)
-                  : null,
-              }))}
+              patients={patients}
+              totalCount={totalCount}
+              currentPage={currentPage}
+              totalPages={totalPages}
               gestorClinicId={gestor.clinicId!}
             />
           </div>

@@ -18,6 +18,8 @@ const SearchPatients = () => {
   const handleSearch = (term: string) => {
     startTransition(() => {
       const params = new URLSearchParams(searchParams);
+      // Mudou a busca/filtro: volta para a primeira página
+      params.delete("page");
       if (term.trim()) {
         params.set("search", term.trim());
       } else {

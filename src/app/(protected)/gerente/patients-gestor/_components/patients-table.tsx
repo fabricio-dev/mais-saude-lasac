@@ -5,7 +5,6 @@ import {
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
   SortingState,
   useReactTable,
@@ -18,7 +17,7 @@ import { toast } from "sonner";
 import { activatePatient } from "@/actions/activate-patient";
 import { deletePatient } from "@/actions/delete-patient";
 import { PrintableContrato } from "@/app/(protected)/_components/contrato-component";
-import { Button } from "@/components/ui/button";
+import PatientsPagination from "@/app/(protected)/_components/patients-pagination";
 import {
   Table,
   TableBody,
@@ -67,10 +66,19 @@ interface Patient {
 
 interface PatientsTableProps {
   patients: Patient[];
+  totalCount: number;
+  currentPage: number;
+  totalPages: number;
   gestorClinicId: string;
 }
 
-const PatientsTable = ({ patients, gestorClinicId }: PatientsTableProps) => {
+const PatientsTable = ({
+  patients,
+  totalCount,
+  currentPage,
+  totalPages,
+  gestorClinicId,
+}: PatientsTableProps) => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -162,7 +170,6 @@ const PatientsTable = ({ patients, gestorClinicId }: PatientsTableProps) => {
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
@@ -170,11 +177,6 @@ const PatientsTable = ({ patients, gestorClinicId }: PatientsTableProps) => {
       sorting,
       columnFilters,
       columnVisibility,
-    },
-    initialState: {
-      pagination: {
-        pageSize: 12,
-      },
     },
   });
 
@@ -245,27 +247,9 @@ const PatientsTable = ({ patients, gestorClinicId }: PatientsTableProps) => {
 
       <div className="flex items-center justify-end space-x-2 py-4">
         <div className="text-muted-foreground flex-1 text-sm">
-          Mostrando {table.getRowModel().rows.length} de {patients.length}{" "}
-          pacientes
+          Mostrando {table.getRowModel().rows.length} de {totalCount} pacientes
         </div>
-        <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Anterior
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Próxima
-          </Button>
-        </div>
+        <PatientsPagination currentPage={currentPage} totalPages={totalPages} />
       </div>
 
       {/* Componente para impressão de contrato */}

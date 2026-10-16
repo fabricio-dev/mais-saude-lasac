@@ -3,6 +3,7 @@ import {
   boolean,
   customType,
   date,
+  index,
   integer,
   jsonb,
   pgEnum,
@@ -149,43 +150,54 @@ export const cardPriceHistoryTable = pgTable("card_price_history", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-export const patientsTable = pgTable("patients", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  name: text("name").notNull(),
-  birthDate: date("birth_date"),
-  rgNumber: text("rg_number"),
-  cpfNumber: text("cpf_number"), // Permite vazio no banco, mas validação obrigatória nos formulários
-  phoneNumber: text("phone_number").notNull(),
-  address: text("address"),
-  homeNumber: text("home_number"),
-  city: text("city"),
-  state: text("state"),
+export const patientsTable = pgTable(
+  "patients",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    name: text("name").notNull(),
+    birthDate: date("birth_date"),
+    rgNumber: text("rg_number"),
+    cpfNumber: text("cpf_number"), // Permite vazio no banco, mas validação obrigatória nos formulários
+    phoneNumber: text("phone_number").notNull(),
+    address: text("address"),
+    homeNumber: text("home_number"),
+    city: text("city"),
+    state: text("state"),
 
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at")
-    .defaultNow()
-    .$onUpdate(() => new Date()),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date()),
 
-  cardType: typeCardEnum("card_type").notNull(),
-  Enterprise: text("enterprise"),
-  numberCards: integer("number_cards"),
-  sellerId: uuid("seller_id").references(() => sellersTable.id),
-  clinicId: uuid("clinic_id").references(() => clinicsTable.id),
-  dependents1: text("dependents1"),
-  dependents2: text("dependents2"),
-  dependents3: text("dependents3"),
-  dependents4: text("dependents4"),
-  dependents5: text("dependents5"),
-  dependents6: text("dependents6"),
-  expirationDate: timestamp("expiration_date"), // estudar como fazer o campo ser automaticamente atualizado para um ano a mais
-  statusAgreement: statusAgreementEnum("status_agreement"),
-  observation: text("observation"),
-  isActive: boolean("is_active").notNull().default(true),
-  activeAt: timestamp("active_at"),
-  reactivatedAt: timestamp("reactivated_at"),
-  whatsappConsent: boolean("whatsapp_consent").notNull().default(true),
-  paymentType: paymentTypeEnum("payment_type"), // tipo do último pagamento (nullable: convênios antigos não têm o dado)
-});
+    cardType: typeCardEnum("card_type").notNull(),
+    Enterprise: text("enterprise"),
+    numberCards: integer("number_cards"),
+    sellerId: uuid("seller_id").references(() => sellersTable.id),
+    clinicId: uuid("clinic_id").references(() => clinicsTable.id),
+    dependents1: text("dependents1"),
+    dependents2: text("dependents2"),
+    dependents3: text("dependents3"),
+    dependents4: text("dependents4"),
+    dependents5: text("dependents5"),
+    dependents6: text("dependents6"),
+    expirationDate: timestamp("expiration_date"), // estudar como fazer o campo ser automaticamente atualizado para um ano a mais
+    statusAgreement: statusAgreementEnum("status_agreement"),
+    observation: text("observation"),
+    isActive: boolean("is_active").notNull().default(true),
+    activeAt: timestamp("active_at"),
+    reactivatedAt: timestamp("reactivated_at"),
+    whatsappConsent: boolean("whatsapp_consent").notNull().default(true),
+    paymentType: paymentTypeEnum("payment_type"), // tipo do último pagamento (nullable: convênios antigos não têm o dado)
+  },
+  // Índices das listagens paginadas de pacientes (filtro por clínica/vendedor,
+  // ordenação por atualização e filtro/ordenação por vencimento)
+  (table) => [
+    index("idx_patients_clinic_id").on(table.clinicId),
+    index("idx_patients_seller_id").on(table.sellerId),
+    index("idx_patients_updated_at").on(table.updatedAt),
+    index("idx_patients_expiration_date").on(table.expirationDate),
+  ],
+);
 
 export const notificationTypeEnum = pgEnum("notification_type", [
   "RENEWAL_D_7",

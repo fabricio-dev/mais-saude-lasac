@@ -12,6 +12,8 @@ const ListExpiredButton = () => {
 
   const handleToggleExpired = () => {
     const params = new URLSearchParams(searchParams);
+    // Mudou a busca/filtro: volta para a primeira página
+    params.delete("page");
 
     if (isShowingExpired) {
       params.delete("filter");

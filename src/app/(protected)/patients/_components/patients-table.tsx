@@ -5,7 +5,6 @@ import {
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
   SortingState,
   useReactTable,
@@ -17,7 +16,6 @@ import { toast } from "sonner";
 
 import { activatePatient } from "@/actions/activate-patient";
 import { deletePatient } from "@/actions/delete-patient";
-import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -28,6 +26,7 @@ import {
 } from "@/components/ui/table";
 
 import { PrintableContrato } from "../../_components/contrato-component";
+import PatientsPagination from "../../_components/patients-pagination";
 import { patientsTableColumns } from "./table-columns";
 
 interface Patient {
@@ -67,9 +66,17 @@ interface Patient {
 
 interface PatientsTableProps {
   patients: Patient[];
+  totalCount: number;
+  currentPage: number;
+  totalPages: number;
 }
 
-export default function PatientsTable({ patients }: PatientsTableProps) {
+export default function PatientsTable({
+  patients,
+  totalCount,
+  currentPage,
+  totalPages,
+}: PatientsTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -345,7 +352,6 @@ export default function PatientsTable({ patients }: PatientsTableProps) {
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
@@ -355,11 +361,6 @@ export default function PatientsTable({ patients }: PatientsTableProps) {
       columnFilters,
       columnVisibility,
       rowSelection,
-    },
-    initialState: {
-      pagination: {
-        pageSize: 12,
-      },
     },
   });
 
@@ -417,27 +418,9 @@ export default function PatientsTable({ patients }: PatientsTableProps) {
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
         <div className="text-muted-foreground flex-1 text-sm">
-          Mostrando {table.getRowModel().rows.length} de {patients.length}{" "}
-          pacientes
+          Mostrando {table.getRowModel().rows.length} de {totalCount} pacientes
         </div>
-        <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Anterior
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Próxima
-          </Button>
-        </div>
+        <PatientsPagination currentPage={currentPage} totalPages={totalPages} />
       </div>
 
       {/* Componente para impressão de contrato */}

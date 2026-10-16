@@ -23,6 +23,8 @@ const FiltersBar = () => {
 
     startTransition(() => {
       const params = new URLSearchParams(searchParams);
+      // Mudou a busca/filtro: volta para a primeira página
+      params.delete("page");
 
       if (from.trim()) {
         params.set("dateFrom", from.trim());
@@ -46,6 +48,8 @@ const FiltersBar = () => {
 
     startTransition(() => {
       const params = new URLSearchParams(searchParams);
+      // Mudou a busca/filtro: volta para a primeira página
+      params.delete("page");
       params.delete("dateFrom");
       params.delete("dateTo");
       router.push(`/patients?${params.toString()}`);

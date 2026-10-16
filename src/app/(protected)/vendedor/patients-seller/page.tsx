@@ -1,4 +1,4 @@
-import { and, eq, isNotNull, lte, type SQL } from "drizzle-orm";
+import { and, desc, eq, isNotNull, lte, type SQL, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
@@ -11,6 +11,7 @@ import {
   PageHeaderContent,
   PageTitle,
 } from "@/components/ui/page-container";
+import { getPatientsPage, parsePageParam } from "@/data/get-patients-page";
 import { db } from "@/db";
 import { patientsTable, sellersTable } from "@/db/schema";
 import { buildPatientSearchCondition } from "@/helpers/patient-search";
@@ -26,6 +27,7 @@ interface PatientsSellerPageProps {
   searchParams: Promise<{
     search?: string;
     filter?: string;
+    page?: string;
   }>;
 }
 
@@ -35,7 +37,7 @@ const PatientsSellerPage = async ({
   const session = await requireRole("user");
 
   // Aguardar searchParams antes de usar
-  const { search, filter } = await searchParams;
+  const { search, filter, page } = await searchParams;
   const isShowingExpired = filter === "expired";
 
   // Buscar o vendedor logado
@@ -70,57 +72,22 @@ const PatientsSellerPage = async ({
       : searchConditions;
   }
 
-  // Buscar todos os pacientes
-  const allPatients = await db.query.patientsTable.findMany({
+  // Pacientes do vendedor logado primeiro, depois os dos outros vendedores
+  const ownPatientsFirst = sql`case when ${patientsTable.sellerId} = ${seller.id} then 0 else 1 end`;
+  const statusOrder = isShowingExpired
+    ? [
+        // Vencidos: nunca ativados (pendentes) primeiro, depois os de ativação mais recente
+        sql`${patientsTable.activeAt} desc nulls first`,
+        desc(patientsTable.updatedAt),
+      ]
+    : [desc(patientsTable.updatedAt)];
+
+  // Buscar só a página atual
+  const { patients, totalPages, currentPage } = await getPatientsPage({
     where: whereCondition,
-    with: {
-      seller: true,
-      clinic: true,
-    },
-    orderBy: (patients, { desc }) => [
-      isShowingExpired ? desc(patients.activeAt) : desc(patients.updatedAt),
-    ],
+    orderBy: [ownPatientsFirst, ...statusOrder],
+    page: parsePageParam(page),
   });
-
-  // Separar por vendedor: logado vs outros
-  const loggedSellerPatients = allPatients.filter(
-    (patient) => patient.sellerId === seller.id,
-  );
-  const otherSellersPatients = allPatients.filter(
-    (patient) => patient.sellerId !== seller.id,
-  );
-
-  // Função para ordenar pacientes vencidos (activeAt nulo primeiro)
-  const sortExpiredPatients = (patients: typeof allPatients) => {
-    if (!isShowingExpired) return patients;
-
-    return patients.sort((a, b) => {
-      // Se um tem activeAt nulo e outro não, nulo vem primeiro
-      if (!a.activeAt && b.activeAt) return -1;
-      if (a.activeAt && !b.activeAt) return 1;
-
-      // Se ambos são nulos ou ambos têm valor, ordenar por updatedAt desc
-      if (!a.activeAt && !b.activeAt) {
-        return (
-          new Date(b.updatedAt || 0).getTime() -
-          new Date(a.updatedAt || 0).getTime()
-        );
-      }
-
-      // Se ambos têm activeAt, ordenar por activeAt desc
-      return (
-        new Date(b.activeAt || 0).getTime() -
-        new Date(a.activeAt || 0).getTime()
-      );
-    });
-  };
-
-  // Aplicar ordenação especial para vencidos e combinar
-  const sortedLoggedPatients = sortExpiredPatients(loggedSellerPatients);
-  const sortedOtherPatients = sortExpiredPatients(otherSellersPatients);
-
-  // Combinar: vendedor logado primeiro, depois outros
-  const patients = [...sortedLoggedPatients, ...sortedOtherPatients];
 
   return (
     <PageContainer>
@@ -156,12 +123,9 @@ const PatientsSellerPage = async ({
 
           <div className="w-full">
             <PatientsTable
-              patients={patients.map((patient) => ({
-                ...patient,
-                birthDate: patient.birthDate
-                  ? new Date(patient.birthDate)
-                  : null,
-              }))}
+              patients={patients}
+              currentPage={currentPage}
+              totalPages={totalPages}
               sellerId={seller.id}
               clinicId={seller.clinicId!}
             />

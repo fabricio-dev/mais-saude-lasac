@@ -4,6 +4,7 @@ import utc from "dayjs/plugin/utc";
 import {
   and,
   between,
+  desc,
   eq,
   gte,
   inArray,
@@ -28,6 +29,7 @@ import {
   PageHeaderContent,
   PageTitle,
 } from "@/components/ui/page-container";
+import { getPatientsPage, parsePageParam } from "@/data/get-patients-page";
 import { db } from "@/db";
 import { patientsTable, usersToClinicsTable } from "@/db/schema";
 import { buildPatientSearchCondition } from "@/helpers/patient-search";
@@ -44,6 +46,7 @@ interface PatientsPageProps {
     filter?: string;
     dateFrom?: string;
     dateTo?: string;
+    page?: string;
   }>;
 }
 
@@ -51,7 +54,7 @@ const PatientsPage = async ({ searchParams }: PatientsPageProps) => {
   const session = await requireRole("admin");
 
   // Aguardar searchParams antes de usar
-  const { search, filter, dateFrom, dateTo } = await searchParams;
+  const { search, filter, dateFrom, dateTo, page } = await searchParams;
   const isShowingExpired = filter === "expired";
 
   // Primeiro, buscar todas as clínicas do usuário
@@ -119,19 +122,17 @@ const PatientsPage = async ({ searchParams }: PatientsPageProps) => {
     whereCondition = and(whereCondition, searchConditions)!;
   }
 
-  // Buscar todos os pacientes das clínicas do usuário admin
-  const patients = await db.query.patientsTable.findMany({
-    where: whereCondition,
-    with: {
-      seller: true,
-      clinic: true,
-    },
-    orderBy: (patients, { desc }) => [
-      isShowingExpired
-        ? desc(patients.expirationDate)
-        : desc(patients.updatedAt),
-    ],
-  });
+  // Buscar só a página atual dos pacientes das clínicas do usuário admin
+  const { patients, totalCount, totalPages, currentPage } =
+    await getPatientsPage({
+      where: whereCondition,
+      orderBy: [
+        isShowingExpired
+          ? desc(patientsTable.expirationDate)
+          : desc(patientsTable.updatedAt),
+      ],
+      page: parsePageParam(page),
+    });
 
   return (
     <PageContainer>
@@ -181,13 +182,10 @@ const PatientsPage = async ({ searchParams }: PatientsPageProps) => {
 
             <div className="w-full">
               <PatientsTable
-                patients={patients.map((patient) => ({
-                  ...patient,
-                  birthDate: patient.birthDate
-                    ? new Date(patient.birthDate)
-                    : null,
-                  // expirationDate: patient.expirationDate, nao sei quando foi inserido isso
-                }))}
+                patients={patients}
+                totalCount={totalCount}
+                currentPage={currentPage}
+                totalPages={totalPages}
               />
             </div>
           </div>
