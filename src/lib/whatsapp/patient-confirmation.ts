@@ -1,6 +1,7 @@
 /**
- * Confirmação de ativação/renovação do convênio por WhatsApp: o template de
- * confirmação e, em seguida, a lista de parceiros em PDF.
+ * Confirmação de ativação/renovação do convênio por WhatsApp, com a lista de
+ * parceiros em PDF: no cabeçalho do próprio modelo (padrão), ou numa segunda
+ * mensagem quando o modelo escolhido para a confirmação não tem documento.
  *
  * Usada pelo cadastro (upsert-patient) e pela ativação (activate-patient), que
  * mandam a mesma dupla de mensagens.
@@ -71,8 +72,13 @@ export async function sendPatientConfirmation({
     const confirmation = templates[type];
     const partners = templates.partners_list;
 
-    // Em sequência, e não em paralelo: a confirmação precisa chegar antes do
-    // PDF, e a ordem dos pedidos é a ordem da fila no whatsapp-ai.
+    const partnersPdf = {
+      link: `${appUrl}${PARTNERS_LIST_PATH}`,
+      filename: "Lista de Parceiros - Mais Saúde.pdf",
+    };
+
+    // Modelo da confirmação com documento no cabeçalho: o PDF vai nela, e é
+    // uma mensagem só. Sem documento, a lista sai logo depois, separada.
     await sendWhatsAppTemplate({
       externalId: `${type}:${patientId}:${ciclo}`,
       phoneNumber,
@@ -81,8 +87,12 @@ export async function sendPatientConfirmation({
       templateName: confirmation.templateName,
       language: confirmation.templateLanguage,
       parameters: buildTemplateParameters(confirmation.params, context),
+      ...(confirmation.headerDocument ? { document: partnersPdf } : {}),
     });
+    if (confirmation.headerDocument) return;
 
+    // Em sequência, e não em paralelo: a confirmação precisa chegar antes do
+    // PDF, e a ordem dos pedidos é a ordem da fila no whatsapp-ai.
     await sendWhatsAppTemplate({
       externalId: `lista_de_parceiros:${patientId}:${ciclo}`,
       phoneNumber,
@@ -91,14 +101,7 @@ export async function sendPatientConfirmation({
       templateName: partners.templateName,
       language: partners.templateLanguage,
       parameters: buildTemplateParameters(partners.params, context),
-      ...(partners.headerDocument
-        ? {
-            document: {
-              link: `${appUrl}${PARTNERS_LIST_PATH}`,
-              filename: "Lista de Parceiros - Mais Saúde.pdf",
-            },
-          }
-        : {}),
+      ...(partners.headerDocument ? { document: partnersPdf } : {}),
     });
   } catch (error) {
     // O WhatsApp é aviso: falhar aqui não pode desfazer a ativação.

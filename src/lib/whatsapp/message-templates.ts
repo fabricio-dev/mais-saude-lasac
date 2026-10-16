@@ -47,7 +47,7 @@ export const MESSAGE_LABELS: Record<
   partners_list: {
     title: "Lista de parceiros",
     description:
-      "Logo depois de cada confirmação acima. O modelo precisa ter cabeçalho de documento: é ali que vai o PDF.",
+      "Só sai, logo depois da confirmação, quando o modelo da confirmação não leva o PDF no cabeçalho. Precisa de cabeçalho de documento.",
   },
   reminder_d7: {
     title: "7 dias antes do vencimento",
@@ -101,8 +101,14 @@ const p = (...sources: VariableSource[]): TemplateParam[] =>
   sources.map((source) => ({ source }));
 
 /**
- * O que vale enquanto ninguém escolheu pela tela: exatamente o que o sistema
- * enviava antes de a escolha existir.
+ * O que vale enquanto ninguém escolheu pela tela: os modelos da conta da LASAC
+ * (WABA "Mais Saúde LASAC", criada em outubro de 2026).
+ *
+ * - As confirmações levam o PDF de parceiros no cabeçalho: uma mensagem por
+ *   confirmação em vez de duas. A `lista_de_parceiros` separada só sai quando
+ *   o modelo escolhido para a confirmação não tem documento.
+ * - Os lembretes não levam mais o número de contato (wa.me): saem do mesmo
+ *   número do atendimento, e o paciente responde ali mesmo.
  */
 export const DEFAULT_MESSAGE_TEMPLATES: Record<
   MessageKey,
@@ -112,19 +118,19 @@ export const DEFAULT_MESSAGE_TEMPLATES: Record<
     templateName: "convenio_ativado",
     templateLanguage: "pt_BR",
     params: p("first_name", "expiration_date", "clinic_name"),
-    headerDocument: false,
+    headerDocument: true,
   },
   renewal: {
     templateName: "convenio_renovado",
     templateLanguage: "pt_BR",
     params: p("first_name", "expiration_date", "clinic_name"),
-    headerDocument: false,
+    headerDocument: true,
   },
   early_renewal: {
     templateName: "convenio_renovado_antecipado",
     templateLanguage: "pt_BR",
     params: p("first_name", "expiration_date", "clinic_name"),
-    headerDocument: false,
+    headerDocument: true,
   },
   partners_list: {
     templateName: "lista_de_parceiros",
@@ -135,25 +141,25 @@ export const DEFAULT_MESSAGE_TEMPLATES: Record<
   reminder_d7: {
     templateName: "lembrete_vencimento_7_dias",
     templateLanguage: "pt_BR",
-    params: p("first_name", "expiration_date", "contact_number"),
+    params: p("first_name", "expiration_date"),
     headerDocument: false,
   },
   reminder_d0: {
     templateName: "lembrete_vencimento_hoje",
     templateLanguage: "pt_BR",
-    params: p("first_name", "contact_number"),
+    params: p("first_name"),
     headerDocument: false,
   },
   reminder_d0_late: {
     templateName: "lembrete_vencimento_atrasado",
     templateLanguage: "pt_BR",
-    params: p("first_name", "expiration_date", "contact_number"),
+    params: p("first_name", "expiration_date"),
     headerDocument: false,
   },
   reminder_d30: {
     templateName: "lembrete_vencimento_30_dias",
     templateLanguage: "pt_BR",
-    params: p("first_name", "contact_number"),
+    params: p("first_name"),
     headerDocument: false,
   },
 };
@@ -208,10 +214,18 @@ export const mediaHeader = (template: { headerFormat: string | null }) =>
     ? template.headerFormat
     : null;
 
+/** As mensagens que podem levar o PDF de parceiros no próprio cabeçalho. */
+export const CONFIRMATION_KEYS: readonly MessageKey[] = [
+  "activation",
+  "renewal",
+  "early_renewal",
+];
+
 /**
- * Por que este modelo não serve para esta mensagem, ou `null` se serve. A lista
- * de parceiros precisa de cabeçalho de documento (é nele que vai o PDF); as
- * outras mensagens não enviam arquivo.
+ * Por que este modelo não serve para esta mensagem, ou `null` se serve. O
+ * único arquivo que o sistema envia é o PDF de parceiros: a lista separada
+ * precisa de cabeçalho de documento, as confirmações podem ter ou não, e os
+ * lembretes não enviam arquivo.
  */
 export function templateMismatch(
   key: MessageKey,
@@ -222,8 +236,11 @@ export function templateMismatch(
   if (key === "partners_list" && media !== "DOCUMENT") {
     return "A lista de parceiros precisa de um modelo com cabeçalho de documento — é nele que vai o PDF.";
   }
-  if (key !== "partners_list" && media) {
-    return "Este modelo pede um arquivo no cabeçalho. Só a lista de parceiros envia arquivo.";
+  if (CONFIRMATION_KEYS.includes(key) && media && media !== "DOCUMENT") {
+    return "A confirmação só pode levar documento no cabeçalho — o PDF de parceiros.";
+  }
+  if (!CONFIRMATION_KEYS.includes(key) && key !== "partners_list" && media) {
+    return "Os lembretes não enviam arquivo: escolha um modelo sem mídia no cabeçalho.";
   }
   return null;
 }
