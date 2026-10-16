@@ -63,6 +63,8 @@ O cadastro guarda DDD + número, sem o código do país, com ou sem o 9 do celul
 
 1. **Consentimento obrigatório**
    - `whatsappConsent = true` (todos os lembretes são de Marketing)
+   - As confirmações de ativação e renovação **não** checam o consentimento:
+     são mensagem de serviço. Ver "Consentimento" em `WHATSAPP_INTEGRATION.md`
 
 2. **Envio único**
    - Cada lembrete é enviado apenas UMA VEZ por paciente

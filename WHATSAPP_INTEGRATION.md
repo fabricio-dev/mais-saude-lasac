@@ -20,6 +20,26 @@
 > `WHATSAPP_API_URL`, `WHATSAPP_ACCESS_TOKEN` e `WHATSAPP_PHONE_NUMBER_ID` não são
 > mais lidas.
 
+## ✋ Consentimento: confirmação não checa, lembrete checa
+
+> Registrado em outubro de 2026.
+
+| Envio | Checa `whatsappConsent`? | Onde |
+|---|---|---|
+| Confirmações (ativado, renovado, renovação antecipada e a lista de parceiros que vai junto) | **Não** — sai para todo paciente com telefone | `sendPatientConfirmation` (`src/lib/whatsapp/patient-confirmation.ts`) |
+| Lembretes de vencimento (D-7, D0, D0 atrasado, D+30) | **Sim** — só quem tem `whatsappConsent = true` | `findEligiblePatients` (`src/cron/whatsapp-renewal-cron.ts`) |
+
+A diferença é intencional: a confirmação é mensagem de **serviço** (utilidade),
+a resposta a algo que o próprio paciente acabou de contratar; o lembrete é
+contato ativo para vender a renovação (marketing), e só vai para quem aceitou.
+
+Mesmo sem checar o consentimento aqui, a confirmação **não chega** a quem pediu
+para sair ou foi bloqueado no atendimento: o whatsapp-ai aplica o descadastro e
+devolve `skipped`.
+
+Se um dia a confirmação também precisar respeitar o consentimento, o lugar é
+`sendPatientConfirmation` — cadastro e ativação passam os dois por ali.
+
 ## 🔮 Futuro: envio pelo próprio sistema, com app e número próprios
 
 > **Ainda não implementado** — registrado em outubro de 2026.
