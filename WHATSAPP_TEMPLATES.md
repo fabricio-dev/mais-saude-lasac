@@ -1,5 +1,9 @@
 # 📋 Guia Completo: Criar Templates WhatsApp Business API
 
+> **Este guia descreve a conta antiga**, de quando o mais-saude chamava a Meta
+> direto e os lembretes levavam o número de contato. Os modelos em uso hoje
+> estão na seção **"Modelos atuais"**, mais abaixo.
+
 ## 🎯 O que são Templates?
 
 Templates são **mensagens pré-aprovadas** pelo Meta que permitem iniciar conversas com clientes no WhatsApp Business API. Eles são obrigatórios para enviar notificações.
@@ -353,296 +357,157 @@ Após criar e aprovar os 3 templates, o sistema estará pronto para enviar notif
 
 **Tempo estimado total**: 2-3 dias (incluindo aprovação do Meta)
 
-# ✅ Templates do WhatsApp - Nomes Corretos
+# ✅ Modelos atuais — conta "Mais Saúde LASAC" (outubro de 2026)
 
-Os templates aprovados na Meta Business Manager com seus nomes corretos:
+Os modelos foram recriados na conta do WhatsApp Business **"Mais Saúde LASAC"
+(WABA 3040272662979703)**, com os mesmos nomes de antes. O texto aprovado de
+cada um é o que está no **WhatsApp Manager → Modelos de mensagem**; os textos
+abaixo são os que foram enviados para análise.
 
-## Templates de Lembrete de Vencimento
+O que mudou em relação aos modelos antigos:
 
-### 1. `lembrete_vencimento_7_dias`
+- **Os lembretes não levam mais o número de contato** (`wa.me/...`). O envio
+  sai do mesmo número do atendimento (pelo whatsapp-ai), então o paciente
+  responde ali mesmo.
+- **As confirmações levam a lista de parceiros em PDF no cabeçalho.** É uma
+  mensagem por confirmação, em vez de duas. O `lista_de_parceiros` não foi
+  criado na conta nova.
+- **Dois botões de resposta rápida nos lembretes:** `Já renovei` (em cima) e
+  `Quero renovar` (embaixo). Não há botão de descadastro: quem responder
+  SAIR, PARE ou "não quero mais receber" é descadastrado pelo whatsapp-ai.
+- **Rodapé com o SAIR** no lembrete de 30 dias e nas confirmações:
+  `Caso não queira mais receber nossos avisos, responda SAIR.`
 
-**Uso:** Enviar 7 dias antes do vencimento (D-7)
+## Qual modelo sai em cada mensagem
 
-**Conteúdo do template aprovado:**
+| Mensagem | Modelo | Variáveis | Cabeçalho | Botões | Rodapé SAIR |
+|---|---|---|---|---|---|
+| 7 dias antes | `lembrete_vencimento_7_dias` | {{1}} primeiro nome, {{2}} vencimento | texto fixo | Já renovei · Quero renovar | — |
+| No dia | `lembrete_vencimento_hoje` | {{1}} primeiro nome | `Seu cartão vence hoje` | Já renovei · Quero renovar | — |
+| Vencido sem aviso no dia | `lembrete_vencimento_atrasado` | {{1}} primeiro nome, {{2}} vencimento | `Seu cartão venceu` | Já renovei · Quero renovar | — |
+| 30 dias ou mais | `lembrete_vencimento_30_dias` | {{1}} primeiro nome | `Seu cartão está vencido` | Já renovei · Quero renovar | sim |
+| Ativação | `convenio_ativado` | {{1}} primeiro nome, {{2}} validade, {{3}} unidade | PDF da lista | — | sim |
+| Renovação | `convenio_renovado` | {{1}} primeiro nome, {{2}} nova validade, {{3}} unidade | PDF da lista | — | sim¹ |
+| Renovação antecipada | `convenio_renovado_antecipado` | {{1}} primeiro nome, {{2}} nova validade, {{3}} unidade | PDF da lista | — | sim |
 
-```
-Mensagem automática do Sistema Mais Saude LASAC.
+¹ O `convenio_renovado` foi enviado sem o rodapé; ele entra numa edição depois
+da aprovação (a Meta permite editar modelo aprovado uma vez a cada 24h).
 
-Olá, {{1}}. Este é um lembrete importante: seu cartão LASAC vence em {{2}}.
+**Onde isso é configurado:** na tela **/whatsapp** do mais-saude, cartão
+"Modelos das mensagens". Lá se escolhe o modelo de cada mensagem e de onde
+vem cada variável. Sem escolha, valem os padrões da tabela acima
+(`DEFAULT_MESSAGE_TEMPLATES` em `src/lib/whatsapp/message-templates.ts`).
+Trocar de modelo ou de variáveis não exige mudar código: crie o modelo,
+espere a aprovação e escolha na tela.
 
-Para evitar a interrupção dos benefícios, realize a renovação dentro do prazo informado.
+**Regras para criar modelos que o sistema consegue enviar:**
 
-Para dúvidas ou atendimento, utilize o WhatsApp oficial:
+- Cabeçalho de texto **sem variável**. Variável no cabeçalho não é suportada.
+- Lembretes não podem ter mídia no cabeçalho. Confirmações podem ter
+  **documento** (o PDF de parceiros) ou nada.
+- Botões de resposta rápida chegam ao atendimento como mensagem do paciente,
+  e aparecem no relatório "Envios automáticos" do whatsapp-ai.
+- Modelo aprovado pode ser editado, mas mudar a quantidade de variáveis
+  exige ajustar a escolha na tela /whatsapp.
 
-👉 wa.me/{{3}} e fale com nossa equipe.
-```
+## Textos enviados para análise
 
-**Parâmetros:**
-
-- `{{1}}` - Primeiro nome do paciente
-- `{{2}}` - Data de expiração (formato DD/MM/YYYY)
-- `{{3}}` - Número oficial do WhatsApp (vem do .env: WHATSAPP_OFFICIAL_NUMBER)
-
----
-
-### 2. `lembrete_vencimento_hoje`
-
-**Uso:** Enviar no dia do vencimento (D0)
-
-**Conteúdo do template aprovado:**
-
-```
-Mensagem automática do Sistema LASAC.
-
-Olá, {{1}}. Informamos que, na data de hoje, ocorre o vencimento do seu cartão LASAC.
-
-Para continuar utilizando os benefícios normalmente, é necessário realizar a renovação.
-
-Para dúvidas ou atendimento, fale conosco pelo WhatsApp oficial:
-
-👉 wa.me/{{2}} para receber suporte.
-```
-
-**Parâmetros:**
-
-- `{{1}}` - Primeiro nome do paciente
-- `{{2}}` - Número oficial do WhatsApp (vem do .env: WHATSAPP_OFFICIAL_NUMBER)
-
-⚠️ **Importante:** Este template usa apenas 2 parâmetros (não usa data)
-
----
-
-### 3. `lembrete_vencimento_30_dias`
-
-**Uso:** Enviar 30 dias após o vencimento (D+30)
-
-**Conteúdo do template aprovado:**
+### `lembrete_vencimento_7_dias`
 
 ```
-Mensagem automática do Sistema LASAC.
-
-Olá, {{1}}. Identificamos que o seu cartão LASAC encontra-se vencido há mais de 30 dias.
-
-Para retomar os benefícios normalmente, é necessário realizar a renovação.
-
-Para dúvidas ou atendimento, fale conosco pelo WhatsApp oficial:
-
-👉 wa.me/{{2}} para receber suporte.
+Oi, {{1}}! Tudo bem? 😊 Passando para lembrar que seu cartão Mais Saúde LASAC vence em {{2}}. Renovando antes, você continua aproveitando seus benefícios sem nenhuma pausa. Quer ajuda para renovar? É só responder esta mensagem que a gente cuida de tudo.
 ```
 
-**Parâmetros:**
+### `lembrete_vencimento_hoje`
 
-- `{{1}}` - Primeiro nome do paciente
-- `{{2}}` - Número oficial do WhatsApp (vem do .env: WHATSAPP_OFFICIAL_NUMBER)
-
-⚠️ **Importante:** Este template usa apenas 2 parâmetros (não usa data)
-
----
-
-## 📱 Configuração do Número Oficial
-
-O terceiro parâmetro dos templates de lembrete (`{{3}}`) é o **número oficial do WhatsApp** da empresa/clínica.
-
-### Como Configurar
-
-Adicionar no arquivo `.env`:
-
-```env
-# Número oficial do WhatsApp para aparecer nos templates
-# Esse número será exibido nas mensagens de lembrete
-WHATSAPP_OFFICIAL_NUMBER=(11) 91234-5678
+```
+Oi, {{1}}! Tudo bem? Hoje é o último dia de validade do seu cartão Mais Saúde LASAC. Para você não ficar sem seus benefícios, é só responder esta mensagem que a gente te ajuda a renovar. 😊
 ```
 
-### Formatos Aceitos
+### `lembrete_vencimento_atrasado`
 
-```env
-# Com máscara (recomendado)
-WHATSAPP_OFFICIAL_NUMBER=(11) 91234-5678
-WHATSAPP_OFFICIAL_NUMBER=(11) 1234-5678
+Só sai com o lembrete "Vencido sem aviso no dia" ligado na tela /whatsapp.
 
-# Sem máscara
-WHATSAPP_OFFICIAL_NUMBER=11912345678
-WHATSAPP_OFFICIAL_NUMBER=1112345678
+```
+Oi, {{1}}! Tudo bem? Seu cartão Mais Saúde LASAC venceu em {{2}}, mas ainda dá tempo de renovar e voltar a aproveitar seus benefícios. É só responder esta mensagem que a gente cuida de tudo. 😊
 ```
 
-### Por que usar variável de ambiente?
+### `lembrete_vencimento_30_dias`
 
-✅ **Fácil manutenção**: Mudar o número em um único lugar  
-✅ **Sem redeployar código**: Apenas atualizar a variável no Vercel  
-✅ **Flexibilidade**: Diferentes números para dev/staging/prod  
-✅ **Sem hardcode**: Não precisa editar código para mudar número
-
-### Exemplo de Uso no Código
-
-```typescript
-// src/lib/whatsapp/templates.ts
-
-const officialWhatsApp =
-  process.env.WHATSAPP_OFFICIAL_NUMBER || "(11) 91234-5678";
-
-// Usado nos templates de renovação
-case "renewal_reminder_d7":
-  return {
-    name: "lembrete_vencimento_7_dias",
-    parameters: [firstName, formattedDate, officialWhatsApp], // ← aqui
-  };
+```
+Oi, {{1}}! Tudo bem? Seu cartão Mais Saúde LASAC está vencido há mais de 30 dias. Se quiser renovar e voltar a ter seus benefícios, é só responder esta mensagem que a gente te ajuda. 😊
 ```
 
-### Fallback
+### `convenio_ativado`
 
-Se `WHATSAPP_OFFICIAL_NUMBER` não estiver configurado, o sistema usa o fallback: `(11) 91234-5678`
+```
+Oi, {{1}}! Seja bem-vindo(a) ao Mais Saúde LASAC! 😊
 
-⚠️ **Importante**: Configure essa variável antes de ir para produção!
+Seu cartão foi ativado com sucesso e você já pode aproveitar seus benefícios.
 
----
+📅 Validade: {{2}}
+🏥 Unidade: {{3}}
 
-## Configuração no Código
+No arquivo acima está a lista de profissionais credenciados. Se precisar de alguma coisa, é só responder esta mensagem.
+```
 
-Os nomes dos templates já estão configurados corretamente em:
+### `convenio_renovado`
 
-### `src/lib/whatsapp/templates.ts`
+```
+Oi, {{1}}! Que bom ter você com a gente de novo! 😊
 
-```typescript
-export function getTemplateConfig(
-  type:
-    | "activation"
-    | "renewal"
-    | "early_renewal"
-    | "renewal_reminder_d7"
-    | "renewal_reminder_d0"
-    | "renewal_reminder_d30",
-  params: MessageTemplateParams,
-): TemplateConfig {
-  // ...
+Seu cartão Mais Saúde LASAC foi renovado com sucesso.
 
-  // Número oficial do WhatsApp (busca do .env para facilitar mudanças)
-  const officialWhatsApp =
-    process.env.WHATSAPP_OFFICIAL_NUMBER || "(11) 91234-5678";
+📅 Nova validade: {{2}}
+🏥 Unidade: {{3}}
 
-  switch (type) {
-    case "renewal_reminder_d7":
-      return {
-        name: "lembrete_vencimento_7_dias", // ✅
-        parameters: [firstName, formattedDate, officialWhatsApp], // ✅ 3 parâmetros
-      };
+No arquivo acima está a lista de profissionais credenciados. Se precisar de alguma coisa, é só responder esta mensagem.
+```
 
-    case "renewal_reminder_d0":
-      return {
-        name: "lembrete_vencimento_hoje", // ✅
-        parameters: [firstName, officialWhatsApp], // ✅ 2 parâmetros (sem data)
-      };
+### `convenio_renovado_antecipado`
 
-    case "renewal_reminder_d30":
-      return {
-        name: "lembrete_vencimento_30_dias", // ✅
-        parameters: [firstName, officialWhatsApp], // ✅ 2 parâmetros (sem data)
-      };
-  }
-}
+```
+Oi, {{1}}! Obrigado por renovar antes do vencimento! 😊
+
+Seu cartão Mais Saúde LASAC já está renovado, e o tempo que ainda faltava foi somado à nova validade.
+
+📅 Nova validade: {{2}}
+🏥 Unidade: {{3}}
+
+No arquivo acima está a lista de profissionais credenciados. Se precisar de alguma coisa, é só responder esta mensagem.
 ```
 
 ---
 
-## Mapeamento Tipo → Template
+## 🧪 Experimento a fazer: ordem dos botões dos lembretes
 
-| Tipo de Notificação | Template WhatsApp             | Parâmetros           | Quando Enviar  |
-| ------------------- | ----------------------------- | -------------------- | -------------- |
-| `RENEWAL_D_7`       | `lembrete_vencimento_7_dias`  | nome, data, whatsapp | 7 dias antes   |
-| `RENEWAL_D_0`       | `lembrete_vencimento_hoje`    | nome, whatsapp       | No dia         |
-| `RENEWAL_D_30`      | `lembrete_vencimento_30_dias` | nome, whatsapp       | 30 dias depois |
+_Anotado em 2026-10-15, na criação dos modelos novos na conta do WhatsApp
+"Mais Saúde LASAC" (WABA 3040272662979703), enviados pelo whatsapp-ai._
 
-⚠️ **Atenção:** Os templates D0 e D+30 usam apenas 2 parâmetros (sem data)
+Os lembretes novos têm dois botões de resposta rápida. A ordem aprovada é:
 
----
+1. `Já renovei` (em cima)
+2. `Quero renovar` (embaixo)
 
-## Checklist de Verificação
+`Quero renovar` ficou embaixo porque, no celular, o polegar alcança mais fácil
+o que está perto da borda de baixo. O argumento contrário é que o olho lê de
+cima para baixo, e o primeiro botão é o que se vê primeiro. Nenhum dos dois tem
+dado por trás.
 
-### No Meta Business Manager
+**O teste:** criar uma cópia de um dos lembretes com a ordem invertida
+(`Quero renovar` em cima) e comparar se as renovações aumentam.
 
-- [ ] Template `lembrete_vencimento_7_dias` está criado
-- [ ] Template `lembrete_vencimento_hoje` está criado
-- [ ] Template `lembrete_vencimento_30_dias` está criado
-- [ ] Todos os templates estão **aprovados**
-- [ ] Categoria definida como **Marketing** (requer opt-in)
-- [ ] Idioma configurado como **pt_BR**
-
-### No Código
-
-- [x] `templates.ts` atualizado com nomes corretos
-- [x] Documentação atualizada
-- [x] Nenhuma alteração necessária no cron (usa getTemplateConfig)
-
----
-
-## Importante
-
-⚠️ **Os templates devem estar aprovados na Meta antes de executar o cron em produção!**
-
-Tempo de aprovação: Pode levar até 24 horas.
-
-Status de aprovação: Verificar em Meta Business Manager > WhatsApp Manager > Message Templates
-
----
-
-## Teste
-
-Para testar se os templates estão funcionando:
-
-```bash
-# 1. Configurar ambiente DEV
-WHATSAPP_ENV=dev
-WHATSAPP_TEST_PHONE=seu_numero
-
-# 2. Executar teste
-npx ts-node src/scripts/test-whatsapp-cron.ts
-
-# 3. Verificar mensagem recebida no seu WhatsApp
-```
-
----
-
-## Exemplo de Mensagem Recebida
-
-**Template:** `lembrete_vencimento_7_dias` (D-7)
-
-```
-Mensagem automática do Sistema Mais Saude LASAC.
-
-Olá, João. Este é um lembrete importante: seu cartão LASAC vence em 27/12/2024.
-
-Para evitar a interrupção dos benefícios, realize a renovação dentro do prazo informado.
-
-Para dúvidas ou atendimento, utilize o WhatsApp oficial:
-
-👉 wa.me/5511912345678 e fale com nossa equipe.
-```
-
-**Template:** `lembrete_vencimento_hoje` (D0)
-
-```
-Mensagem automática do Sistema LASAC.
-
-Olá, João. Informamos que, na data de hoje, ocorre o vencimento do seu cartão LASAC.
-
-Para continuar utilizando os benefícios normalmente, é necessário realizar a renovação.
-
-Para dúvidas ou atendimento, fale conosco pelo WhatsApp oficial:
-
-👉 wa.me/5511912345678 para receber suporte.
-```
-
-**Template:** `lembrete_vencimento_30_dias` (D+30)
-
-```
-Mensagem automática do Sistema LASAC.
-
-Olá, João. Identificamos que o seu cartão LASAC encontra-se vencido há mais de 30 dias.
-
-Para retomar os benefícios normalmente, é necessário realizar a renovação.
-
-Para dúvidas ou atendimento, fale conosco pelo WhatsApp oficial:
-
-👉 wa.me/5511912345678 para receber suporte.
-```
-
-✅ Templates configurados e prontos para uso!
+- Mude só a ordem. Texto, cabeçalho e rodapé ficam iguais, senão não dá para
+  saber o que fez diferença.
+- O modelo aprovado não pode ser editado, então a cópia precisa de outro nome,
+  por exemplo `lembrete_vencimento_7_dias_b`. Ela também passa pela revisão da
+  Meta.
+- Alterne entre as duas versões, por exemplo por semana ou por paciente par e
+  ímpar, para os dois grupos serem parecidos.
+- **Medida:** a proporção de pacientes que renovam até 7 dias depois do
+  lembrete, em cada versão. Os toques em `Quero renovar` ajudam a entender, mas
+  o que importa é a renovação.
+- Espere juntar algumas centenas de lembretes por versão antes de concluir.
+  Com poucos envios, a diferença pode ser acaso.
+- Use a mesma ordem em todos os lembretes de cada versão, para o paciente
+  encontrar o botão sempre no mesmo lugar.
