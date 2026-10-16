@@ -366,7 +366,9 @@ Após criar e aprovar os 3 templates, o sistema estará pronto para enviar notif
 Os modelos foram recriados na conta do WhatsApp Business **"Mais Saúde LASAC"
 (WABA 3040272662979703)**, com os mesmos nomes de antes. O texto aprovado de
 cada um é o que está no **WhatsApp Manager → Modelos de mensagem**; os textos
-abaixo são os que foram enviados para análise.
+abaixo são os que foram enviados para análise. A frase "Se precisar de alguma
+coisa, é só responder esta mensagem." não está em nenhum modelo, e saiu do
+`convenio_renovado` e do `convenio_renovado_antecipado` (outubro de 2026).
 
 O que mudou em relação aos modelos antigos:
 
@@ -389,7 +391,7 @@ O que mudou em relação aos modelos antigos:
 | 7 dias antes | `lembrete_vencimento_7_dias` | {{1}} primeiro nome, {{2}} vencimento | `Seu cartão vence em breve` | Já renovei · Quero renovar | — |
 | No dia | `lembrete_vencimento_hoje` | {{1}} primeiro nome | `Seu cartão vence hoje` | Já renovei · Quero renovar | — |
 | Vencido sem aviso no dia | `lembrete_vencimento_atrasado` | {{1}} primeiro nome, {{2}} vencimento | `Seu cartão venceu` | Já renovei · Quero renovar | — |
-| 30 dias ou mais | `lembrete_vencimento_30_dias` | {{1}} primeiro nome | `Seu cartão está vencido` | Já renovei · Quero renovar | sim |
+| 30 dias ou mais | `lembrete_vencimento_30_dias` | {{1}} primeiro nome | `Sentimos sua falta` | Já renovei · Quero renovar | sim |
 | Ativação | `convenio_ativado` | {{1}} primeiro nome, {{2}} validade, {{3}} unidade | PDF da lista | — | sim |
 | Renovação | `convenio_renovado` | {{1}} primeiro nome, {{2}} nova validade, {{3}} unidade | PDF da lista | — | sim¹ |
 | Renovação antecipada | `convenio_renovado_antecipado` | {{1}} primeiro nome, {{2}} nova validade, {{3}} unidade | PDF da lista | — | sim |
@@ -465,7 +467,7 @@ Seu cartão Mais Saúde LASAC foi renovado com sucesso.
 📅 Nova validade: {{2}}
 🏥 Unidade: {{3}}
 
-No arquivo acima está a lista de profissionais credenciados. Se precisar de alguma coisa, é só responder esta mensagem.
+No arquivo acima está a lista de profissionais credenciados.
 ```
 
 ### `convenio_renovado_antecipado`
@@ -478,7 +480,7 @@ Seu cartão Mais Saúde LASAC já está renovado, e o tempo que ainda faltava fo
 📅 Nova validade: {{2}}
 🏥 Unidade: {{3}}
 
-No arquivo acima está a lista de profissionais credenciados. Se precisar de alguma coisa, é só responder esta mensagem.
+No arquivo acima está a lista de profissionais credenciados.
 ```
 
 ---
