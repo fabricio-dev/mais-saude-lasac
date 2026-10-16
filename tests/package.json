@@ -1,0 +1,12 @@
+{
+  "name": "mais-saude-lasac-tests",
+  "private": true,
+  "description": "Testes do mais-saude-lasac. Pacote à parte para o npm install da aplicação (e da VPS) não instalar o Vitest.",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.12"
+  }
+}

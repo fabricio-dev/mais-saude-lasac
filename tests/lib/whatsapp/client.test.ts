@@ -1,16 +1,21 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-
 import {
   fake,
   resetFakes,
   setWhatsAppEnv,
   TEST_PHONE,
-} from "@/test/whatsapp-fakes";
+} from "@tests/fakes/whatsapp-fakes";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { sendWhatsAppTemplate } from "./client";
+import { sendWhatsAppTemplate } from "@/lib/whatsapp/client";
 
-vi.mock("@/data/whatsapp-settings", () => import("@/test/whatsapp-fakes"));
-vi.mock("@/data/whatsapp-connection", () => import("@/test/whatsapp-fakes"));
+vi.mock(
+  "@/data/whatsapp-settings",
+  () => import("@tests/fakes/whatsapp-fakes"),
+);
+vi.mock(
+  "@/data/whatsapp-connection",
+  () => import("@tests/fakes/whatsapp-fakes"),
+);
 
 const PATIENT_PHONE = "87991234567";
 

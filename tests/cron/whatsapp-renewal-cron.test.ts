@@ -1,21 +1,26 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-
 import {
   dbCallsOf,
   fake,
   resetFakes,
   setWhatsAppEnv,
   TEST_PHONE,
-} from "@/test/whatsapp-fakes";
+} from "@tests/fakes/whatsapp-fakes";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { runWhatsAppRenewalCron } from "./whatsapp-renewal-cron";
+import { runWhatsAppRenewalCron } from "@/cron/whatsapp-renewal-cron";
 
-vi.mock("@/db", () => import("@/test/whatsapp-fakes"));
-vi.mock("@/data/whatsapp-settings", () => import("@/test/whatsapp-fakes"));
-vi.mock("@/data/whatsapp-connection", () => import("@/test/whatsapp-fakes"));
+vi.mock("@/db", () => import("@tests/fakes/whatsapp-fakes"));
+vi.mock(
+  "@/data/whatsapp-settings",
+  () => import("@tests/fakes/whatsapp-fakes"),
+);
+vi.mock(
+  "@/data/whatsapp-connection",
+  () => import("@tests/fakes/whatsapp-fakes"),
+);
 vi.mock(
   "@/data/whatsapp-message-templates",
-  () => import("@/test/whatsapp-fakes"),
+  () => import("@tests/fakes/whatsapp-fakes"),
 );
 
 const patient = (phoneNumber = "87991234567") => ({

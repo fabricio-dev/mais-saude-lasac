@@ -23,16 +23,24 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 ## Testes
 
 ```bash
-npm test            # roda uma vez
-npm run test:watch  # roda de novo a cada alteração
+npm test                          # roda uma vez
+npm --prefix tests run test:watch # roda de novo a cada alteração
 ```
 
-Os testes usam [Vitest](https://vitest.dev) e ficam ao lado do código
-(`*.test.ts`). Hoje eles cobrem o envio por WhatsApp: a proteção de DEV, as
-confirmações de ativação e renovação, e o cron de lembretes. Nenhum teste fala
-com o Postgres ou com o whatsapp-ai: `src/test/whatsapp-fakes.ts` faz o papel do
-banco, das configurações e do `fetch`, e registra o pedido que iria para o
-whatsapp-ai.
+Os testes usam [Vitest](https://vitest.dev) e moram em `tests/`, um pacote à
+parte com o próprio `package.json`: o `npm install` da aplicação (e o da VPS)
+não instala o Vitest. O `npm test` instala as dependências de `tests/` na
+primeira vez e depois roda. O `tsconfig.json` da raiz ignora `tests/`, para o
+`next build` não precisar do Vitest.
+
+A pasta `tests/` repete a estrutura de `src/` (`tests/lib/whatsapp/client.test.ts`
+testa `src/lib/whatsapp/client.ts`). Hoje os testes cobrem o envio por WhatsApp:
+a proteção de DEV, as confirmações de ativação e renovação, e o cron de
+lembretes. Nenhum teste fala com o Postgres ou com o whatsapp-ai:
+`tests/fakes/whatsapp-fakes.ts` faz o papel do banco, das configurações e do
+`fetch`, e registra o pedido que iria para o whatsapp-ai.
+
+Para checar os tipos dos testes: `npx tsc -p tests --noEmit`.
 
 ## Learn More
 

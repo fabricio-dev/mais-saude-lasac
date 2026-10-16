@@ -1,25 +1,33 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-
 import {
   fake,
   resetFakes,
   setWhatsAppEnv,
   TEST_PHONE,
-} from "@/test/whatsapp-fakes";
+} from "@tests/fakes/whatsapp-fakes";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { DEFAULT_MESSAGE_TEMPLATES } from "./message-templates";
+import { DEFAULT_MESSAGE_TEMPLATES } from "@/lib/whatsapp/message-templates";
 import {
   type ConfirmationType,
   sendPatientConfirmation,
-} from "./patient-confirmation";
+} from "@/lib/whatsapp/patient-confirmation";
 
-vi.mock("@/data/whatsapp-settings", () => import("@/test/whatsapp-fakes"));
-vi.mock("@/data/whatsapp-connection", () => import("@/test/whatsapp-fakes"));
+vi.mock(
+  "@/data/whatsapp-settings",
+  () => import("@tests/fakes/whatsapp-fakes"),
+);
+vi.mock(
+  "@/data/whatsapp-connection",
+  () => import("@tests/fakes/whatsapp-fakes"),
+);
 vi.mock(
   "@/data/whatsapp-message-templates",
-  () => import("@/test/whatsapp-fakes"),
+  () => import("@tests/fakes/whatsapp-fakes"),
 );
-vi.mock("@/data/partners-list-file", () => import("@/test/whatsapp-fakes"));
+vi.mock(
+  "@/data/partners-list-file",
+  () => import("@tests/fakes/whatsapp-fakes"),
+);
 
 const PATIENT_PHONE = "87991234567";
 
