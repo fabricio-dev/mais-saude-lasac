@@ -1,5 +1,15 @@
 # 📄 Configuração de Envio de PDFs via WhatsApp
 
+> **Como funciona hoje (outubro de 2026):** na conta "Mais Saúde LASAC", as
+> confirmações (`convenio_ativado`, `convenio_renovado` e
+> `convenio_renovado_antecipado`) levam o PDF da lista de parceiros **no
+> cabeçalho**, numa mensagem só. O `lista_de_parceiros` separado só sai quando o
+> modelo escolhido na tela /whatsapp para a confirmação não tem documento, e
+> ele não foi criado na conta nova. O PDF é servido em
+> `/arquivos/lista-de-parceiros.pdf` e trocado pela tela /whatsapp. Os modelos
+> estão em [WHATSAPP_TEMPLATES.md](WHATSAPP_TEMPLATES.md), seção "Modelos
+> atuais". O resto deste documento descreve a versão anterior.
+
 ## 🎯 Problema Resolvido
 
 O PDF estava sendo enviado como arquivo binário corrompido porque o WhatsApp Business API precisa de uma **URL pública acessível** para baixar o arquivo, não um caminho de arquivo local.

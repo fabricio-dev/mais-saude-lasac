@@ -328,11 +328,15 @@ Antes de ir para produção, verifique:
 
 Se precisar modificar um template:
 
-1. **Não pode editar template aprovado diretamente**
-2. **Crie uma nova versão** do template
-3. **Aguarde aprovação** da nova versão
-4. **Atualize o código** com o novo nome (se necessário)
-5. **Template antigo** continua funcionando até ser desativado
+1. **Modelo aprovado pode ser editado** no WhatsApp Manager: até 1 vez a cada
+   24h e 10 vezes em 30 dias. A categoria não muda na edição.
+2. **A edição volta para a revisão da Meta.** Enquanto não for aprovada de
+   novo, o modelo não sai.
+3. **Modelo em análise não pode ser editado:** espere a aprovação ou a
+   reprovação.
+4. **Mudou a quantidade de variáveis?** Ajuste a escolha na tela /whatsapp.
+5. **Para ter as duas versões ao mesmo tempo** (um teste, por exemplo), crie
+   um modelo novo, com outro nome, em vez de editar.
 
 ---
 
@@ -382,7 +386,7 @@ O que mudou em relação aos modelos antigos:
 
 | Mensagem | Modelo | Variáveis | Cabeçalho | Botões | Rodapé SAIR |
 |---|---|---|---|---|---|
-| 7 dias antes | `lembrete_vencimento_7_dias` | {{1}} primeiro nome, {{2}} vencimento | texto fixo | Já renovei · Quero renovar | — |
+| 7 dias antes | `lembrete_vencimento_7_dias` | {{1}} primeiro nome, {{2}} vencimento | `Seu cartão vence em breve` | Já renovei · Quero renovar | — |
 | No dia | `lembrete_vencimento_hoje` | {{1}} primeiro nome | `Seu cartão vence hoje` | Já renovei · Quero renovar | — |
 | Vencido sem aviso no dia | `lembrete_vencimento_atrasado` | {{1}} primeiro nome, {{2}} vencimento | `Seu cartão venceu` | Já renovei · Quero renovar | — |
 | 30 dias ou mais | `lembrete_vencimento_30_dias` | {{1}} primeiro nome | `Seu cartão está vencido` | Já renovei · Quero renovar | sim |
@@ -448,7 +452,7 @@ Seu cartão foi ativado com sucesso e você já pode aproveitar seus benefícios
 📅 Validade: {{2}}
 🏥 Unidade: {{3}}
 
-No arquivo acima está a lista de profissionais credenciados. Se precisar de alguma coisa, é só responder esta mensagem.
+No arquivo acima está a lista de profissionais credenciados.
 ```
 
 ### `convenio_renovado`
@@ -499,9 +503,10 @@ dado por trás.
 
 - Mude só a ordem. Texto, cabeçalho e rodapé ficam iguais, senão não dá para
   saber o que fez diferença.
-- O modelo aprovado não pode ser editado, então a cópia precisa de outro nome,
-  por exemplo `lembrete_vencimento_7_dias_b`. Ela também passa pela revisão da
-  Meta.
+- As duas versões precisam valer ao mesmo tempo, então a cópia é um modelo
+  novo, com outro nome, por exemplo `lembrete_vencimento_7_dias_b`. Editar o
+  original não serve: ele trocaria de ordem para todo mundo. A cópia também
+  passa pela revisão da Meta.
 - Alterne entre as duas versões, por exemplo por semana ou por paciente par e
   ímpar, para os dois grupos serem parecidos.
 - **Medida:** a proporção de pacientes que renovam até 7 dias depois do

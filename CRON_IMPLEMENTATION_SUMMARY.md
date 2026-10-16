@@ -141,47 +141,14 @@ CRON_SECRET=um_token_secreto
 
 ## 📝 Templates do WhatsApp
 
-### Templates que devem ser aprovados na Meta:
+Os lembretes usam `lembrete_vencimento_7_dias`, `lembrete_vencimento_hoje`,
+`lembrete_vencimento_atrasado` e `lembrete_vencimento_30_dias`, na conta
+"Mais Saúde LASAC". Os textos, as variáveis, os cabeçalhos e os botões estão
+em [WHATSAPP_TEMPLATES.md](WHATSAPP_TEMPLATES.md), seção **"Modelos atuais"**.
+O modelo e as variáveis de cada lembrete são escolhidos na tela /whatsapp.
 
-#### 1. `lembrete_vencimento_7_dias`
-```
-Olá {{1}},
-
-Seu convênio Mais Saúde vence em 7 dias ({{2}}).
-
-Renove agora e continue aproveitando todos os benefícios!
-
-Unidade: {{3}}
-```
-
-#### 2. `lembrete_vencimento_hoje`
-```
-Olá {{1}},
-
-Seu convênio Mais Saúde vence HOJE ({{2}}).
-
-Renove agora para não perder o acesso!
-
-Unidade: {{3}}
-```
-
-#### 3. `lembrete_vencimento_30_dias`
-```
-Olá {{1}},
-
-Seu convênio Mais Saúde venceu há 30 dias ({{2}}).
-
-Quer renovar e voltar a ter acesso aos benefícios?
-
-Unidade: {{3}}
-```
-
-**Parâmetros:**
-- `{{1}}` = Primeiro nome do paciente
-- `{{2}}` = Data de expiração (DD/MM/YYYY)
-- `{{3}}` = Nome da clínica
-
-**Categoria:** Marketing (requer opt-in)
+> Os textos que estavam aqui (com "Unidade: {{3}}" e categoria Marketing) são
+> de uma versão anterior e não correspondem aos modelos aprovados.
 
 ## 🔧 Estrutura do Código
 
