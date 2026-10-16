@@ -20,6 +20,20 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Testes
+
+```bash
+npm test            # roda uma vez
+npm run test:watch  # roda de novo a cada alteração
+```
+
+Os testes usam [Vitest](https://vitest.dev) e ficam ao lado do código
+(`*.test.ts`). Hoje eles cobrem o envio por WhatsApp: a proteção de DEV, as
+confirmações de ativação e renovação, e o cron de lembretes. Nenhum teste fala
+com o Postgres ou com o whatsapp-ai: `src/test/whatsapp-fakes.ts` faz o papel do
+banco, das configurações e do `fetch`, e registra o pedido que iria para o
+whatsapp-ai.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
