@@ -16,7 +16,11 @@
 > do número **no whatsapp-ai**, não aqui.
 >
 > Variáveis deste sistema: `WHATSAPP_ENABLED`, `WHATSAPP_AI_URL`,
-> `WHATSAPP_AI_API_KEY` (e, no cron, `WHATSAPP_ENV` e `WHATSAPP_TEST_PHONE`).
+> `WHATSAPP_AI_API_KEY`, `WHATSAPP_ENV` e `WHATSAPP_TEST_PHONE`. Com
+> `WHATSAPP_ENV=dev` (o padrão quando ausente) e `WHATSAPP_TEST_PHONE`
+> preenchido, **todo** envio — confirmações e lembretes — vai para o número de
+> teste; o redirecionamento fica em `sendWhatsAppTemplate`. Em produção,
+> `WHATSAPP_ENV=prod`.
 > `WHATSAPP_API_URL`, `WHATSAPP_ACCESS_TOKEN` e `WHATSAPP_PHONE_NUMBER_ID` não são
 > mais lidas.
 

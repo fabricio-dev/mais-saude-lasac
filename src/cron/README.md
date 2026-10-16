@@ -99,7 +99,9 @@ WHATSAPP_ENV=dev
 WHATSAPP_TEST_PHONE=5511999999999
 ```
 
-Em ambiente `dev`, TODAS as mensagens são redirecionadas para `WHATSAPP_TEST_PHONE`.
+Em ambiente `dev`, TODAS as mensagens são redirecionadas para `WHATSAPP_TEST_PHONE` — os lembretes deste cron e também as confirmações de ativação e renovação. O redirecionamento fica em `sendWhatsAppTemplate` (`src/lib/whatsapp/client.ts`), por onde passa todo envio.
+
+`WHATSAPP_ENV` ausente conta como `dev`: em produção, deixe `WHATSAPP_ENV=prod` no `.env`, senão, com `WHATSAPP_TEST_PHONE` preenchido, nenhum paciente recebe.
 
 ## Templates do WhatsApp
 

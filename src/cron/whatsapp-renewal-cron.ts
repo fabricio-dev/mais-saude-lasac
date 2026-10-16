@@ -26,7 +26,8 @@
  * 3. Todos os lembretes são do tipo Marketing (exigem whatsappConsent = true)
  *
  * 4. Proteção em ambiente DEV:
- *    - Só envia para WHATSAPP_TEST_PHONE
+ *    - Só envia para WHATSAPP_TEST_PHONE (em sendWhatsAppTemplate, que vale
+ *      também para as confirmações de ativação e renovação)
  *
  * 5. Fluxo de envio:
  *    - SELECT pacientes elegíveis
@@ -349,24 +350,6 @@ async function releaseNotificationLock(
 }
 
 /**
- * Aplica proteção de ambiente DEV
- * Em DEV, só permite enviar para WHATSAPP_TEST_PHONE
- */
-function applyDevProtection(phoneNumber: string): string {
-  const whatsappEnv = process.env.WHATSAPP_ENV || "dev";
-  const testPhone = process.env.WHATSAPP_TEST_PHONE;
-
-  if (whatsappEnv === "dev" && testPhone) {
-    console.log(
-      `[DEV] Redirecionando envio de ${maskPhoneNumber(phoneNumber)} para ${maskPhoneNumber(testPhone)}`,
-    );
-    return testPhone;
-  }
-
-  return phoneNumber;
-}
-
-/**
  * Processa um paciente: cria lock, envia WhatsApp e atualiza status
  *
  * Fluxo:
@@ -375,9 +358,8 @@ function applyDevProtection(phoneNumber: string): string {
  * 3. Se lock falhar (já existe), pula paciente
  * 4. Telefone inválido fica 'failed' com o motivo — sem o lock, o mesmo
  *    paciente voltaria a cada execução e ocuparia o teto do D+30
- * 5. Aplica proteção DEV
- * 6. Pede o envio ao whatsapp-ai
- * 7. Atualiza status para 'sent' ou 'failed'
+ * 5. Pede o envio ao whatsapp-ai (que em DEV redireciona ao número de teste)
+ * 6. Atualiza status para 'sent' ou 'failed'
  */
 async function processPatient(
   patient: EligiblePatient,
@@ -441,12 +423,10 @@ async function processPatient(
     };
   }
 
-  // 4. Aplicar proteção DEV (redirecionar para número de teste)
-  const targetPhone = applyDevProtection(formattedPhone);
-
-  // 5. Pedir o envio ao whatsapp-ai (templates aprovados, mesmo número)
+  // 4. Pedir o envio ao whatsapp-ai (templates aprovados, mesmo número). A
+  // proteção DEV fica em sendWhatsAppTemplate, que vale para todo envio.
   console.log(
-    `[${notificationType}] Enviando lembrete para ${name} (${maskPhoneNumber(targetPhone)})`,
+    `[${notificationType}] Enviando lembrete para ${name} (${maskPhoneNumber(formattedPhone)})`,
   );
 
   // A validade entra no id: depois de uma renovação, o próximo ciclo é outro
@@ -457,7 +437,7 @@ async function processPatient(
 
   const result = await sendWhatsAppTemplate({
     externalId: `${notificationType}:${id}:${ciclo}`,
-    phoneNumber: targetPhone,
+    phoneNumber: formattedPhone,
     patientName: name,
     category: CATEGORY[notificationType],
     templateName: templateConfig.name,
@@ -465,7 +445,7 @@ async function processPatient(
     parameters: templateConfig.parameters,
   });
 
-  // 6. Atualizar status no banco. Pulado (descadastro no atendimento) conta
+  // 5. Atualizar status no banco. Pulado (descadastro no atendimento) conta
   // como não enviado: o paciente não recebeu, e não adianta tentar de novo.
   // Falha passageira libera a trava para a próxima execução recuperar.
   const sent = result.success && result.status === "queued";
@@ -487,7 +467,7 @@ async function processPatient(
   return {
     patientId: id,
     patientName: name,
-    phone: maskPhoneNumber(targetPhone),
+    phone: maskPhoneNumber(formattedPhone),
     success: sent,
     reason: !result.success
       ? `Falha no envio: ${result.error}` +

@@ -66,6 +66,25 @@ const TIMEOUT_MS = 10_000;
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
+ * Em DEV, todo envio vai para WHATSAPP_TEST_PHONE — confirmações e lembretes.
+ * Fica aqui, e não em quem chama, para nenhum tipo de mensagem escapar: um
+ * banco de dev copiado da produção tem os telefones reais dos pacientes.
+ */
+function applyDevProtection(phoneNumber: string): string {
+  const whatsappEnv = process.env.WHATSAPP_ENV || "dev";
+  const testPhone = process.env.WHATSAPP_TEST_PHONE;
+
+  if (whatsappEnv === "dev" && testPhone) {
+    console.log(
+      `[DEV] Redirecionando envio de ${maskPhoneNumber(phoneNumber)} para ${maskPhoneNumber(testPhone)}`,
+    );
+    return testPhone;
+  }
+
+  return phoneNumber;
+}
+
+/**
  * Pede o envio de um template aprovado ao whatsapp-ai.
  *
  * Tenta de novo só quando o problema pode ser passageiro (rede, timeout, 5xx,
@@ -110,9 +129,11 @@ export async function sendWhatsAppTemplate(
   }
   const { url: baseUrl, apiKey } = credentials;
 
+  const phoneNumber = applyDevProtection(params.phoneNumber);
+
   const body = JSON.stringify({
     externalId: params.externalId,
-    to: params.phoneNumber,
+    to: phoneNumber,
     name: params.patientName,
     category: params.category,
     template: {
@@ -131,7 +152,7 @@ export async function sendWhatsAppTemplate(
       : {}),
   });
 
-  const destino = maskPhoneNumber(params.phoneNumber);
+  const destino = maskPhoneNumber(phoneNumber);
   let lastError = "Falha ao enviar após todas as tentativas";
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
