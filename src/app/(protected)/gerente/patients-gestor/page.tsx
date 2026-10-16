@@ -1,18 +1,7 @@
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
-import {
-  and,
-  between,
-  eq,
-  gte,
-  ilike,
-  isNotNull,
-  lte,
-  or,
-  type SQL,
-  sql,
-} from "drizzle-orm";
+import { and, between, eq, gte, isNotNull, lte, type SQL } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
@@ -31,6 +20,7 @@ import {
 } from "@/components/ui/page-container";
 import { db } from "@/db";
 import { patientsTable, sellersTable } from "@/db/schema";
+import { buildPatientSearchCondition } from "@/helpers/patient-search";
 import { requireRole } from "@/lib/require-role";
 
 import GenerateLinkButton from "../../_components/generate-link-button";
@@ -122,31 +112,7 @@ const PatientsGestorPage = async ({
 
   // Aplicar filtro de busca por texto
   if (searchTerm) {
-    // Normalizar termo de busca removendo acentos e espaços extras
-    const normalizedSearchTerm = searchTerm
-      .trim()
-      .replace(/\s+/g, " ") // Normalizar espaços múltiplos para um único espaço
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase();
-
-    // Também criar versão com espaços normalizados mas com acentos
-    const spacesNormalizedTerm = searchTerm.trim().replace(/\s+/g, " ");
-
-    const searchConditions = or(
-      // Busca normal (com acentos)
-      ilike(patientsTable.name, `%${searchTerm}%`),
-      ilike(patientsTable.cpfNumber, `%${searchTerm}%`),
-      ilike(patientsTable.rgNumber, `%${searchTerm}%`),
-      ilike(patientsTable.phoneNumber, `%${searchTerm}%`),
-      ilike(patientsTable.city, `%${searchTerm}%`),
-      // Busca com espaços normalizados
-      ilike(patientsTable.name, `%${spacesNormalizedTerm}%`),
-      ilike(patientsTable.city, `%${spacesNormalizedTerm}%`),
-      // Busca sem acentos usando translate (compatível com PostgreSQL)
-      sql`lower(translate(regexp_replace(${patientsTable.name}, '\\s+', ' ', 'g'), 'ÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ', 'AAAAAAaaaaaaOOOOOOooooooEEEEeeeeeCcIIIIiiiiUUUUuuuuyNn')) ilike '%' || lower(${normalizedSearchTerm}) || '%'`,
-      sql`lower(translate(regexp_replace(${patientsTable.city}, '\\s+', ' ', 'g'), 'ÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ', 'AAAAAAaaaaaaOOOOOOooooooEEEEeeeeeCcIIIIiiiiUUUUuuuuyNn')) ilike '%' || lower(${normalizedSearchTerm}) || '%'`,
-    )!;
+    const searchConditions = buildPatientSearchCondition(searchTerm);
 
     whereCondition = whereCondition
       ? and(whereCondition, searchConditions)!
