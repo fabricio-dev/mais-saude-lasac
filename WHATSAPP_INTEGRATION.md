@@ -44,6 +44,51 @@ devolve `skipped`.
 Se um dia a confirmação também precisar respeitar o consentimento, o lugar é
 `sendPatientConfirmation` — cadastro e ativação passam os dois por ali.
 
+## 🔮 Futuro: saber se a mensagem chegou (entregue, lida, falhou)
+
+> **Ainda não implementado** — registrado em outubro de 2026.
+
+**Hoje:** o whatsapp-ai não avisa este sistema depois do envio. A única
+resposta é a do próprio `POST /api/integrations/v1/messages`, dada **antes** de
+falar com a Meta: `queued` (entrou na fila) ou `skipped` (descadastrado ou
+bloqueado). O cron grava `sent` com base só nisso, então `sent` em
+`whatsapp_notifications` quer dizer "aceito pelo atendimento", não "entregue".
+Enviada, entregue, lida, respondida e falhou ficam só no whatsapp-ai, em
+**Envios automáticos**.
+
+Casos em que aqui fica `sent` e o paciente não recebeu: a Meta recusou (modelo
+pausado, número sem WhatsApp, limite da conta), a Meta não respondeu a tempo
+(o whatsapp-ai não reenvia, para não duplicar), o paciente se descadastrou
+entre o pedido e o envio, ou o número foi desconectado no whatsapp-ai.
+
+As confirmações (ativado, renovado, renovação antecipada) nem são gravadas
+aqui: `whatsapp_notifications` só aceita os quatro lembretes. Elas aparecem só
+no log e no whatsapp-ai.
+
+**Dois caminhos — os dois mexem nos dois sistemas; muda quanto cada lado faz:**
+
+| | Consulta (GET) | Aviso (webhook) |
+|---|---|---|
+| Como funciona | Um job daqui pergunta ao whatsapp-ai, de tempos em tempos, o desfecho dos envios ainda sem desfecho | O whatsapp-ai chama uma rota daqui a cada mudança de status vinda da Meta |
+| No whatsapp-ai | **Pequeno:** `GET /api/integrations/v1/messages/{externalId}`, só leitura, com a mesma chave. A situação já é calculada no relatório de Envios automáticos (`sendsWithOutcome` em `lib/data/automated-sends.ts`) | **Maior:** URL de destino por organização, disparo a cada mudança de status, fila com novas tentativas quando este sistema estiver fora do ar, assinatura do aviso. A saída de rede com as proteções já existe (`lib/integrations/egress.ts`) |
+| Aqui no mais-saude | O grosso: status novos, o job de consulta e a gravação das confirmações | Rota que recebe o aviso e confere a assinatura, status novos e a gravação das confirmações |
+| Atualização | Depende de quantas vezes o job roda | Na hora |
+
+**O que vale nos dois caminhos, aqui:**
+
+1. Status novos em `whatsapp_notifications` (por exemplo `delivered`, `read`,
+   `failed` vindo da Meta), com migração. Hoje são `pending`, `sent` e
+   `failed`.
+2. Gravar também as confirmações, se elas precisarem aparecer na ficha do
+   paciente — o enum `notification_type` ganha os tipos delas.
+3. A chave da consulta ou do aviso é o `externalId` que já vai em todo envio
+   (`{tipo}:{patientId}:{validade}`): não precisa guardar o id do whatsapp-ai.
+4. Decidir o que fazer com uma falha da Meta: hoje a trava impede que o mesmo
+   lembrete saia de novo no mesmo ciclo.
+
+No whatsapp-ai, este retorno está registrado como "fica de fora, por ora" no
+§9.10 de `docs/ARCHITECTURE.md`.
+
 ## 🔮 Futuro: envio pelo próprio sistema, com app e número próprios
 
 > **Ainda não implementado** — registrado em outubro de 2026.
