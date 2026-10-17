@@ -51,16 +51,68 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import type { WhatsAppConnectionView } from "@/data/whatsapp-connection";
 
 interface WhatsAppConnectionCardProps {
   connection: WhatsAppConnectionView;
+  /** Endereço público deste sistema, sem barra no fim (ex.: https://app.com). */
+  appUrl: string;
 }
+
+const PATIENT_LOOKUP_PATH = "/api/integrations/v1/patient-lookup";
+
+function hostOf(url: string): string {
+  try {
+    return new URL(url).host;
+  } catch {
+    return "";
+  }
+}
+
+const copyToClipboard = async (value: string, successMessage: string) => {
+  try {
+    await navigator.clipboard.writeText(value);
+    toast.success(successMessage);
+  } catch {
+    toast.error("Não foi possível copiar. Selecione o texto e copie.");
+  }
+};
+
+interface CopyableFieldProps {
+  label: string;
+  value: string;
+  description?: string;
+}
+
+const CopyableField = ({ label, value, description }: CopyableFieldProps) => (
+  <div className="space-y-2">
+    <Label>{label}</Label>
+    <div className="flex items-center gap-2">
+      <Input readOnly value={value} className="font-mono text-xs" />
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        aria-label={`Copiar ${label.toLowerCase()}`}
+        disabled={!value}
+        onClick={() => copyToClipboard(value, `${label} copiado`)}
+      >
+        <Copy className="size-4" />
+      </Button>
+    </div>
+    {description ? (
+      <p className="text-muted-foreground text-sm">{description}</p>
+    ) : null}
+  </div>
+);
 
 const WhatsAppConnectionCard = ({
   connection,
+  appUrl,
 }: WhatsAppConnectionCardProps) => {
   const [newKey, setNewKey] = useState<string | null>(null);
+  const lookupUrl = appUrl ? `${appUrl}${PATIENT_LOOKUP_PATH}` : "";
 
   const form = useForm<SaveWhatsAppConnectionInput>({
     resolver: zodResolver(saveWhatsAppConnectionSchema),
@@ -88,14 +140,8 @@ const WhatsAppConnectionCard = ({
       toast.error(error.error.serverError || "Erro ao gerar a chave"),
   });
 
-  const copyKey = async () => {
-    if (!newKey) return;
-    try {
-      await navigator.clipboard.writeText(newKey);
-      toast.success("Chave copiada");
-    } catch {
-      toast.error("Não foi possível copiar. Selecione o texto e copie.");
-    }
+  const copyKey = () => {
+    if (newKey) copyToClipboard(newKey, "Chave copiada");
   };
 
   return (
@@ -193,53 +239,77 @@ const WhatsAppConnectionCard = ({
           <CardTitle>Chave da consulta de cartão</CardTitle>
           <CardDescription>
             O atendimento usa esta chave para consultar se o cartão do paciente
-            está ativo. Depois de gerar, cole no whatsapp-ai, em Configurações →
-            Integrações, na consulta do cartão.
+            está ativo. Cole no whatsapp-ai, em Configurações → Integrações, na
+            consulta do cartão, o endereço da API e a chave. Se lá houver lista
+            de hosts liberados, inclua o host abaixo.
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-3 text-sm">
-            <KeyRound className="text-muted-foreground size-6 shrink-0" />
-            {connection.integrationKeyPrefix ? (
-              <div>
-                <p className="font-mono">{connection.integrationKeyPrefix}</p>
-                <p className="text-muted-foreground">
-                  {connection.integrationKeyFromEnv
-                    ? "Vinda do arquivo .env"
-                    : connection.integrationKeyCreatedAt
-                      ? `Gerada em ${dayjs(connection.integrationKeyCreatedAt).format("DD/MM/YYYY HH:mm")}`
-                      : null}
-                </p>
-              </div>
-            ) : (
-              <p className="text-muted-foreground">
-                Nenhuma chave: o atendimento não consegue consultar o cartão.
-              </p>
-            )}
-          </div>
+        <CardContent className="space-y-6">
+          {lookupUrl ? (
+            <div className="grid gap-4 md:grid-cols-2">
+              <CopyableField
+                label="Endereço da API"
+                value={lookupUrl}
+                description="Chamada por POST, com a chave no cabeçalho X-Api-Key."
+              />
+              <CopyableField
+                label="Host"
+                value={hostOf(appUrl)}
+                description="Para liberar na outra plataforma."
+              />
+            </div>
+          ) : (
+            <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+              Falta a variável NEXT_PUBLIC_APP_URL no servidor: sem ela não há
+              como mostrar o endereço da API.
+            </p>
+          )}
 
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="outline" disabled={generateAction.isPending}>
-                {generateAction.isPending ? "Gerando…" : "Gerar nova chave"}
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Gerar nova chave?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  A chave atual para de funcionar na hora. Até a nova ser colada
-                  no whatsapp-ai, o atendimento não consegue consultar cartões.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={() => generateAction.execute()}>
-                  Gerar
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-3 text-sm">
+              <KeyRound className="text-muted-foreground size-6 shrink-0" />
+              {connection.integrationKeyPrefix ? (
+                <div>
+                  <p className="font-mono">{connection.integrationKeyPrefix}</p>
+                  <p className="text-muted-foreground">
+                    {connection.integrationKeyFromEnv
+                      ? "Vinda do arquivo .env"
+                      : connection.integrationKeyCreatedAt
+                        ? `Gerada em ${dayjs(connection.integrationKeyCreatedAt).format("DD/MM/YYYY HH:mm")}`
+                        : null}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-muted-foreground">
+                  Nenhuma chave: o atendimento não consegue consultar o cartão.
+                </p>
+              )}
+            </div>
+
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" disabled={generateAction.isPending}>
+                  {generateAction.isPending ? "Gerando…" : "Gerar nova chave"}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Gerar nova chave?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    A chave atual para de funcionar na hora. Até a nova ser
+                    colada no whatsapp-ai, o atendimento não consegue consultar
+                    cartões.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => generateAction.execute()}>
+                    Gerar
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         </CardContent>
       </Card>
 

@@ -80,8 +80,11 @@ const WhatsAppPage = async () => {
     ]);
 
   const proximo = nextRun(settings);
-  const appUrl =
-    process.env.NEXT_PUBLIC_APP_URL || process.env.BETTER_AUTH_URL || "";
+  const appUrl = (
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.BETTER_AUTH_URL ||
+    ""
+  ).replace(/\/+$/, "");
 
   return (
     <PageContainer>
@@ -120,7 +123,7 @@ const WhatsAppPage = async () => {
             </CardContent>
           </Card>
 
-          <WhatsAppConnectionCard connection={connection} />
+          <WhatsAppConnectionCard connection={connection} appUrl={appUrl} />
 
           <MessageTemplatesCard
             messages={messages}
