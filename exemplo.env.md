@@ -45,7 +45,11 @@ WHATSAPP_AI_API_KEY=wai_xxxxxxxxxxxxxxxxxxxxxxxx
 
 WHATSAPP_D0_LATE_ENABLED=false
 
-# Máximo de avisos D+30 por execução (o acúmulo drena ao longo dos dias)
+# Máximo de avisos D-7 por execução (a primeira rodada drena em alguns dias)
+
+WHATSAPP_D7_DAILY_LIMIT=40
+
+# Máximo de avisos D0 atrasado + D+30 por execução (o acúmulo drena ao longo dos dias)
 
 WHATSAPP_D30_DAILY_LIMIT=100
 NEXT_PUBLIC_APP_URL=https://seudominio.com.br

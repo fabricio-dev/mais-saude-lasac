@@ -56,6 +56,7 @@ export function resetFakes() {
     reminderD0Enabled: false,
     reminderD0LateEnabled: false,
     reminderD30Enabled: false,
+    d7DailyLimit: 40,
     overdueDailyLimit: 100,
   };
   fake.templates = structuredClone(DEFAULT_MESSAGE_TEMPLATES);

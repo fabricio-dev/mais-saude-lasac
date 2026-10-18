@@ -42,7 +42,7 @@
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
-import { and, desc, eq, gte, inArray, isNull, lte } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNull, lte } from "drizzle-orm";
 
 import { getMessageTemplates } from "@/data/whatsapp-message-templates";
 import {
@@ -150,6 +150,12 @@ async function findEligiblePatients(params: {
   onlyActive?: boolean;
   /** Mais recentes primeiro, com teto: o acúmulo drena ao longo dos dias. */
   limit?: number;
+  /**
+   * Ordem por vencimento. Padrão: os mais recentes primeiro, que serve ao
+   * passivo. O D-7 usa "asc": com teto, quem vence antes tem de sair antes, ou
+   * perde a janela.
+   */
+  order?: "asc" | "desc";
 }): Promise<EligiblePatient[]> {
   const query = db
     .select({
@@ -181,7 +187,11 @@ async function findEligiblePatients(params: {
         isNull(whatsappNotificationsTable.id),
       ),
     )
-    .orderBy(desc(patientsTable.expirationDate))
+    .orderBy(
+      params.order === "asc"
+        ? asc(patientsTable.expirationDate)
+        : desc(patientsTable.expirationDate),
+    )
     .$dynamic();
 
   const patients = await (params.limit ? query.limit(params.limit) : query);
@@ -197,17 +207,27 @@ async function findEligiblePatients(params: {
   }));
 }
 
-/** D-7: vence entre amanhã e daqui a 7 dias, e ainda não recebeu o D-7. */
-async function getEligiblePatientsForD7(): Promise<EligiblePatient[]> {
+/**
+ * D-7: vence entre amanhã e daqui a 7 dias, e ainda não recebeu o D-7. Com
+ * teto, quem vence antes sai antes; o resto fica para o dia seguinte, ainda
+ * dentro da janela.
+ */
+async function getEligiblePatientsForD7(
+  limit: number,
+): Promise<EligiblePatient[]> {
   const from = daySP(1);
   const to = daySP(7);
-  console.log(`[D-7] Vencimento entre ${from.label} e ${to.label}`);
+  console.log(
+    `[D-7] Vencimento entre ${from.label} e ${to.label}, no máximo ${limit} nesta execução`,
+  );
 
   return findEligiblePatients({
     from: from.start,
     to: to.end,
     notSent: ["RENEWAL_D_7"],
     onlyActive: true,
+    limit,
+    order: "asc",
   });
 }
 
@@ -633,7 +653,7 @@ export async function runWhatsAppRenewalCron({
     {
       type: "RENEWAL_D_7",
       enabled: settings.reminderD7Enabled,
-      find: getEligiblePatientsForD7,
+      find: () => getEligiblePatientsForD7(settings.d7DailyLimit),
     },
     {
       type: "RENEWAL_D_0",
