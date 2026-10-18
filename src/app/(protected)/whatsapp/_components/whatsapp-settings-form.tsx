@@ -196,10 +196,26 @@ const WhatsAppSettingsForm = ({ defaultValues }: WhatsAppSettingsFormProps) => {
                         }
                       />
                     </FormControl>
-                    <FormDescription>
-                      Vale para os vencidos há menos e há mais de 30 dias,
-                      juntos. O número entrega 250 conversas por dia, dividido
-                      com o atendimento.
+                    <FormDescription className="space-y-1">
+                      <span className="block">
+                        Vale para os vencidos há menos e há mais de 30 dias,
+                        juntos. O número entrega 250 conversas por dia, dividido
+                        com o atendimento.
+                      </span>
+                      <span className="block">
+                        O &ldquo;venceu há pouco&rdquo; roda primeiro e usa o
+                        limite; o &ldquo;30 dias ou mais&rdquo; fica só com o
+                        que sobrar.
+                      </span>
+                      <span className="block">
+                        Exemplo com limite 100: se o primeiro enviar 100, o
+                        segundo não envia nenhum nesse dia; se enviar 15, o
+                        segundo pode mandar até 85.
+                      </span>
+                      <span className="block">
+                        Quando o primeiro não tiver mais ninguém na fila, o
+                        limite inteiro passa para o segundo.
+                      </span>
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
