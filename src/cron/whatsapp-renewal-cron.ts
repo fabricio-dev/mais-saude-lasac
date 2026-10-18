@@ -11,7 +11,8 @@
  *    - D0 atrasado: venceu há 1 a 29 dias sem ter recebido o D0
  *      ("venceu em {{data}}"). Ligado na tela depois que o template
  *      lembrete_vencimento_atrasado for aprovado na Meta.
- *    - D+30: venceu há 30 dias ou mais, com teto por execução, dos vencidos
+ *    - D+30: venceu há 30 dias ou mais.
+ *      O D0 atrasado e o D+30 dividem um só teto por execução, dos vencidos
  *      mais recentes para os mais antigos: o número é o mesmo do atendimento,
  *      com teto diário da Meta.
  *
@@ -223,15 +224,20 @@ async function getEligiblePatientsForD0(): Promise<EligiblePatient[]> {
 }
 
 /** D0 atrasado: venceu há 1 a 29 dias e não recebeu nem o D0 nem este. */
-async function getEligiblePatientsForD0Late(): Promise<EligiblePatient[]> {
+async function getEligiblePatientsForD0Late(
+  limit: number,
+): Promise<EligiblePatient[]> {
   const from = daySP(-29);
   const to = daySP(-1);
-  console.log(`[D0 atrasado] Vencimento entre ${from.label} e ${to.label}`);
+  console.log(
+    `[D0 atrasado] Vencimento entre ${from.label} e ${to.label}, no máximo ${limit} nesta execução`,
+  );
 
   return findEligiblePatients({
     from: from.start,
     to: to.end,
     notSent: ["RENEWAL_D_0", "RENEWAL_D_0_LATE"],
+    limit,
   });
 }
 
@@ -247,7 +253,7 @@ async function getEligiblePatientsForD30(
   return findEligiblePatients({
     to: to.end,
     notSent: ["RENEWAL_D_30"],
-    limit: Math.max(1, limit),
+    limit,
   });
 }
 
@@ -486,7 +492,7 @@ async function processRenewalType(
   type: RenewalType,
   getEligiblePatients: () => Promise<EligiblePatient[]>,
   send: ReminderSend,
-): Promise<void> {
+): Promise<number> {
   console.log(`\n========================================`);
   console.log(`[${type}] Iniciando processamento`);
   console.log(`========================================\n`);
@@ -497,7 +503,7 @@ async function processRenewalType(
 
     if (patients.length === 0) {
       console.log(`[${type}] Nenhum paciente elegível encontrado`);
-      return;
+      return 0;
     }
 
     console.log(`[${type}] ${patients.length} pacientes elegíveis encontrados`);
@@ -549,6 +555,8 @@ async function processRenewalType(
           console.log(`  - ${r.patientName} (${r.phone}): ${r.reason}`);
         });
     }
+
+    return results.length;
   } catch (error) {
     console.error(`[${type}] Erro crítico no processamento:`, error);
     throw error;
@@ -562,7 +570,8 @@ async function processRenewalType(
  * 1. D-7 (vence em 1 a 7 dias)
  * 2. D0 (vence hoje)
  * 3. D0 atrasado (venceu há 1 a 29 dias, se ligado)
- * 4. D+30 (venceu há 30 dias ou mais, com teto por execução)
+ * 4. D+30 (venceu há 30 dias ou mais)
+ *    O D0 atrasado e o D+30 dividem o teto diário de vencidos.
  *
  * Uso:
  * - Pode ser chamada manualmente: await runWhatsAppRenewalCron()
@@ -609,9 +618,16 @@ export async function runWhatsAppRenewalCron({
   // mesmo modelo, mesmo que alguém o troque na tela no meio do disparo.
   const templates = await getMessageTemplates();
 
+  // O D0 atrasado e o D+30 drenam o passivo de vencidos e dividem um só teto
+  // por execução: a Meta entrega poucas conversas por dia, e a que ela recusa
+  // já ficou gravada como enviada — não volta na fila.
+  let overdueBudget = settings.overdueDailyLimit;
+
   const etapas: Array<{
     type: RenewalType;
     enabled: boolean;
+    /** Parte do teto de vencidos: sem saldo, a etapa nem consulta. */
+    isOverdue?: boolean;
     find: () => Promise<EligiblePatient[]>;
   }> = [
     {
@@ -627,12 +643,14 @@ export async function runWhatsAppRenewalCron({
     {
       type: "RENEWAL_D_0_LATE",
       enabled: settings.reminderD0LateEnabled,
-      find: getEligiblePatientsForD0Late,
+      isOverdue: true,
+      find: () => getEligiblePatientsForD0Late(overdueBudget),
     },
     {
       type: "RENEWAL_D_30",
       enabled: settings.reminderD30Enabled,
-      find: () => getEligiblePatientsForD30(settings.d30DailyLimit),
+      isOverdue: true,
+      find: () => getEligiblePatientsForD30(overdueBudget),
     },
   ];
 
@@ -642,10 +660,15 @@ export async function runWhatsAppRenewalCron({
         console.log(`\n[${etapa.type}] Desligado em /whatsapp`);
         continue;
       }
-      await processRenewalType(etapa.type, etapa.find, {
+      if (etapa.isOverdue && overdueBudget <= 0) {
+        console.log(`\n[${etapa.type}] Teto diário de vencidos já usado`);
+        continue;
+      }
+      const processed = await processRenewalType(etapa.type, etapa.find, {
         template: templates[MESSAGE_KEY[etapa.type]],
         officialNumber,
       });
+      if (etapa.isOverdue) overdueBudget -= processed;
     }
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);

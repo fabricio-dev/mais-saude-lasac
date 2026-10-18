@@ -268,7 +268,9 @@ export const whatsappSettingsTable = pgTable("whatsapp_settings", {
     .notNull()
     .default(false),
   reminderD30Enabled: boolean("reminder_d30_enabled").notNull().default(true),
-  d30DailyLimit: integer("d30_daily_limit").notNull().default(100),
+  // Teto por execução do D0 atrasado e do D+30 somados. A coluna manteve o
+  // nome antigo para não exigir mudança no banco.
+  overdueDailyLimit: integer("d30_daily_limit").notNull().default(100),
   // Número do wa.me nos lembretes, como o cadastro: DDD + número.
   officialNumber: text("official_number"),
   // Hora cheia (0–23, São Paulo) em que o cron dispara os lembretes.
