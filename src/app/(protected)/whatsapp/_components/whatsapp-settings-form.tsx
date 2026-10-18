@@ -181,10 +181,10 @@ const WhatsAppSettingsForm = ({ defaultValues }: WhatsAppSettingsFormProps) => {
             <div className="grid gap-4 pt-2 md:grid-cols-2">
               <FormField
                 control={form.control}
-                name="d30DailyLimit"
+                name="overdueDailyLimit"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Limite por dia (30 dias ou mais)</FormLabel>
+                    <FormLabel>Limite por dia (vencidos)</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -197,8 +197,9 @@ const WhatsAppSettingsForm = ({ defaultValues }: WhatsAppSettingsFormProps) => {
                       />
                     </FormControl>
                     <FormDescription>
-                      O número entrega 250 conversas por dia, dividido com o
-                      atendimento.
+                      Vale para os vencidos há menos e há mais de 30 dias,
+                      juntos. O número entrega 250 conversas por dia, dividido
+                      com o atendimento.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

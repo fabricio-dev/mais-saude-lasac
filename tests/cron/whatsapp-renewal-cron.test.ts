@@ -138,3 +138,35 @@ describe("cron de lembretes — D-7", () => {
     expect(fake.requests).toHaveLength(0);
   });
 });
+
+describe("cron de lembretes — teto de vencidos", () => {
+  const limitsAsked = () =>
+    dbCallsOf("select", "limit").map((call) => call.args[0]);
+
+  beforeEach(() => {
+    setWhatsAppEnv({ whatsappEnv: "dev", testPhone: TEST_PHONE });
+    fake.settings.reminderD7Enabled = false;
+    fake.settings.reminderD0LateEnabled = true;
+    fake.settings.reminderD30Enabled = true;
+    fake.patients = [patient(), { ...patient(), id: "p2" }];
+  });
+
+  it("o D+30 recebe só o que sobrou do D0 atrasado", async () => {
+    fake.settings.overdueDailyLimit = 3;
+    await runCron();
+
+    expect(limitsAsked()).toEqual([3, 1]);
+  });
+
+  it("teto usado pelo D0 atrasado: o D+30 nem consulta", async () => {
+    fake.settings.overdueDailyLimit = 2;
+    await runCron();
+
+    expect(limitsAsked()).toEqual([2]);
+    expect(
+      fake.requests.every((r) =>
+        r.body.externalId.startsWith("RENEWAL_D_0_LATE"),
+      ),
+    ).toBe(true);
+  });
+});

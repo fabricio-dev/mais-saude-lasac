@@ -41,12 +41,13 @@ de cada tipo por ciclo.
 ### 3. RENEWAL_D_0_LATE - Recuperação do D0
 - **Quando**: venceu há 1 a 29 dias sem ter recebido o D0 nem este
 - **Template**: `lembrete_vencimento_atrasado` — parâmetros: nome, data de vencimento, número WhatsApp
+- **Teto**: o mesmo do D+30 (`WHATSAPP_D30_DAILY_LIMIT`), compartilhado: o D0 atrasado usa primeiro e o D+30 fica com o que sobrar
 - **Ligado por**: `WHATSAPP_D0_LATE_ENABLED=true`, depois de o template ser aprovado na Meta
 
 ### 4. RENEWAL_D_30 - Lembrete após vencimento
 - **Quando**: venceu há 30 dias ou mais, sem ter recebido o D+30
 - **Template**: `lembrete_vencimento_30_dias`
-- **Teto**: `WHATSAPP_D30_DAILY_LIMIT` por execução (padrão 100), dos vencidos mais recentes para os mais antigos. O número é o mesmo do atendimento, com limite diário na Meta — o acúmulo da primeira execução drena ao longo de alguns dias
+- **Teto**: `WHATSAPP_D30_DAILY_LIMIT` por execução (padrão 100), dividido com o D0 atrasado (que usa o teto primeiro), dos vencidos mais recentes para os mais antigos. O número é o mesmo do atendimento, com limite diário na Meta — o acúmulo da primeira execução drena ao longo de alguns dias
 - **Status do paciente**: Pode estar inativo
 
 ### Falhas

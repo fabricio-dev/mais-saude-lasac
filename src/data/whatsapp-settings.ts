@@ -18,7 +18,7 @@ export type WhatsAppSettings = {
   reminderD0Enabled: boolean;
   reminderD0LateEnabled: boolean;
   reminderD30Enabled: boolean;
-  d30DailyLimit: number;
+  overdueDailyLimit: number;
   officialNumber: string | null;
   sendHour: number;
   sendDays: number[];
@@ -39,7 +39,7 @@ function defaultsFromEnv(): WhatsAppSettings {
     reminderD0Enabled: true,
     reminderD0LateEnabled: process.env.WHATSAPP_D0_LATE_ENABLED === "true",
     reminderD30Enabled: true,
-    d30DailyLimit:
+    overdueDailyLimit:
       Number.parseInt(process.env.WHATSAPP_D30_DAILY_LIMIT ?? "", 10) || 100,
     officialNumber: process.env.WHATSAPP_OFFICIAL_NUMBER?.trim() || null,
     sendHour: 9,
@@ -62,7 +62,7 @@ export async function getWhatsAppSettings(): Promise<WhatsAppSettings> {
     reminderD0Enabled: row.reminderD0Enabled,
     reminderD0LateEnabled: row.reminderD0LateEnabled,
     reminderD30Enabled: row.reminderD30Enabled,
-    d30DailyLimit: row.d30DailyLimit,
+    overdueDailyLimit: row.overdueDailyLimit,
     officialNumber: row.officialNumber,
     sendHour: row.sendHour,
     sendDays: row.sendDays,
@@ -85,7 +85,7 @@ export function toInput(settings: WhatsAppSettings): WhatsAppSettingsInput {
     reminderD0Enabled: settings.reminderD0Enabled,
     reminderD0LateEnabled: settings.reminderD0LateEnabled,
     reminderD30Enabled: settings.reminderD30Enabled,
-    d30DailyLimit: settings.d30DailyLimit,
+    overdueDailyLimit: settings.overdueDailyLimit,
     officialNumber: settings.officialNumber,
     sendHour: settings.sendHour,
     sendDays: settings.sendDays,
