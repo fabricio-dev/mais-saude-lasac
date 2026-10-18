@@ -5,6 +5,8 @@ import {
   setWhatsAppEnv,
   TEST_PHONE,
 } from "@tests/fakes/whatsapp-fakes";
+import type { SQL } from "drizzle-orm";
+import { PgDialect } from "drizzle-orm/pg-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { runWhatsAppRenewalCron } from "@/cron/whatsapp-renewal-cron";
@@ -168,5 +170,40 @@ describe("cron de lembretes — teto de vencidos", () => {
         r.body.externalId.startsWith("RENEWAL_D_0_LATE"),
       ),
     ).toBe(true);
+  });
+});
+
+describe("cron de lembretes — teto do D-7", () => {
+  const callsOf = (method: string) =>
+    dbCallsOf("select", method).map((call) => call.args[0]);
+
+  beforeEach(() => {
+    setWhatsAppEnv({ whatsappEnv: "dev", testPhone: TEST_PHONE });
+    fake.patients = [patient()];
+  });
+
+  it("pede ao banco só o teto do D-7", async () => {
+    fake.settings.d7DailyLimit = 40;
+    await runCron();
+
+    expect(callsOf("limit")).toEqual([40]);
+  });
+
+  it("o D-7 não divide o teto com os vencidos", async () => {
+    fake.settings.d7DailyLimit = 40;
+    fake.settings.overdueDailyLimit = 100;
+    fake.settings.reminderD0LateEnabled = true;
+    fake.settings.reminderD30Enabled = true;
+    await runCron();
+
+    expect(callsOf("limit")).toEqual([40, 100, 99]);
+  });
+
+  it("quem vence antes sai antes: ordem crescente de vencimento", async () => {
+    await runCron();
+
+    const [order] = callsOf("orderBy") as SQL[];
+    const { sql } = new PgDialect().sqlToQuery(order);
+    expect(sql).toMatch(/ asc$/);
   });
 });

@@ -32,6 +32,7 @@ de cada tipo por ciclo.
 - **Quando**: vence entre amanhã (D-1) e daqui a 7 dias, sem ter recebido o D-7
 - **Template**: `lembrete_vencimento_7_dias` (o texto leva a data, então vale em qualquer dia da janela)
 - **Objetivo**: o aviso antecipado é o que mais converte em renovação
+- **Teto**: `WHATSAPP_D7_DAILY_LIMIT` por execução (padrão 40), dos que vencem antes para os que vencem depois. A primeira rodada junta uma semana de vencimentos; com o teto ela drena em alguns dias, ainda dentro da janela. O D-7 não divide o teto com os vencidos
 - **Status do paciente**: Ativo (`isActive = true`)
 
 ### 2. RENEWAL_D_0 - Lembrete no dia
@@ -179,7 +180,10 @@ WHATSAPP_AI_API_KEY=wai_chave_gerada_no_whatsapp_ai
 # lembrete_vencimento_atrasado na Meta
 WHATSAPP_D0_LATE_ENABLED=false
 
-# Teto de avisos D+30 por execução
+# Teto de avisos D-7 por execução (a primeira rodada drena em alguns dias)
+WHATSAPP_D7_DAILY_LIMIT=40
+
+# Teto de avisos do D0 atrasado + D+30 por execução
 WHATSAPP_D30_DAILY_LIMIT=100
 
 # Telefone de teste (usado em dev)

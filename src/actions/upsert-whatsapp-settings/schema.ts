@@ -6,6 +6,12 @@ export const upsertWhatsAppSettingsSchema = z.object({
   reminderD0Enabled: z.boolean(),
   reminderD0LateEnabled: z.boolean(),
   reminderD30Enabled: z.boolean(),
+  d7DailyLimit: z
+    .number({ message: "Informe o limite" })
+    .int()
+    .min(1, { message: "Mínimo de 1 por dia" })
+    // Mesmo teto de 250 conversas por dia da Meta, dividido com o atendimento.
+    .max(250, { message: "Máximo de 250 por dia" }),
   overdueDailyLimit: z
     .number({ message: "Informe o limite" })
     .int()

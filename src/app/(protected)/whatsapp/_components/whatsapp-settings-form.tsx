@@ -53,7 +53,7 @@ const REMINDERS: {
     name: "reminderD7Enabled",
     title: "7 dias antes do vencimento",
     description:
-      "Quem vence nos próximos 7 dias. Se o envio falhar num dia, sai no seguinte, até a véspera.",
+      "Quem vence nos próximos 7 dias, dos que vencem antes para os que vencem depois, até o limite por dia abaixo. O que não couber ou falhar sai no dia seguinte, até a véspera.",
   },
   {
     name: "reminderD0Enabled",
@@ -179,6 +179,40 @@ const WhatsAppSettingsForm = ({ defaultValues }: WhatsAppSettingsFormProps) => {
             ))}
 
             <div className="grid gap-4 pt-2 md:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="d7DailyLimit"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Limite por dia (7 dias antes)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={250}
+                        value={field.value}
+                        onChange={(event) =>
+                          field.onChange(event.target.valueAsNumber)
+                        }
+                      />
+                    </FormControl>
+                    <FormDescription className="space-y-1">
+                      <span className="block">
+                        Na primeira vez o sistema junta uma semana de
+                        vencimentos. Com o limite, quem vence antes recebe
+                        primeiro e o resto sai nos dias seguintes, ainda dentro
+                        da janela.
+                      </span>
+                      <span className="block">
+                        Dividido com o atendimento nas 250 conversas por dia do
+                        número. No dia a dia sai bem menos que o limite.
+                      </span>
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <FormField
                 control={form.control}
                 name="overdueDailyLimit"
