@@ -3,7 +3,9 @@
 import dayjs from "dayjs";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { returnValidationErrors } from "next-safe-action";
 
+import { findPatientByPhone } from "@/data/find-patient-by-phone";
 import { db } from "@/db";
 import { patientsTable } from "@/db/schema";
 import { actionClient } from "@/lib/next-safe-action";
@@ -49,6 +51,18 @@ export const createPatient = actionClient
       if (existingPatient.length > 0) {
         throw new Error("Este CPF já está cadastrado no sistema");
       }
+    }
+
+    // Telefone duplicado. A mensagem não diz de quem é o número: este cadastro
+    // é público, e o nome do titular não pode vazar para quem digitar o telefone.
+    if (await findPatientByPhone(phoneNumber)) {
+      returnValidationErrors(createPatientSchema, {
+        phoneNumber: {
+          _errors: [
+            "Este telefone já está cadastrado. Para renovar ou alterar seu convênio, fale com a clínica.",
+          ],
+        },
+      });
     }
 
     // Criar paciente sem vendedor e clínica (será atribuído posteriormente)

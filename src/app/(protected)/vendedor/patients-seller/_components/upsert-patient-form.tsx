@@ -383,7 +383,14 @@ const UpsertPatientForm = ({
       );
       onSuccess?.();
     },
-    onError: () => {
+    onError: ({ error }) => {
+      // Telefone já cadastrado: o servidor diz para quem, e o motivo vai no campo
+      const phoneError = error.validationErrors?.phoneNumber?._errors?.[0];
+      if (phoneError) {
+        form.setError("phoneNumber", { message: phoneError });
+        toast.error(phoneError);
+        return;
+      }
       toast.error(
         patient ? "Erro ao atualizar paciente" : "Erro ao adicionar paciente",
       );

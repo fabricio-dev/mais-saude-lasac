@@ -4,8 +4,10 @@ import utc from "dayjs/plugin/utc";
 import { and, eq, ne } from "drizzle-orm";
 import { z } from "zod";
 
+import { findPatientByPhone } from "@/data/find-patient-by-phone";
 import { db } from "@/db";
 import { patientsTable } from "@/db/schema";
+import { mesmoTelefone, nucleoTelefone } from "@/helpers/phone-core";
 import { whatsappConsentSchema } from "@/helpers/whatsapp-consent";
 
 // Configurar plugins do dayjs
@@ -142,6 +144,35 @@ export const upsertPatientSchema = z
           code: z.ZodIssueCode.custom,
           message: "Este CPF já está cadastrado no sistema",
           path: ["cpfNumber"],
+        });
+      }
+    }
+
+    // Telefone duplicado. Na edição, só verifica se o número mudou: cadastros
+    // antigos que já dividem o telefone continuam podendo ser editados.
+    const currentPatient = data.id
+      ? await db.query.patientsTable.findFirst({
+          where: eq(patientsTable.id, data.id),
+          columns: { phoneNumber: true },
+        })
+      : undefined;
+    const newPhone = nucleoTelefone(data.phoneNumber);
+    const phoneChanged =
+      !currentPatient ||
+      !newPhone ||
+      !mesmoTelefone(newPhone, nucleoTelefone(currentPatient.phoneNumber));
+
+    if (phoneChanged) {
+      const patientWithPhone = await findPatientByPhone(
+        data.phoneNumber,
+        data.id,
+      );
+
+      if (patientWithPhone) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Este telefone já está cadastrado para o paciente ${patientWithPhone.name}`,
+          path: ["phoneNumber"],
         });
       }
     }

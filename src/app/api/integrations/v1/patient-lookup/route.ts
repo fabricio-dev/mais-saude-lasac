@@ -5,6 +5,11 @@ import { z } from "zod";
 import { verifyIntegrationApiKey } from "@/data/whatsapp-connection";
 import { db } from "@/db";
 import { patientsTable } from "@/db/schema";
+import {
+  mesmoTelefone,
+  type NucleoTelefone,
+  nucleoTelefone,
+} from "@/helpers/phone-core";
 
 // Consulta de cartão para o sistema de atendimento (whatsapp-ai).
 //
@@ -60,31 +65,6 @@ type Candidato = {
   validUntil: string | null;
 };
 
-type Telefone = { ddd: string; final: string };
-
-/**
- * DDD + os 8 dígitos finais — o que sobrevive ao "55" e ao nono dígito.
- *
- * O formulário já grava só dígitos, sem código de país, e a única variação é o
- * nono (87991372728 ou 8791372728). Do WhatsApp o número chega com o 55 e
- * também com ou sem o nono, então são quatro combinações que precisam apontar
- * para a mesma pessoa. O que não muda em nenhuma delas é o DDD e os 8 finais.
- *
- * A limpeza de não-dígitos é guarda para linha antiga, anterior à normalização:
- * uma máscara gravada no passado casa igual, em vez de falhar calada.
- */
-function nucleo(bruto: string): Telefone | null {
-  let digitos = bruto.replace(/\D/g, "");
-
-  if (digitos.length > 11 && digitos.startsWith("55")) {
-    digitos = digitos.slice(2);
-  }
-
-  if (digitos.length < 10) return null;
-
-  return { ddd: digitos.slice(0, 2), final: digitos.slice(-8) };
-}
-
 /**
  * A data como o paciente digita, no formato da coluna.
  *
@@ -115,10 +95,8 @@ function dataISO(bruto: string): string | null {
   return `${digitos.slice(4)}-${digitos.slice(2, 4)}-${digitos.slice(0, 2)}`;
 }
 
-const doMesmoNumero = (telefone: Telefone) => (candidato: Candidato) => {
-  const dele = nucleo(candidato.phoneNumber);
-  return dele?.ddd === telefone.ddd && dele.final === telefone.final;
-};
+const doMesmoNumero = (telefone: NucleoTelefone) => (candidato: Candidato) =>
+  mesmoTelefone(telefone, nucleoTelefone(candidato.phoneNumber));
 
 /// Cadastro duplicado existe; entre as linhas da mesma pessoa vale a que vence
 /// por último, que é o cartão que ela tem na mão.
@@ -173,7 +151,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "invalid_request" }, { status: 400 });
   }
 
-  const telefone = nucleo(entrada.data.phone);
+  const telefone = nucleoTelefone(entrada.data.phone);
   const cpf = (entrada.data.document ?? "").replace(/\D/g, "");
   const nascimento = entrada.data.birth_date
     ? dataISO(entrada.data.birth_date)

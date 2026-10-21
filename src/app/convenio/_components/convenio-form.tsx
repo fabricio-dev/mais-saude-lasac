@@ -173,9 +173,14 @@ export function ConvenioForm() {
         form.reset();
       }, 100);
     },
-    onError: (error) => {
-      console.log("Erro:", error);
-      toast.error(error.error.serverError || "Erro ao enviar solicitação");
+    onError: ({ error }) => {
+      const phoneError = error.validationErrors?.phoneNumber?._errors?.[0];
+      if (phoneError) {
+        form.setError("phoneNumber", { message: phoneError });
+        toast.error(phoneError);
+        return;
+      }
+      toast.error(error.serverError || "Erro ao enviar solicitação");
     },
   });
 
