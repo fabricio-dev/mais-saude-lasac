@@ -41,7 +41,7 @@ const CAMPOS = {
   phoneNumber: patientsTable.phoneNumber,
   birthDate: patientsTable.birthDate,
   cardType: patientsTable.cardType,
-  isActive: patientsTable.isActive,
+  activeAt: patientsTable.activeAt,
   expirationDate: patientsTable.expirationDate,
   // Formatada no Postgres de propósito: converter no Node passaria a data por
   // fuso e moveria o vencimento um dia para trás em metade do país.
@@ -55,7 +55,7 @@ type Candidato = {
   phoneNumber: string;
   birthDate: string | null;
   cardType: "enterprise" | "personal";
-  isActive: boolean;
+  activeAt: Date | null;
   expirationDate: Date | null;
   validUntil: string | null;
 };
@@ -125,14 +125,27 @@ const doMesmoNumero = (telefone: Telefone) => (candidato: Candidato) => {
 const maisRecente = (a: Candidato, b: Candidato) =>
   (b.expirationDate?.getTime() ?? 0) - (a.expirationDate?.getTime() ?? 0);
 
+/// Cadastro que nunca foi ativado não é cartão: ele nasce com a validade de
+/// ontem, e respondê-lo diria a quem ainda não pagou que o cartão venceu. Sai
+/// antes da escolha, e não na resposta, para que uma linha nova sem pagamento
+/// não esconda o cartão antigo da mesma pessoa só por vencer depois dele.
+const foiAtivado = (candidato: Candidato) => candidato.activeAt !== null;
+
+/**
+ * A situação sai só da validade, nunca do `isActive`.
+ *
+ * O dashboard desliga o `isActive` de todo cadastro que venceu, então lê-lo
+ * aqui fazia todo cartão vencido sair como "inativo" — e sem data, o que no
+ * WhatsApp vira "não encontrei um cartão", para quem tem o cartão na mão. A
+ * validade é a resposta que o paciente precisa: está valendo ou venceu em tal
+ * dia.
+ */
 function resposta(paciente: Candidato) {
-  const status = !paciente.isActive
-    ? "inativo"
-    : !paciente.expirationDate
-      ? null
-      : paciente.expirationDate.getTime() >= Date.now()
-        ? "ativo"
-        : "vencido";
+  const status = !paciente.expirationDate
+    ? null
+    : paciente.expirationDate.getTime() >= Date.now()
+      ? "ativo"
+      : "vencido";
 
   return {
     // Primeiro nome: o texto final é uma frase de WhatsApp, e nome completo no
@@ -140,11 +153,7 @@ function resposta(paciente: Candidato) {
     patient: { name: paciente.name.trim().split(/\s+/)[0] },
     agreement: {
       status,
-      // Cartão inativo carrega uma validade que não vale mais: anunciá-la sairia
-      // como "está inativo — validade 20/05/2027", que se contradiz na frente
-      // do paciente. Sem a data, vale o texto de não encontrado e ele fala com
-      // uma pessoa, que é o desfecho certo para cartão desligado.
-      validUntil: status === "inativo" ? null : paciente.validUntil,
+      validUntil: paciente.validUntil,
       cardType:
         paciente.cardType === "enterprise" ? "empresarial" : "individual",
     },
@@ -184,11 +193,13 @@ export async function POST(request: NextRequest) {
   const confere = doMesmoNumero(telefone);
 
   if (cpf.length === 11) {
-    const porCpf = await db
-      .select(CAMPOS)
-      .from(patientsTable)
-      .where(eq(patientsTable.cpfNumber, cpf))
-      .limit(5);
+    const porCpf = (
+      await db
+        .select(CAMPOS)
+        .from(patientsTable)
+        .where(eq(patientsTable.cpfNumber, cpf))
+        .limit(5)
+    ).filter(foiAtivado);
 
     if (porCpf.length > 0) {
       // Titular falando do próprio número: o telefone já provou quem é.
@@ -217,7 +228,7 @@ export async function POST(request: NextRequest) {
     )
     .limit(10);
 
-  const daPessoa = porTelefone.filter(confere);
+  const daPessoa = porTelefone.filter(confere).filter(foiAtivado);
   const titulares = new Set(daPessoa.map((c) => c.name.trim().toLowerCase()));
 
   // Telefone de família, com titulares diferentes no mesmo número, não tem
