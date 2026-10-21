@@ -31,6 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { WhatsappConsentField } from "@/components/whatsapp-consent-field";
 
 import { PaymentInfoDialog } from "./payment-info-dialog";
 
@@ -159,7 +160,6 @@ export function ConvenioForm() {
       dependents5: "",
       dependents6: "",
       acceptTerms: false,
-      whatsappConsent: true,
     },
   });
 
@@ -173,9 +173,14 @@ export function ConvenioForm() {
         form.reset();
       }, 100);
     },
-    onError: (error) => {
-      console.log("Erro:", error);
-      toast.error(error.error.serverError || "Erro ao enviar solicitação");
+    onError: ({ error }) => {
+      const phoneError = error.validationErrors?.phoneNumber?._errors?.[0];
+      if (phoneError) {
+        form.setError("phoneNumber", { message: phoneError });
+        toast.error(phoneError);
+        return;
+      }
+      toast.error(error.serverError || "Erro ao enviar solicitação");
     },
   });
 
@@ -791,29 +796,12 @@ export function ConvenioForm() {
                         }
                       />
                     </div>
-                    <FormField
+                    <WhatsappConsentField
                       control={form.control}
                       name="whatsappConsent"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-y-0 space-x-3">
-                          <FormControl>
-                            <input
-                              type="checkbox"
-                              checked={field.value}
-                              onChange={field.onChange}
-                              className="mt-2 h-4 w-4 rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500"
-                            />
-                          </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel className="mt-2 mb-2 text-sm font-medium text-emerald-950">
-                              Autorizo o recebimento de mensagens via WhatsApp
-                              sobre avisos, lembretes e comunicações sobre o meu
-                              cartão LASAC.
-                            </FormLabel>
-                            <FormMessage />
-                          </div>
-                        </FormItem>
-                      )}
+                      label="Você autoriza o recebimento de avisos, lembretes e comunicações sobre o seu cartão LASAC por WhatsApp?"
+                      tone="emerald"
+                      className="mb-4"
                     />
                     <FormField
                       control={form.control}

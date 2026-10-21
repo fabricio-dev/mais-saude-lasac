@@ -34,7 +34,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { WhatsappConsentField } from "@/components/whatsapp-consent-field";
 import { patientsTable } from "@/db/schema";
+import { whatsappConsentSchema } from "@/helpers/whatsapp-consent";
 
 // Função para verificar CPF duplicado
 const checkCPFExists = async (
@@ -137,7 +139,7 @@ const formSchema = z
     dependents4: z.string().optional(),
     dependents5: z.string().optional(),
     dependents6: z.string().optional(),
-    whatsappConsent: z.boolean(),
+    whatsappConsent: whatsappConsentSchema,
     paymentType: z
       .enum(["pix", "dinheiro", "cartao_credito", "cartao_debito"])
       .optional(),
@@ -259,7 +261,7 @@ const UpsertPatientForm = ({
       dependents4: patient?.dependents4 ?? "",
       dependents5: patient?.dependents5 ?? "",
       dependents6: patient?.dependents6 ?? "",
-      whatsappConsent: patient?.whatsappConsent ?? true,
+      whatsappConsent: patient?.whatsappConsent,
       paymentType: patient?.paymentType ?? undefined,
     },
   });
@@ -303,7 +305,7 @@ const UpsertPatientForm = ({
         dependents4: patient?.dependents4 ?? "",
         dependents5: patient?.dependents5 ?? "",
         dependents6: patient?.dependents6 ?? "",
-        whatsappConsent: patient?.whatsappConsent ?? true,
+        whatsappConsent: patient?.whatsappConsent,
         paymentType: patient?.paymentType ?? undefined,
       });
     }
@@ -337,7 +339,14 @@ const UpsertPatientForm = ({
       );
       onSuccess?.();
     },
-    onError: () => {
+    onError: ({ error }) => {
+      // Telefone já cadastrado: o servidor diz para quem, e o motivo vai no campo
+      const phoneError = error.validationErrors?.phoneNumber?._errors?.[0];
+      if (phoneError) {
+        form.setError("phoneNumber", { message: phoneError });
+        toast.error(phoneError);
+        return;
+      }
       toast.error(
         patient ? "Erro ao atualizar paciente" : "Erro ao adicionar paciente",
       );
@@ -438,28 +447,11 @@ const UpsertPatientForm = ({
           </div>
 
           <div className="col-span-1 md:col-span-2">
-            <FormField
+            <WhatsappConsentField
               control={form.control}
               name="whatsappConsent"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-y-0 space-x-3">
-                  <FormControl>
-                    <input
-                      type="checkbox"
-                      checked={field.value}
-                      onChange={field.onChange}
-                      className="mt-0.5 h-4 w-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500"
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel className="text-sm font-normal text-amber-950">
-                      Autorização para recebimento de avisos, lembretes e
-                      comunicações sobre o meu cartão LASAC por WhatsApp.
-                    </FormLabel>
-                    <FormMessage />
-                  </div>
-                </FormItem>
-              )}
+              label="O paciente autoriza o recebimento de avisos, lembretes e comunicações sobre o cartão LASAC por WhatsApp?"
+              tone="amber"
             />
           </div>
 

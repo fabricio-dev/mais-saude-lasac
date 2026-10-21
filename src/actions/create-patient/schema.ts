@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { whatsappConsentSchema } from "@/helpers/whatsapp-consent";
+
 // Função para validar CPF
 const isValidCPF = (cpf: string): boolean => {
   const cleanCPF = cpf.replace(/\D/g, "");
@@ -76,7 +78,7 @@ export const createPatientSchema = z
     acceptTerms: z.boolean().refine((value) => value === true, {
       message: "Você deve aceitar os termos de uso e política de privacidade",
     }),
-    whatsappConsent: z.boolean(),
+    whatsappConsent: whatsappConsentSchema,
   })
   .superRefine((data, ctx) => {
     if (
