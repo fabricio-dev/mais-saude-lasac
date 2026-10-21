@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { db } from "@/db";
 import { patientsTable } from "@/db/schema";
+import { whatsappConsentSchema } from "@/helpers/whatsapp-consent";
 
 // Configurar plugins do dayjs
 dayjs.extend(utc);
@@ -78,7 +79,7 @@ export const upsertPatientSchema = z
     dependents5: z.string().optional(),
     dependents6: z.string().optional(),
     contractDate: z.string().optional(), // Data do contrato (pode ir para activeAt ou reactivatedAt)
-    whatsappConsent: z.boolean(),
+    whatsappConsent: whatsappConsentSchema,
     paymentType: z
       .enum(["pix", "dinheiro", "cartao_credito", "cartao_debito"])
       .optional(),
