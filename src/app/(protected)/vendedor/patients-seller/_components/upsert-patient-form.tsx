@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { PatternFormat } from "react-number-format";
 import { toast } from "sonner";
@@ -37,6 +37,7 @@ import {
 import { WhatsappConsentField } from "@/components/whatsapp-consent-field";
 import { patientsTable } from "@/db/schema";
 import { whatsappConsentSchema } from "@/helpers/whatsapp-consent";
+import { useAskConsentWhenPhoneChanged } from "@/hooks/use-ask-consent-when-phone-changed";
 
 // Função para verificar CPF duplicado
 const checkCPFExists = async (
@@ -373,6 +374,17 @@ const UpsertPatientForm = ({
 
     loadData();
   }, [isOpen, patient, form, sellerId, clinicId]);
+
+  useAskConsentWhenPhoneChanged({
+    savedPhone: patient?.phoneNumber,
+    phoneNumber: form.watch("phoneNumber"),
+    clearConsent: useCallback(
+      // null, e não undefined: com undefined o campo volta a mostrar o valor
+      // gravado. Sem escolha, o schema exige "Sim" ou "Não" antes de salvar.
+      () => form.setValue("whatsappConsent", null as unknown as boolean),
+      [form],
+    ),
+  });
 
   const upsertPatientAction = useAction(upsertPatient, {
     onSuccess: () => {

@@ -34,9 +34,18 @@ export function isValidPhoneNumber(phoneNumber: string): boolean {
 
   // 55 + DDD + número, com ou sem o 9 do celular: o cadastro tem os dois
   // jeitos, e o whatsapp-ai encontra a ficha do paciente pelas duas formas.
-  return (
-    cleaned.startsWith("55") && (cleaned.length === 12 || cleaned.length === 13)
-  );
+  if (
+    !cleaned.startsWith("55") ||
+    (cleaned.length !== 12 && cleaned.length !== 13)
+  ) {
+    return false;
+  }
+
+  // Placeholder de quem não tem telefone, "(00) 00000-0000" com ou sem o
+  // nono dígito: não existe DDD começando com 0, nem número só de zeros.
+  const ddd = cleaned.slice(2, 4);
+  const numero = cleaned.slice(4);
+  return !ddd.startsWith("0") && !/^0+$/.test(numero);
 }
 
 /**
