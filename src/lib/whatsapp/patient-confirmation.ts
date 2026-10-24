@@ -3,30 +3,29 @@
  * parceiros em PDF: no cabeçalho do próprio modelo (padrão), ou numa segunda
  * mensagem quando o modelo escolhido para a confirmação não tem documento.
  *
- * Usada pelo cadastro (upsert-patient) e pela ativação (activate-patient), que
- * mandam a mesma dupla de mensagens.
+ * Usada pelo cadastro e pela troca de telefone (upsert-patient) e pela ativação
+ * (activate-patient), que mandam a mesma dupla de mensagens.
  */
-
-import dayjs from "dayjs";
-import timezone from "dayjs/plugin/timezone";
-import utc from "dayjs/plugin/utc";
 
 import { PARTNERS_LIST_PATH } from "@/data/partners-list-file";
 import { getMessageTemplates } from "@/data/whatsapp-message-templates";
 import { getWhatsAppSettings } from "@/data/whatsapp-settings";
 
 import { sendWhatsAppTemplate } from "./client";
+import { buildExternalId } from "./external-id";
 import { buildTemplateParameters } from "./message-templates";
 
-dayjs.extend(utc);
-dayjs.extend(timezone);
-
-export type ConfirmationType = "activation" | "renewal" | "early_renewal";
+export type ConfirmationType =
+  | "activation"
+  | "renewal"
+  | "early_renewal"
+  | "phone_updated";
 
 const CATEGORY: Record<ConfirmationType, string> = {
   activation: "Convênio ativado",
   renewal: "Convênio renovado",
   early_renewal: "Renovação antecipada",
+  phone_updated: "Telefone atualizado",
 };
 
 interface PatientConfirmationParams {
@@ -46,12 +45,6 @@ export async function sendPatientConfirmation({
   expirationDate,
   clinicName,
 }: PatientConfirmationParams): Promise<void> {
-  // A nova validade entra no id: cada ciclo de renovação é um envio novo, e
-  // repetir a mesma ativação (duplo clique, retry) não manda duas vezes.
-  const ciclo = dayjs(expirationDate)
-    .tz("America/Sao_Paulo")
-    .format("YYYY-MM-DD");
-
   const appUrl =
     process.env.NEXT_PUBLIC_APP_URL ||
     process.env.BETTER_AUTH_URL ||
@@ -80,7 +73,7 @@ export async function sendPatientConfirmation({
     // Modelo da confirmação com documento no cabeçalho: o PDF vai nela, e é
     // uma mensagem só. Sem documento, a lista sai logo depois, separada.
     await sendWhatsAppTemplate({
-      externalId: `${type}:${patientId}:${ciclo}`,
+      externalId: buildExternalId(type, patientId, expirationDate, phoneNumber),
       phoneNumber,
       patientName,
       category: CATEGORY[type],
@@ -94,7 +87,12 @@ export async function sendPatientConfirmation({
     // Em sequência, e não em paralelo: a confirmação precisa chegar antes do
     // PDF, e a ordem dos pedidos é a ordem da fila no whatsapp-ai.
     await sendWhatsAppTemplate({
-      externalId: `lista_de_parceiros:${patientId}:${ciclo}`,
+      externalId: buildExternalId(
+        "lista_de_parceiros",
+        patientId,
+        expirationDate,
+        phoneNumber,
+      ),
       phoneNumber,
       patientName,
       category: "Lista de parceiros",

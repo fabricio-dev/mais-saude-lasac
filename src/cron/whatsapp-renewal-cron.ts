@@ -62,6 +62,7 @@ import {
   // whatsappNotificationStatusEnum,
 } from "@/db/schema";
 import { sendWhatsAppTemplate } from "@/lib/whatsapp/client";
+import { buildExternalId } from "@/lib/whatsapp/external-id";
 import {
   buildTemplateParameters,
   type MessageKey,
@@ -455,14 +456,13 @@ async function processPatient(
     `[${notificationType}] Enviando lembrete para ${name} (${maskPhoneNumber(formattedPhone)})`,
   );
 
-  // A validade entra no id: depois de uma renovação, o próximo ciclo é outro
-  // envio — e rodar o cron duas vezes no mesmo dia não manda duas vezes.
-  const ciclo = dayjs(expirationDate)
-    .tz("America/Sao_Paulo")
-    .format("YYYY-MM-DD");
-
   const result = await sendWhatsAppTemplate({
-    externalId: `${notificationType}:${id}:${ciclo}`,
+    externalId: buildExternalId(
+      notificationType,
+      id,
+      expirationDate,
+      phoneNumber,
+    ),
     phoneNumber: formattedPhone,
     patientName: name,
     category: CATEGORY[notificationType],

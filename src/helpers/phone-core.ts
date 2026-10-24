@@ -25,3 +25,9 @@ export function nucleoTelefone(bruto: string): NucleoTelefone | null {
 
 export const mesmoTelefone = (a: NucleoTelefone, b: NucleoTelefone | null) =>
   b !== null && a.ddd === b.ddd && a.final === b.final;
+
+/** Se o número é outro — máscara, 55 ou nono dígito não contam como troca. */
+export function telefoneMudou(antes: string, depois: string): boolean {
+  const novo = nucleoTelefone(depois);
+  return !novo || !mesmoTelefone(novo, nucleoTelefone(antes));
+}

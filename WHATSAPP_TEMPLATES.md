@@ -395,9 +395,15 @@ O que mudou em relação aos modelos antigos:
 | Ativação | `convenio_ativado` | {{1}} primeiro nome, {{2}} validade, {{3}} unidade | PDF da lista | — | sim |
 | Renovação | `convenio_renovado` | {{1}} primeiro nome, {{2}} nova validade, {{3}} unidade | PDF da lista | — | sim¹ |
 | Renovação antecipada | `convenio_renovado_antecipado` | {{1}} primeiro nome, {{2}} nova validade, {{3}} unidade | PDF da lista | — | sim |
+| Telefone atualizado² | `telefone_atualizado` | {{1}} primeiro nome, {{2}} validade, {{3}} unidade | PDF da lista | Ver cartão online (URL) | sim |
 
 ¹ O `convenio_renovado` foi enviado sem o rodapé; ele entra numa edição depois
 da aprovação (a Meta permite editar modelo aprovado uma vez a cada 24h).
+
+² Sai quando o telefone é corrigido até 7 dias depois da ativação ou
+renovação: a confirmação tinha ido para o número errado. Fora dessa janela a
+troca só zera os lembretes, para o aviso não chegar repetido logo antes da
+confirmação de uma renovação.
 
 **Onde isso é configurado:** na tela **/whatsapp** do mais-saude, cartão
 "Modelos das mensagens". Lá se escolhe o modelo de cada mensagem e de onde
@@ -478,6 +484,21 @@ Oi, {{1}}! Obrigado por renovar antes do vencimento! 😊
 Seu cartão Mais Saúde LASAC já está renovado, e o tempo que ainda faltava foi somado à nova validade.
 
 📅 Nova validade: {{2}}
+🏥 Unidade: {{3}}
+
+No arquivo acima está a lista de profissionais credenciados.
+```
+
+### `telefone_atualizado`
+
+Botão de URL estática `Ver cartão online`, com o link do cartão online.
+
+```
+Oi, {{1}}! Tudo bem? 😊
+
+Atualizamos o seu telefone no cadastro do Mais Saúde LASAC. A partir de agora, os avisos do seu cartão chegam por aqui.
+
+📅 Validade: {{2}}
 🏥 Unidade: {{3}}
 
 No arquivo acima está a lista de profissionais credenciados.
