@@ -14,7 +14,7 @@
 import { getWhatsAppAiCredentials } from "@/data/whatsapp-connection";
 import { getWhatsAppSettings } from "@/data/whatsapp-settings";
 
-import { maskPhoneNumber } from "./utils";
+import { isValidPhoneNumber, maskPhoneNumber } from "./utils";
 
 /** Arquivo do cabeçalho do template, por URL pública (só https). */
 interface TemplateDocument {
@@ -103,6 +103,20 @@ export async function sendWhatsAppTemplate(
       success: false,
       error: "Envios de WhatsApp desligados em /whatsapp",
       retryable: true,
+    };
+  }
+
+  // Telefone inválido ou zerado nem vai ao whatsapp-ai: seria recusado lá e
+  // só encheria o relatório de envios com erro. Conferido antes do
+  // redirecionamento de DEV, para o teste se comportar como a produção.
+  if (!isValidPhoneNumber(params.phoneNumber)) {
+    console.log(
+      `Telefone inválido no cadastro. "${params.templateName}" não enviado para ${maskPhoneNumber(params.phoneNumber)}`,
+    );
+    return {
+      success: false,
+      error: "Telefone inválido no cadastro",
+      retryable: false,
     };
   }
 
