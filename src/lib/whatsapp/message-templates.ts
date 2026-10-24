@@ -19,6 +19,7 @@ export const MESSAGE_KEYS = [
   "activation",
   "renewal",
   "early_renewal",
+  "phone_updated",
   "partners_list",
   "reminder_d7",
   "reminder_d0",
@@ -43,6 +44,11 @@ export const MESSAGE_LABELS: Record<
   early_renewal: {
     title: "Renovação antecipada",
     description: "Renovação antes de vencer.",
+  },
+  phone_updated: {
+    title: "Telefone atualizado",
+    description:
+      "Quando o número é corrigido até 7 dias depois da ativação ou renovação — a confirmação tinha ido para o número errado.",
   },
   partners_list: {
     title: "Lista de parceiros",
@@ -128,6 +134,12 @@ export const DEFAULT_MESSAGE_TEMPLATES: Record<
   },
   early_renewal: {
     templateName: "convenio_renovado_antecipado",
+    templateLanguage: "pt_BR",
+    params: p("first_name", "expiration_date", "clinic_name"),
+    headerDocument: true,
+  },
+  phone_updated: {
+    templateName: "telefone_atualizado",
     templateLanguage: "pt_BR",
     params: p("first_name", "expiration_date", "clinic_name"),
     headerDocument: true,
@@ -219,6 +231,7 @@ export const CONFIRMATION_KEYS: readonly MessageKey[] = [
   "activation",
   "renewal",
   "early_renewal",
+  "phone_updated",
 ];
 
 /**

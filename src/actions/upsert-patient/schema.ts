@@ -7,7 +7,7 @@ import { z } from "zod";
 import { findPatientByPhone } from "@/data/find-patient-by-phone";
 import { db } from "@/db";
 import { patientsTable } from "@/db/schema";
-import { mesmoTelefone, nucleoTelefone } from "@/helpers/phone-core";
+import { telefoneMudou } from "@/helpers/phone-core";
 import { whatsappConsentSchema } from "@/helpers/whatsapp-consent";
 
 // Configurar plugins do dayjs
@@ -156,11 +156,9 @@ export const upsertPatientSchema = z
           columns: { phoneNumber: true },
         })
       : undefined;
-    const newPhone = nucleoTelefone(data.phoneNumber);
     const phoneChanged =
       !currentPatient ||
-      !newPhone ||
-      !mesmoTelefone(newPhone, nucleoTelefone(currentPatient.phoneNumber));
+      telefoneMudou(currentPatient.phoneNumber, data.phoneNumber);
 
     if (phoneChanged) {
       const patientWithPhone = await findPatientByPhone(
