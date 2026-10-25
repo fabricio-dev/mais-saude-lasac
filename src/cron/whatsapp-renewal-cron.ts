@@ -452,6 +452,8 @@ async function processPatient(
 
   // 4. Pedir o envio ao whatsapp-ai (templates aprovados, mesmo número). A
   // proteção DEV fica em sendWhatsAppTemplate, que vale para todo envio.
+  // Todo lembrete vai como campanha, qualquer que seja o modelo escolhido em
+  // /whatsapp: "oi" ou emoji em resposta puxa o assunto da renovação.
   console.log(
     `[${notificationType}] Enviando lembrete para ${name} (${maskPhoneNumber(formattedPhone)})`,
   );
@@ -469,6 +471,7 @@ async function processPatient(
     templateName: templateConfig.name,
     language: templateConfig.language,
     parameters: templateConfig.parameters,
+    asCampaign: true,
   });
 
   // 5. Atualizar status no banco. Pulado (descadastro no atendimento) conta
