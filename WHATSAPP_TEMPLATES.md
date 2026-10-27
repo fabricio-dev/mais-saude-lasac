@@ -386,16 +386,16 @@ O que mudou em relação aos modelos antigos:
 
 ## Qual modelo sai em cada mensagem
 
-| Mensagem | Modelo | Variáveis | Cabeçalho | Botões | Rodapé SAIR |
-|---|---|---|---|---|---|
-| 7 dias antes | `lembrete_vencimento_7_dias` | {{1}} primeiro nome, {{2}} vencimento | `Seu cartão vence em breve` | Já renovei · Quero renovar | — |
-| No dia | `lembrete_vencimento_hoje` | {{1}} primeiro nome | `Seu cartão vence hoje` | Já renovei · Quero renovar | — |
-| Vencido sem aviso no dia | `lembrete_vencimento_atrasado` | {{1}} primeiro nome, {{2}} vencimento | `Seu cartão venceu` | Já renovei · Quero renovar | — |
-| 30 dias ou mais | `lembrete_vencimento_30_dias` | {{1}} primeiro nome | `Sentimos sua falta` | Já renovei · Quero renovar | sim |
-| Ativação | `convenio_ativado` | {{1}} primeiro nome, {{2}} validade, {{3}} unidade | PDF da lista | — | sim |
-| Renovação | `convenio_renovado` | {{1}} primeiro nome, {{2}} nova validade, {{3}} unidade | PDF da lista | — | sim¹ |
-| Renovação antecipada | `convenio_renovado_antecipado` | {{1}} primeiro nome, {{2}} nova validade, {{3}} unidade | PDF da lista | — | sim |
-| Telefone atualizado² | `telefone_atualizado` | {{1}} primeiro nome, {{2}} validade, {{3}} unidade | PDF da lista | Ver cartão online (URL) | sim |
+| Mensagem | Modelo | Variáveis | Cabeçalho | Botões | Rodapé SAIR | Puxa assunto³ |
+|---|---|---|---|---|---|---|
+| 7 dias antes | `lembrete_vencimento_7_dias` | {{1}} primeiro nome, {{2}} vencimento | `Seu cartão vence em breve` | Já renovei · Quero renovar | — | sim |
+| No dia | `lembrete_vencimento_hoje` | {{1}} primeiro nome | `Seu cartão vence hoje` | Já renovei · Quero renovar | — | sim |
+| Vencido sem aviso no dia | `lembrete_vencimento_atrasado` | {{1}} primeiro nome, {{2}} vencimento | `Seu cartão venceu` | Já renovei · Quero renovar | — | sim |
+| 30 dias ou mais | `lembrete_vencimento_30_dias` | {{1}} primeiro nome | `Sentimos sua falta` | Já renovei · Quero renovar | sim | sim |
+| Ativação | `convenio_ativado` | {{1}} primeiro nome, {{2}} validade, {{3}} unidade | PDF da lista | — | sim | — |
+| Renovação | `convenio_renovado` | {{1}} primeiro nome, {{2}} nova validade, {{3}} unidade | PDF da lista | — | sim¹ | — |
+| Renovação antecipada | `convenio_renovado_antecipado` | {{1}} primeiro nome, {{2}} nova validade, {{3}} unidade | PDF da lista | — | sim | — |
+| Telefone atualizado² | `telefone_atualizado` | {{1}} primeiro nome, {{2}} validade, {{3}} unidade | PDF da lista | Ver cartão online (URL) | sim | — |
 
 ¹ O `convenio_renovado` foi enviado sem o rodapé; ele entra numa edição depois
 da aprovação (a Meta permite editar modelo aprovado uma vez a cada 24h).
@@ -404,6 +404,13 @@ da aprovação (a Meta permite editar modelo aprovado uma vez a cada 24h).
 renovação: a confirmação tinha ido para o número errado. Fora dessa janela a
 troca só zera os lembretes, para o aviso não chegar repetido logo antes da
 confirmação de uma renovação.
+
+³ Os lembretes vão ao whatsapp-ai com `asCampaign: true`: se o paciente
+responder só "oi" ou um emoji, a assistente pergunta pelo assunto da mensagem
+("Quer saber mais sobre a renovação do seu cartão?"). As confirmações vão como
+aviso: emoji não recebe resposta e "oi" recebe só a apresentação. A decisão é
+pelo tipo de mensagem, não pelo modelo: trocar em /whatsapp o modelo de um
+lembrete não muda isso (`processPatient` em `src/cron/whatsapp-renewal-cron.ts`).
 
 **Onde isso é configurado:** na tela **/whatsapp** do mais-saude, cartão
 "Modelos das mensagens". Lá se escolhe o modelo de cada mensagem e de onde

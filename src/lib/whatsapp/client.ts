@@ -38,6 +38,14 @@ export interface SendTemplateParams {
   language?: string;
   parameters: string[];
   document?: TemplateDocument;
+  /**
+   * O envio quer conversa, como uma campanha: se o paciente responder só "oi"
+   * ou um emoji, a assistente do atendimento pergunta pelo assunto da
+   * mensagem ("Quer saber mais sobre a renovação do seu cartão?"). Sem o
+   * campo, o envio é aviso: emoji não recebe resposta e "oi" recebe só a
+   * apresentação. Decidido pelo tipo de mensagem, não pelo modelo escolhido.
+   */
+  asCampaign?: boolean;
 }
 
 export type SendTemplateResult =
@@ -164,6 +172,7 @@ export async function sendWhatsAppTemplate(
           },
         }
       : {}),
+    ...(params.asCampaign ? { asCampaign: true } : {}),
   });
 
   const destino = maskPhoneNumber(phoneNumber);

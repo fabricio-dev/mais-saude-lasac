@@ -44,6 +44,32 @@ devolve `skipped`.
 Se um dia a confirmação também precisar respeitar o consentimento, o lugar é
 `sendPatientConfirmation` — cadastro e ativação passam os dois por ali.
 
+## 💬 Lembrete puxa assunto, confirmação não (`asCampaign`)
+
+> Registrado em outubro de 2026.
+
+O pedido de envio aceita o campo opcional `asCampaign: true`. Ele diz ao
+whatsapp-ai que o envio quer conversa, como uma campanha:
+
+| Resposta do paciente | Com `asCampaign: true` | Sem o campo (aviso) |
+|---|---|---|
+| "oi" | Apresentação e "Quer saber mais sobre a renovação do seu cartão?" | Só a apresentação |
+| Só um emoji ("👍") | "Quer saber mais sobre…" | Nada |
+
+| Envio | `asCampaign` | Onde |
+|---|---|---|
+| Lembretes de vencimento (D-7, D0, D0 atrasado, D+30) | `true` | `processPatient` (`src/cron/whatsapp-renewal-cron.ts`) |
+| Confirmações (ativado, renovado, renovação antecipada, telefone atualizado e a lista de parceiros) | ausente | `sendPatientConfirmation` (`src/lib/whatsapp/patient-confirmation.ts`) |
+
+A decisão é pelo **tipo de mensagem**, não pelo modelo escolhido em /whatsapp:
+se alguém trocar o modelo de um lembrete, ele continua indo como campanha. O
+campo só vai no corpo quando é `true` (`sendWhatsAppTemplate`, em
+`src/lib/whatsapp/client.ts`).
+
+**Ordem de deploy:** o whatsapp-ai precisa estar no ar com o campo antes deste
+sistema mandá-lo. Uma versão antiga do whatsapp-ai ignora o campo (o schema do
+pedido não é estrito): o lembrete sai normalmente, só sem puxar o assunto.
+
 ## 🔮 Futuro: saber se a mensagem chegou (entregue, lida, falhou)
 
 > **Ainda não implementado** — registrado em outubro de 2026.
