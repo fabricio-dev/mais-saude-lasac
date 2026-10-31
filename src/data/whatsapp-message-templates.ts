@@ -2,12 +2,18 @@ import { db } from "@/db";
 import { whatsappMessageTemplatesTable } from "@/db/schema";
 import {
   DEFAULT_MESSAGE_TEMPLATES,
+  isHeaderMediaFormat,
   MESSAGE_KEYS,
   type MessageKey,
   type MessageTemplateConfig,
   type TemplateParam,
   VARIABLE_SOURCES,
 } from "@/lib/whatsapp/message-templates";
+
+import {
+  getHeaderMediaInfo,
+  type HeaderMediaInfo,
+} from "./whatsapp-header-media";
 
 const isParam = (value: unknown): value is TemplateParam =>
   typeof value === "object" &&
@@ -18,18 +24,27 @@ export type MessageTemplateSetting = MessageTemplateConfig & {
   /** Ainda não escolhido pela tela: vale o padrão de antes. */
   isDefault: boolean;
   updatedAt: Date | null;
+  /**
+   * O arquivo anexado para esta mensagem, quando há. Fica guardado mesmo com
+   * um modelo sem mídia escolhido: volta a valer se ele trocar de volta.
+   */
+  headerMediaFile: HeaderMediaInfo | null;
 };
 
 /** O modelo de cada mensagem: o escolhido na tela, ou o padrão. */
 export async function getMessageTemplates(): Promise<
   Record<MessageKey, MessageTemplateSetting>
 > {
-  const rows = await db.select().from(whatsappMessageTemplatesTable);
+  const [rows, mediaFiles] = await Promise.all([
+    db.select().from(whatsappMessageTemplatesTable),
+    getHeaderMediaInfo(),
+  ]);
   const byKey = new Map(rows.map((row) => [row.key, row]));
 
   return Object.fromEntries(
     MESSAGE_KEYS.map((key) => {
       const row = byKey.get(key);
+      const headerMediaFile = mediaFiles.get(key) ?? null;
       if (!row) {
         return [
           key,
@@ -37,6 +52,7 @@ export async function getMessageTemplates(): Promise<
             ...DEFAULT_MESSAGE_TEMPLATES[key],
             isDefault: true,
             updatedAt: null,
+            headerMediaFile,
           },
         ];
       }
@@ -47,8 +63,12 @@ export async function getMessageTemplates(): Promise<
           templateLanguage: row.templateLanguage,
           params: row.params.filter(isParam),
           headerDocument: row.headerDocument,
+          headerMedia: isHeaderMediaFormat(row.headerMedia)
+            ? row.headerMedia
+            : null,
           isDefault: false,
           updatedAt: row.updatedAt,
+          headerMediaFile,
         },
       ];
     }),
@@ -65,6 +85,7 @@ export async function saveMessageTemplate(
     templateLanguage: config.templateLanguage,
     params: config.params,
     headerDocument: config.headerDocument,
+    headerMedia: config.headerMedia,
     updatedAt: new Date(),
     updatedByUserId: userId,
   };

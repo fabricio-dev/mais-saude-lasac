@@ -3,6 +3,18 @@
  */
 
 /**
+ * Endereço público deste sistema, para os links que vão no WhatsApp (PDF de
+ * parceiros, imagem dos lembretes): quem os abre é a Meta, de fora.
+ */
+export function publicAppUrl(): string {
+  return (
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.BETTER_AUTH_URL ||
+    "https://maissaudelasac.com.br"
+  ).replace(/\/+$/, "");
+}
+
+/**
  * Formata número de telefone para o formato internacional
  * Remove caracteres especiais e adiciona código do país se necessário
  *

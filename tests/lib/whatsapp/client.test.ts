@@ -70,6 +70,24 @@ describe("sendWhatsAppTemplate — proteção DEV", () => {
     expect(fake.requests).toHaveLength(0);
   });
 
+  it("mídia no cabeçalho: vai como veio, com o tipo e o link", async () => {
+    setWhatsAppEnv({ whatsappEnv: "dev", testPhone: TEST_PHONE });
+    const header = {
+      type: "video" as const,
+      link: "https://lasac.test/arquivos/midia-dos-modelos/reminder_d30.mp4",
+    };
+    await sendWhatsAppTemplate({
+      externalId: "RENEWAL_D_30:p1:2026-09-01",
+      phoneNumber: PATIENT_PHONE,
+      category: "Vencido há 30 dias ou mais",
+      templateName: "lembrete_com_video",
+      parameters: ["Maria"],
+      header,
+    });
+
+    expect(fake.requests[0].body.header).toEqual(header);
+  });
+
   it("só o destino muda: o resto do pedido segue igual", async () => {
     setWhatsAppEnv({ whatsappEnv: "dev", testPhone: TEST_PHONE });
     await send();

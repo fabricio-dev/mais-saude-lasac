@@ -20,6 +20,8 @@ export const saveMessageTemplateSchema = z.object({
         path: ["text"],
       }),
   ),
+  /** Arquivo novo para o cabeçalho; sem ele, vale o já anexado. */
+  headerMedia: z.instanceof(File).optional(),
 });
 
 export type SaveMessageTemplateInput = z.infer<

@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import dayjs from "dayjs";
 import { useAction } from "next-safe-action/hooks";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -46,9 +46,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type { HeaderMediaInfo } from "@/data/whatsapp-header-media";
 import type { WhatsAppAiTemplate } from "@/lib/whatsapp/client";
 import {
   buildTemplateParameters,
+  HEADER_MEDIA,
+  headerMediaFileProblem,
+  headerMediaFormatOf,
+  headerMediaPath,
+  isHeaderMediaFormat,
+  isReminderKey,
+  mediaHeader,
   MESSAGE_KEYS,
   MESSAGE_LABELS,
   type MessageKey,
@@ -60,7 +68,10 @@ import {
   type VariableSource,
 } from "@/lib/whatsapp/message-templates";
 
-type MessageTemplateRow = MessageTemplateConfig & { isDefault: boolean };
+type MessageTemplateRow = MessageTemplateConfig & {
+  isDefault: boolean;
+  headerMediaFile: HeaderMediaInfo | null;
+};
 
 interface MessageTemplatesCardProps {
   messages: Record<MessageKey, MessageTemplateRow>;
@@ -126,6 +137,11 @@ const MessageTemplatesCard = ({
                   {row.isDefault ? (
                     <Badge variant="secondary" className="ml-2">
                       padrão
+                    </Badge>
+                  ) : null}
+                  {row.headerMedia ? (
+                    <Badge variant="outline" className="ml-2">
+                      com {HEADER_MEDIA[row.headerMedia].label}
                     </Badge>
                   ) : null}
                 </p>
@@ -202,15 +218,61 @@ function MessageTemplateDialog({
   const name = form.watch("templateName");
   const language = form.watch("templateLanguage");
   const params = form.watch("params");
+  const newFile = form.watch("headerMedia");
   const selected = templates.find(
     (template) => template.name === name && template.language === language,
   );
+  // A mídia do cabeçalho que o lembrete precisa anexar, quando precisa.
+  const selectedMedia = selected ? mediaHeader(selected) : null;
+  const mediaFormat =
+    isReminderKey(messageKey) && isHeaderMediaFormat(selectedMedia)
+      ? selectedMedia
+      : null;
+  // O já anexado só vale se for do formato que o modelo pede.
+  const storedFile =
+    mediaFormat &&
+    current.headerMediaFile &&
+    headerMediaFormatOf(current.headerMediaFile.mimeType) === mediaFormat
+      ? current.headerMediaFile
+      : null;
+
+  // O arquivo escolhido agora, ou o já anexado para esta mensagem.
+  const newFileUrl = useMemo(
+    () => (newFile ? URL.createObjectURL(newFile) : null),
+    [newFile],
+  );
+  useEffect(
+    () => () => {
+      if (newFileUrl) URL.revokeObjectURL(newFileUrl);
+    },
+    [newFileUrl],
+  );
+  const mediaUrl =
+    newFileUrl ?? (storedFile ? headerMediaPath(messageKey, storedFile) : null);
+  const mediaFileName = newFile?.name ?? storedFile?.fileName ?? null;
+
+  const submit = form.handleSubmit((values) => {
+    if (mediaFormat && !values.headerMedia && !storedFile) {
+      form.setError("headerMedia", {
+        message: `Este modelo tem ${HEADER_MEDIA[mediaFormat].label} no cabeçalho: anexe o arquivo.`,
+      });
+      return;
+    }
+    saveAction.execute({
+      ...values,
+      // Trocou para um modelo sem mídia: o escolhido antes não vai junto.
+      headerMedia: mediaFormat ? values.headerMedia : undefined,
+    });
+  });
 
   const chooseTemplate = (id: string) => {
     const template = templates.find((item) => templateId(item) === id);
     if (!template) return;
     form.setValue("templateName", template.name, { shouldDirty: true });
     form.setValue("templateLanguage", template.language, { shouldDirty: true });
+    // O arquivo escolhido era para o modelo anterior.
+    form.setValue("headerMedia", undefined);
+    form.clearErrors("headerMedia");
     // Mantém o que já estava nas posições que continuam existindo.
     form.setValue(
       "params",
@@ -245,10 +307,7 @@ function MessageTemplateDialog({
         </DialogHeader>
 
         <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit((values) => saveAction.execute(values))}
-            className="space-y-4"
-          >
+          <form onSubmit={submit} className="space-y-4">
             <FormField
               control={form.control}
               name="templateName"
@@ -290,6 +349,55 @@ function MessageTemplateDialog({
                 </FormItem>
               )}
             />
+
+            {mediaFormat ? (
+              <FormField
+                // Um campo por formato: volta vazio quando o formato muda.
+                key={mediaFormat}
+                control={form.control}
+                name="headerMedia"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Arquivo do cabeçalho ({HEADER_MEDIA[mediaFormat].label})
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="file"
+                        accept={Object.keys(
+                          HEADER_MEDIA[mediaFormat].types,
+                        ).join(",")}
+                        name={field.name}
+                        ref={field.ref}
+                        onBlur={field.onBlur}
+                        onChange={(event) => {
+                          const file = event.target.files?.[0];
+                          // O mesmo que a action confere, antes de enviar.
+                          const problem = file
+                            ? headerMediaFileProblem(mediaFormat, file)
+                            : null;
+                          if (problem) {
+                            form.setError("headerMedia", { message: problem });
+                            event.target.value = "";
+                            field.onChange(undefined);
+                            return;
+                          }
+                          form.clearErrors("headerMedia");
+                          field.onChange(file);
+                        }}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      {storedFile
+                        ? `Anexado: ${storedFile.fileName} · ${(storedFile.sizeBytes / 1024).toFixed(0)} KB, em ${dayjs(storedFile.updatedAt).format("DD/MM/YYYY HH:mm")}. Escolha outro para trocar.`
+                        : `${HEADER_MEDIA[mediaFormat].hint}.`}{" "}
+                      O mesmo arquivo vai para todo paciente deste lembrete.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ) : null}
 
             {selected && selected.variables > 0 ? (
               <div className="space-y-3">
@@ -363,10 +471,42 @@ function MessageTemplateDialog({
                 <p className="text-muted-foreground text-xs">
                   Prévia, com uma paciente de exemplo
                 </p>
-                {selected.headerFormat === "DOCUMENT" ? (
+                {selected.headerFormat === "DOCUMENT" && !mediaFormat ? (
                   <p className="text-muted-foreground text-xs">
                     📄 Lista de Parceiros - Mais Saúde.pdf
                   </p>
+                ) : null}
+                {mediaFormat && !mediaUrl ? (
+                  <p className="text-muted-foreground text-xs">
+                    Arquivo do cabeçalho ainda não anexado
+                  </p>
+                ) : null}
+                {mediaFormat === "IMAGE" && mediaUrl ? (
+                  // <img>, e não next/image: a prévia do arquivo escolhido é
+                  // um blob: do navegador, que o otimizador não abre.
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={mediaUrl}
+                    alt="Imagem do cabeçalho"
+                    className="max-h-56 rounded-md border object-contain"
+                  />
+                ) : null}
+                {mediaFormat === "VIDEO" && mediaUrl ? (
+                  <video
+                    src={mediaUrl}
+                    controls
+                    className="max-h-56 rounded-md border"
+                  />
+                ) : null}
+                {mediaFormat === "DOCUMENT" && mediaUrl ? (
+                  <a
+                    href={mediaUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-primary text-xs hover:underline"
+                  >
+                    📄 {mediaFileName}
+                  </a>
                 ) : null}
                 <p className="whitespace-pre-wrap">{preview}</p>
                 {selected.footer ? (

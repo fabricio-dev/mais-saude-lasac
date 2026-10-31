@@ -44,7 +44,10 @@ import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 import { and, asc, desc, eq, gte, inArray, isNull, lte } from "drizzle-orm";
 
-import { getMessageTemplates } from "@/data/whatsapp-message-templates";
+import {
+  getMessageTemplates,
+  type MessageTemplateSetting,
+} from "@/data/whatsapp-message-templates";
 import {
   claimScheduledRun,
   getWhatsAppSettings,
@@ -61,10 +64,15 @@ import {
   whatsappNotificationsTable,
   // whatsappNotificationStatusEnum,
 } from "@/db/schema";
-import { sendWhatsAppTemplate } from "@/lib/whatsapp/client";
+import {
+  sendWhatsAppTemplate,
+  type TemplateHeader,
+} from "@/lib/whatsapp/client";
 import { buildExternalId } from "@/lib/whatsapp/external-id";
 import {
   buildTemplateParameters,
+  headerMediaFormatOf,
+  headerMediaPath,
   type MessageKey,
   type MessageTemplateConfig,
 } from "@/lib/whatsapp/message-templates";
@@ -72,6 +80,7 @@ import {
   formatPhoneNumber,
   isValidPhoneNumber,
   maskPhoneNumber,
+  publicAppUrl,
 } from "@/lib/whatsapp/utils";
 
 /**
@@ -95,7 +104,34 @@ const MESSAGE_KEY = {
 type ReminderSend = {
   template: MessageTemplateConfig;
   officialNumber: string | null;
+  /** O arquivo do cabeçalho, quando o modelo tem mídia (a imagem do cartão). */
+  header?: TemplateHeader;
 };
+
+/**
+ * O cabeçalho do lembrete: o arquivo anexado em /whatsapp, do formato que o
+ * modelo pede. `null` quando o modelo não tem mídia; `undefined` quando tem e
+ * falta o arquivo.
+ */
+function reminderHeader(
+  key: MessageKey,
+  template: MessageTemplateSetting,
+): TemplateHeader | null | undefined {
+  if (!template.headerMedia) return null;
+  const file = template.headerMediaFile;
+  if (!file || headerMediaFormatOf(file.mimeType) !== template.headerMedia) {
+    return undefined;
+  }
+  const link = `${publicAppUrl()}${headerMediaPath(key, file)}`;
+  switch (template.headerMedia) {
+    case "IMAGE":
+      return { type: "image", link };
+    case "VIDEO":
+      return { type: "video", link };
+    case "DOCUMENT":
+      return { type: "document", link, filename: file.fileName };
+  }
+}
 
 /** Rótulo de cada lembrete no relatório do atendimento. */
 const CATEGORY: Record<RenewalType, string> = {
@@ -391,7 +427,7 @@ async function releaseNotificationLock(
 async function processPatient(
   patient: EligiblePatient,
   notificationType: RenewalType,
-  { template, officialNumber }: ReminderSend,
+  { template, officialNumber, header }: ReminderSend,
 ): Promise<ProcessingResult> {
   const { id, name, phoneNumber, expirationDate, clinicId, clinicName } =
     patient;
@@ -471,6 +507,7 @@ async function processPatient(
     templateName: templateConfig.name,
     language: templateConfig.language,
     parameters: templateConfig.parameters,
+    ...(header ? { header } : {}),
     asCampaign: true,
   });
 
@@ -687,9 +724,22 @@ export async function runWhatsAppRenewalCron({
         console.log(`\n[${etapa.type}] Teto diário de vencidos já usado`);
         continue;
       }
+      const key = MESSAGE_KEY[etapa.type];
+      const template = templates[key];
+      const header = reminderHeader(key, template);
+      // Modelo com mídia e nenhum arquivo anexado não sai da tela (a action
+      // exige o arquivo). Se acontecer, a etapa espera: sem o arquivo, a Meta
+      // recusaria o lote inteiro.
+      if (header === undefined) {
+        console.error(
+          `\n[${etapa.type}] O modelo "${template.templateName}" tem mídia no cabeçalho, e nenhum arquivo do formato foi anexado em /whatsapp`,
+        );
+        continue;
+      }
       const processed = await processRenewalType(etapa.type, etapa.find, {
-        template: templates[MESSAGE_KEY[etapa.type]],
+        template,
         officialNumber,
+        ...(header ? { header } : {}),
       });
       if (etapa.isOverdue) overdueBudget -= processed;
     }

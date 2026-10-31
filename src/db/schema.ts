@@ -319,6 +319,9 @@ export const whatsappMessageTemplatesTable = pgTable(
       .notNull()
       .default([]),
     headerDocument: boolean("header_document").notNull().default(false),
+    // Lembretes: IMAGE, DOCUMENT ou VIDEO quando o modelo tem mídia no
+    // cabeçalho; vai o arquivo de whatsapp_header_media.
+    headerMedia: text("header_media"),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
     updatedByUserId: text("updated_by_user_id").references(() => usersTable.id),
   },
@@ -328,6 +331,22 @@ const bytea = customType<{ data: Buffer }>({
   dataType() {
     return "bytea";
   },
+});
+
+/**
+ * O arquivo do cabeçalho de cada lembrete (imagem do cartão, PDF ou vídeo),
+ * anexado em /whatsapp ao escolher um modelo com mídia. Uma linha por mensagem
+ * (`key`, como em whatsapp_message_templates); o mesmo arquivo vai para todo
+ * paciente. Servido em /arquivos/midia-dos-modelos/{key}.{extensão}.
+ */
+export const whatsappHeaderMediaTable = pgTable("whatsapp_header_media", {
+  key: text("key").primaryKey(),
+  content: bytea("content").notNull(),
+  mimeType: text("mime_type").notNull(),
+  fileName: text("file_name").notNull(),
+  sizeBytes: integer("size_bytes").notNull(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  updatedByUserId: text("updated_by_user_id").references(() => usersTable.id),
 });
 
 /**
