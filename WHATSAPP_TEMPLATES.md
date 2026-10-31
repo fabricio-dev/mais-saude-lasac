@@ -422,8 +422,19 @@ espere a aprovação e escolha na tela.
 **Regras para criar modelos que o sistema consegue enviar:**
 
 - Cabeçalho de texto **sem variável**. Variável no cabeçalho não é suportada.
-- Lembretes não podem ter mídia no cabeçalho. Confirmações podem ter
+- Lembretes podem ter **imagem**, **documento** ou **vídeo** no cabeçalho
+  (a imagem do cartão, por exemplo), ou nada. Confirmações podem ter
   **documento** (o PDF de parceiros) ou nada.
+- Lembrete com mídia: ao escolher o modelo em /whatsapp, anexe o arquivo do
+  formato do cabeçalho — imagem JPG ou PNG até 5 MB, documento PDF até 10 MB,
+  vídeo MP4 até 16 MB. É o mesmo arquivo para todo paciente daquele lembrete,
+  fica na tabela `whatsapp_header_media` e é servido em
+  `/arquivos/midia-dos-modelos/{mensagem}.{jpg|png|pdf|mp4}?v=…` (o `v` muda a
+  cada troca). O pedido ao whatsapp-ai vai com
+  `header: { type: "image" | "video", link }` ou
+  `header: { type: "document", link, filename }`.
+  Modelo com mídia e nenhum arquivo do formato anexado: o cron pula aquele
+  lembrete.
 - Botões de resposta rápida chegam ao atendimento como mensagem do paciente,
   e aparecem no relatório "Envios automáticos" do whatsapp-ai.
 - Modelo aprovado pode ser editado, mas mudar a quantidade de variáveis
