@@ -39,6 +39,10 @@ export async function GET(
     headers: {
       "Content-Type": media.mimeType,
       "Content-Length": String(media.content.byteLength),
+      // O tipo vem da assinatura do começo do arquivo, e o resto não é
+      // conferido: sem isto, o navegador poderia "adivinhar" HTML num arquivo
+      // montado para parecer imagem e rodá-lo no domínio do sistema.
+      "X-Content-Type-Options": "nosniff",
       // Curto, como o PDF de parceiros; o `v` do link já troca a cada arquivo.
       "Cache-Control": "public, max-age=60",
     },
