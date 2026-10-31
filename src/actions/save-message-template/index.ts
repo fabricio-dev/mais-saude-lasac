@@ -38,6 +38,28 @@ function sniffType(content: Buffer): HeaderMediaType | null {
   return null;
 }
 
+const FILE_NAME_MAX_LENGTH = 200;
+
+/**
+ * O nome que o navegador mandou, limpo antes de gravar: aparece na tela e,
+ * quando é documento, como nome do arquivo no WhatsApp do paciente. Sai o que
+ * é invisível ou de controle (inclusive o U+202E, que inverte o texto e
+ * disfarça a extensão), barras viram "_" e o tamanho é limitado, mantendo a
+ * extensão.
+ */
+function cleanFileName(name: string): string {
+  const clean = name
+    .replace(/[\p{Cc}\p{Cf}]/gu, "")
+    .replace(/[/\\]/g, "_")
+    .trim();
+  if (!clean) return "arquivo";
+  if (clean.length <= FILE_NAME_MAX_LENGTH) return clean;
+
+  const dot = clean.lastIndexOf(".");
+  const extension = dot > 0 && clean.length - dot <= 10 ? clean.slice(dot) : "";
+  return clean.slice(0, FILE_NAME_MAX_LENGTH - extension.length) + extension;
+}
+
 /**
  * Confere o arquivo pela assinatura, e não pela extensão ou pelo que o
  * navegador diz: é este arquivo que vai para todo paciente do lembrete.
@@ -114,7 +136,7 @@ export const saveMessageTemplateAction = actionClient
       if (!file.ok) return fail(file.message);
       await saveHeaderMedia(
         parsedInput.key,
-        { ...file.file, fileName: parsedInput.headerMedia.name },
+        { ...file.file, fileName: cleanFileName(parsedInput.headerMedia.name) },
         session.user.id,
       );
     } else if (headerMedia) {

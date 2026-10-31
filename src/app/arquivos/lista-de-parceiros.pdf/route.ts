@@ -33,6 +33,8 @@ export async function GET() {
     headers: {
       "Content-Type": "application/pdf",
       "Content-Disposition": 'inline; filename="lista-de-parceiros.pdf"',
+      // Como na mídia dos lembretes: vale o tipo declarado, sem adivinhação.
+      "X-Content-Type-Options": "nosniff",
       // Curto: o arquivo trocado na tela precisa valer no próximo envio.
       "Cache-Control": "public, max-age=60",
     },
