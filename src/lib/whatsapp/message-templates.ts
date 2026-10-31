@@ -101,6 +101,12 @@ export type MessageTemplateConfig = {
   params: TemplateParam[];
   /** O modelo tem cabeçalho de documento: o PDF de parceiros vai nele. */
   headerDocument: boolean;
+  /**
+   * Lembretes: a mídia do cabeçalho do modelo, quando tem. Vai o arquivo
+   * anexado em /whatsapp para a mensagem. As confirmações usam
+   * `headerDocument`, com o PDF de parceiros.
+   */
+  headerMedia: HeaderMediaFormat | null;
 };
 
 const p = (...sources: VariableSource[]): TemplateParam[] =>
@@ -125,54 +131,63 @@ export const DEFAULT_MESSAGE_TEMPLATES: Record<
     templateLanguage: "pt_BR",
     params: p("first_name", "expiration_date", "clinic_name"),
     headerDocument: true,
+    headerMedia: null,
   },
   renewal: {
     templateName: "convenio_renovado",
     templateLanguage: "pt_BR",
     params: p("first_name", "expiration_date", "clinic_name"),
     headerDocument: true,
+    headerMedia: null,
   },
   early_renewal: {
     templateName: "convenio_renovado_antecipado",
     templateLanguage: "pt_BR",
     params: p("first_name", "expiration_date", "clinic_name"),
     headerDocument: true,
+    headerMedia: null,
   },
   phone_updated: {
     templateName: "telefone_atualizado",
     templateLanguage: "pt_BR",
     params: p("first_name", "expiration_date", "clinic_name"),
     headerDocument: true,
+    headerMedia: null,
   },
   partners_list: {
     templateName: "lista_de_parceiros",
     templateLanguage: "pt_BR",
     params: [],
     headerDocument: true,
+    headerMedia: null,
   },
   reminder_d7: {
     templateName: "lembrete_vencimento_7_dias",
     templateLanguage: "pt_BR",
     params: p("first_name", "expiration_date"),
     headerDocument: false,
+    headerMedia: null,
   },
   reminder_d0: {
     templateName: "lembrete_vencimento_hoje",
     templateLanguage: "pt_BR",
     params: p("first_name"),
     headerDocument: false,
+    headerMedia: null,
   },
   reminder_d0_late: {
     templateName: "lembrete_vencimento_atrasado",
     templateLanguage: "pt_BR",
     params: p("first_name", "expiration_date"),
     headerDocument: false,
+    headerMedia: null,
   },
   reminder_d30: {
     templateName: "lembrete_vencimento_30_dias",
     templateLanguage: "pt_BR",
     params: p("first_name"),
     headerDocument: false,
+    headerMedia: null,
   },
 };
 
@@ -234,11 +249,82 @@ export const CONFIRMATION_KEYS: readonly MessageKey[] = [
   "phone_updated",
 ];
 
+/** Os lembretes: levam no cabeçalho o arquivo anexado em /whatsapp. */
+export const isReminderKey = (key: MessageKey) =>
+  !CONFIRMATION_KEYS.includes(key) && key !== "partners_list";
+
+const MB = 1024 * 1024;
+
 /**
- * Por que este modelo não serve para esta mensagem, ou `null` se serve. O
- * único arquivo que o sistema envia é o PDF de parceiros: a lista separada
- * precisa de cabeçalho de documento, as confirmações podem ter ou não, e os
- * lembretes não enviam arquivo.
+ * As mídias de cabeçalho que um lembrete pode levar, com os arquivos aceitos.
+ * Limites da Meta, menos o do documento (100 MB lá): aqui o arquivo passa pelo
+ * corpo da Server Action (next.config.ts).
+ */
+export const HEADER_MEDIA = {
+  IMAGE: {
+    label: "imagem",
+    types: { "image/jpeg": "jpg", "image/png": "png" },
+    maxBytes: 5 * MB,
+    hint: "JPG ou PNG, até 5 MB",
+  },
+  DOCUMENT: {
+    label: "documento",
+    types: { "application/pdf": "pdf" },
+    maxBytes: 10 * MB,
+    hint: "PDF, até 10 MB",
+  },
+  VIDEO: {
+    label: "vídeo",
+    types: { "video/mp4": "mp4" },
+    maxBytes: 16 * MB,
+    hint: "MP4, até 16 MB",
+  },
+} as const;
+
+export type HeaderMediaFormat = keyof typeof HEADER_MEDIA;
+
+export type HeaderMediaType = {
+  [F in HeaderMediaFormat]: keyof (typeof HEADER_MEDIA)[F]["types"];
+}[HeaderMediaFormat];
+
+export const isHeaderMediaFormat = (
+  value: string | null,
+): value is HeaderMediaFormat => value !== null && value in HEADER_MEDIA;
+
+/** O formato de um arquivo pelo tipo, ou `null` se nenhuma mídia o aceita. */
+export function headerMediaFormatOf(type: string): HeaderMediaFormat | null {
+  for (const [format, media] of Object.entries(HEADER_MEDIA)) {
+    if (type in media.types) return format as HeaderMediaFormat;
+  }
+  return null;
+}
+
+const extensionOf = (type: HeaderMediaType): string => {
+  const format = headerMediaFormatOf(type)!;
+  return (HEADER_MEDIA[format].types as Record<string, string>)[type];
+};
+
+/** Por que este arquivo não serve para esta mídia, ou `null` se serve. */
+export function headerMediaFileProblem(
+  format: HeaderMediaFormat,
+  file: { type: string; size: number },
+): string | null {
+  const media = HEADER_MEDIA[format];
+  if (headerMediaFormatOf(file.type) !== format) {
+    return `O modelo pede ${media.label} no cabeçalho: ${media.hint}.`;
+  }
+  if (file.size === 0) return "O arquivo está vazio.";
+  if (file.size > media.maxBytes) {
+    return `O arquivo passa do limite: ${media.hint}.`;
+  }
+  return null;
+}
+
+/**
+ * Por que este modelo não serve para esta mensagem, ou `null` se serve. A
+ * lista separada precisa de cabeçalho de documento (o PDF de parceiros), as
+ * confirmações podem ter documento ou nada, e os lembretes podem ter imagem,
+ * documento, vídeo (o arquivo anexado em /whatsapp) ou nada.
  */
 export function templateMismatch(
   key: MessageKey,
@@ -252,8 +338,25 @@ export function templateMismatch(
   if (CONFIRMATION_KEYS.includes(key) && media && media !== "DOCUMENT") {
     return "A confirmação só pode levar documento no cabeçalho — o PDF de parceiros.";
   }
-  if (!CONFIRMATION_KEYS.includes(key) && key !== "partners_list" && media) {
-    return "Os lembretes não enviam arquivo: escolha um modelo sem mídia no cabeçalho.";
+  if (isReminderKey(key) && media && !isHeaderMediaFormat(media)) {
+    return "Os lembretes só podem levar imagem, documento ou vídeo no cabeçalho.";
   }
   return null;
 }
+
+/** O nome do arquivo no link: `reminder_d30.pdf`. */
+export const headerMediaFileName = (
+  key: MessageKey,
+  mimeType: HeaderMediaType,
+) => `${key}.${extensionOf(mimeType)}`;
+
+/**
+ * Caminho público do arquivo do cabeçalho — é este link que vai no WhatsApp.
+ * O `v` muda a cada troca do arquivo: a Meta guarda o arquivo de um link por
+ * um tempo, e o link novo faz o próximo envio já levar o arquivo novo.
+ */
+export const headerMediaPath = (
+  key: MessageKey,
+  file: { mimeType: HeaderMediaType; updatedAt: Date },
+) =>
+  `/arquivos/midia-dos-modelos/${headerMediaFileName(key, file.mimeType)}?v=${new Date(file.updatedAt).getTime()}`;

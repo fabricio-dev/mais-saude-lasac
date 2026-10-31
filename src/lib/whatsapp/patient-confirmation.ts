@@ -11,9 +11,10 @@ import { PARTNERS_LIST_PATH } from "@/data/partners-list-file";
 import { getMessageTemplates } from "@/data/whatsapp-message-templates";
 import { getWhatsAppSettings } from "@/data/whatsapp-settings";
 
-import { sendWhatsAppTemplate } from "./client";
+import { sendWhatsAppTemplate, type TemplateHeader } from "./client";
 import { buildExternalId } from "./external-id";
 import { buildTemplateParameters } from "./message-templates";
+import { publicAppUrl } from "./utils";
 
 export type ConfirmationType =
   | "activation"
@@ -45,10 +46,7 @@ export async function sendPatientConfirmation({
   expirationDate,
   clinicName,
 }: PatientConfirmationParams): Promise<void> {
-  const appUrl =
-    process.env.NEXT_PUBLIC_APP_URL ||
-    process.env.BETTER_AUTH_URL ||
-    "https://maissaudelasac.com.br";
+  const appUrl = publicAppUrl();
 
   try {
     // Os modelos escolhidos em /whatsapp para a confirmação e para a lista.
@@ -65,7 +63,8 @@ export async function sendPatientConfirmation({
     const confirmation = templates[type];
     const partners = templates.partners_list;
 
-    const partnersPdf = {
+    const partnersPdf: TemplateHeader = {
+      type: "document",
       link: `${appUrl}${PARTNERS_LIST_PATH}`,
       filename: "Lista de Parceiros - Mais Saúde.pdf",
     };
@@ -80,7 +79,7 @@ export async function sendPatientConfirmation({
       templateName: confirmation.templateName,
       language: confirmation.templateLanguage,
       parameters: buildTemplateParameters(confirmation.params, context),
-      ...(confirmation.headerDocument ? { document: partnersPdf } : {}),
+      ...(confirmation.headerDocument ? { header: partnersPdf } : {}),
     });
     if (confirmation.headerDocument) return;
 
@@ -99,7 +98,7 @@ export async function sendPatientConfirmation({
       templateName: partners.templateName,
       language: partners.templateLanguage,
       parameters: buildTemplateParameters(partners.params, context),
-      ...(partners.headerDocument ? { document: partnersPdf } : {}),
+      ...(partners.headerDocument ? { header: partnersPdf } : {}),
     });
   } catch (error) {
     // O WhatsApp é aviso: falhar aqui não pode desfazer a ativação.

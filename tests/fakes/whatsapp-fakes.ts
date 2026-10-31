@@ -10,11 +10,12 @@
 
 import { vi } from "vitest";
 
+import type { MessageTemplateSetting } from "@/data/whatsapp-message-templates";
 import type { WhatsAppSettings } from "@/data/whatsapp-settings";
 import {
   DEFAULT_MESSAGE_TEMPLATES,
+  MESSAGE_KEYS,
   type MessageKey,
-  type MessageTemplateConfig,
 } from "@/lib/whatsapp/message-templates";
 
 export const TEST_PHONE = "5511900000000";
@@ -33,7 +34,7 @@ type SentRequest = { url: string; body: SentBody };
 
 export const fake = {
   settings: {} as Partial<WhatsAppSettings>,
-  templates: {} as Record<MessageKey, MessageTemplateConfig>,
+  templates: {} as Record<MessageKey, MessageTemplateSetting>,
   patients: [] as unknown[],
   dbCalls: [] as DbCall[],
   requests: [] as SentRequest[],
@@ -59,7 +60,18 @@ export function resetFakes() {
     d7DailyLimit: 40,
     overdueDailyLimit: 100,
   };
-  fake.templates = structuredClone(DEFAULT_MESSAGE_TEMPLATES);
+  // Os padrões, como getMessageTemplates os devolve sem nada salvo na tela.
+  fake.templates = Object.fromEntries(
+    MESSAGE_KEYS.map((key) => [
+      key,
+      {
+        ...structuredClone(DEFAULT_MESSAGE_TEMPLATES[key]),
+        isDefault: true,
+        updatedAt: null,
+        headerMediaFile: null,
+      },
+    ]),
+  ) as Record<MessageKey, MessageTemplateSetting>;
   fake.patients = [];
   fake.dbCalls = [];
   fake.requests = [];

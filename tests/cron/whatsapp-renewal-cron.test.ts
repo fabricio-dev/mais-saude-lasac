@@ -10,6 +10,7 @@ import { PgDialect } from "drizzle-orm/pg-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { runWhatsAppRenewalCron } from "@/cron/whatsapp-renewal-cron";
+import type { HeaderMediaType } from "@/lib/whatsapp/message-templates";
 
 vi.mock("@/db", () => import("@tests/fakes/whatsapp-fakes"));
 vi.mock(
@@ -170,6 +171,90 @@ describe("cron de lembretes — teto de vencidos", () => {
         r.body.externalId.startsWith("RENEWAL_D_0_LATE"),
       ),
     ).toBe(true);
+  });
+});
+
+describe("cron de lembretes — mídia no cabeçalho", () => {
+  const updatedAt = new Date("2026-10-30T12:00:00Z");
+  const v = updatedAt.getTime();
+  const base = "https://lasac.test/arquivos/midia-dos-modelos";
+  const file = (mimeType: HeaderMediaType, fileName: string) => ({
+    mimeType,
+    fileName,
+    sizeBytes: 1000,
+    updatedAt,
+  });
+
+  beforeEach(() => {
+    setWhatsAppEnv({ whatsappEnv: "dev", testPhone: TEST_PHONE });
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://lasac.test/");
+    fake.settings.reminderD7Enabled = false;
+    fake.settings.reminderD30Enabled = true;
+    fake.patients = [patient()];
+  });
+
+  it.each([
+    [
+      "IMAGE",
+      file("image/png", "cartao.png"),
+      { type: "image", link: `${base}/reminder_d30.png?v=${v}` },
+    ],
+    [
+      "DOCUMENT",
+      file("application/pdf", "Cartão LASAC.pdf"),
+      {
+        type: "document",
+        link: `${base}/reminder_d30.pdf?v=${v}`,
+        filename: "Cartão LASAC.pdf",
+      },
+    ],
+    [
+      "VIDEO",
+      file("video/mp4", "cartao.mp4"),
+      { type: "video", link: `${base}/reminder_d30.mp4?v=${v}` },
+    ],
+  ] as const)(
+    "modelo com %s: o D+30 leva o link do arquivo anexado",
+    async (format, stored, header) => {
+      fake.templates.reminder_d30.headerMedia = format;
+      fake.templates.reminder_d30.headerMediaFile = stored;
+      await runCron();
+
+      expect(fake.requests).toHaveLength(1);
+      expect(fake.requests[0].body.header).toEqual(header);
+    },
+  );
+
+  it("arquivo anexado, mas modelo sem mídia: o D+30 vai sem cabeçalho", async () => {
+    fake.templates.reminder_d30.headerMediaFile = file(
+      "image/jpeg",
+      "cartao.jpg",
+    );
+    await runCron();
+
+    expect(fake.requests).toHaveLength(1);
+    expect(fake.requests[0].body.header).toBeUndefined();
+  });
+
+  it("modelo com mídia e nenhum arquivo: o D+30 espera, sem trava", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    fake.templates.reminder_d30.headerMedia = "IMAGE";
+    await runCron();
+
+    expect(fake.requests).toHaveLength(0);
+    expect(dbCallsOf("insert", "values")).toHaveLength(0);
+  });
+
+  it("arquivo de outro formato que o do modelo: o D+30 espera", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    fake.templates.reminder_d30.headerMedia = "DOCUMENT";
+    fake.templates.reminder_d30.headerMediaFile = file(
+      "image/png",
+      "cartao.png",
+    );
+    await runCron();
+
+    expect(fake.requests).toHaveLength(0);
   });
 });
 

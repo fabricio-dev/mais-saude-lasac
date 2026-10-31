@@ -16,11 +16,14 @@ import { getWhatsAppSettings } from "@/data/whatsapp-settings";
 
 import { isValidPhoneNumber, maskPhoneNumber } from "./utils";
 
-/** Arquivo do cabeçalho do template, por URL pública (só https). */
-interface TemplateDocument {
-  link: string;
-  filename: string;
-}
+/**
+ * Arquivo do cabeçalho do template, por URL pública (só https). Documento
+ * leva o nome com que aparece no WhatsApp.
+ */
+export type TemplateHeader =
+  | { type: "document"; link: string; filename: string }
+  | { type: "image"; link: string }
+  | { type: "video"; link: string };
 
 export interface SendTemplateParams {
   /**
@@ -37,7 +40,8 @@ export interface SendTemplateParams {
   /** Idioma do modelo aprovado. Padrão pt_BR. */
   language?: string;
   parameters: string[];
-  document?: TemplateDocument;
+  /** O arquivo, quando o cabeçalho do modelo tem mídia. */
+  header?: TemplateHeader;
   /**
    * O envio quer conversa, como uma campanha: se o paciente responder só "oi"
    * ou um emoji, a assistente do atendimento pergunta pelo assunto da
@@ -163,15 +167,7 @@ export async function sendWhatsAppTemplate(
       language: params.language ?? "pt_BR",
       params: params.parameters,
     },
-    ...(params.document
-      ? {
-          header: {
-            type: "document",
-            link: params.document.link,
-            filename: params.document.filename,
-          },
-        }
-      : {}),
+    ...(params.header ? { header: params.header } : {}),
     ...(params.asCampaign ? { asCampaign: true } : {}),
   });
 

@@ -8,6 +8,12 @@ const nextConfig: NextConfig = {
   //
   // Vale só em desenvolvimento; `next build` ignora esta opção.
   allowedDevOrigins: ["lasac.condamus.com.br"],
+
+  experimental: {
+    // O padrão é 1 MB, e o arquivo vai no corpo da Server Action: a lista de
+    // parceiros aceita até 10 MB, e a mídia dos lembretes até 16 MB (vídeo).
+    serverActions: { bodySizeLimit: "20mb" },
+  },
 };
 
 export default nextConfig;
