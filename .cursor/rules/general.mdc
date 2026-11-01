@@ -39,3 +39,7 @@ Princípios Principais:
 - Usamos a biblioteca "dayjs" para manipular e formatar datas.
 - Ao criar páginas, use os componentes dentro de [page-container.tsx](mdc:src/components/ui/page-container.tsx) para manter os padrões de margin, padding e spacing nas páginas. Exemplo: [page.tsx](<mdc:src/app/(protected)/sellers/page.tsx>).
 - Sempre use a biblioteca "react-number-format" ao criar máscaras para inputs.
+
+Infraestrutura:
+
+- Somente o Fabricio acessa a VPS de produção. Nunca abra SSH, rode comandos, faça deploy ou consulte o banco da VPS, nem para "só conferir". Prepare os comandos (pull, backup, `drizzle-kit push`, build, restart) e entregue para ele rodar.
