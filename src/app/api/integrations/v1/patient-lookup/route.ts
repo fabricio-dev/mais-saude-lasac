@@ -5,6 +5,7 @@ import { z } from "zod";
 import { verifyIntegrationApiKey } from "@/data/whatsapp-connection";
 import { db } from "@/db";
 import { patientsTable } from "@/db/schema";
+import { situacaoDoCartao } from "@/helpers/card-status";
 import {
   mesmoTelefone,
   type NucleoTelefone,
@@ -116,14 +117,10 @@ const foiAtivado = (candidato: Candidato) => candidato.activeAt !== null;
  * aqui fazia todo cartão vencido sair como "inativo" — e sem data, o que no
  * WhatsApp vira "não encontrei um cartão", para quem tem o cartão na mão. A
  * validade é a resposta que o paciente precisa: está valendo ou venceu em tal
- * dia.
+ * dia. E vale o dia inteiro (`situacaoDoCartao`).
  */
 function resposta(paciente: Candidato) {
-  const status = !paciente.expirationDate
-    ? null
-    : paciente.expirationDate.getTime() >= Date.now()
-      ? "ativo"
-      : "vencido";
+  const status = situacaoDoCartao(paciente.validUntil);
 
   return {
     // Primeiro nome: o texto final é uma frase de WhatsApp, e nome completo no
