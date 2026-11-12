@@ -1,4 +1,4 @@
-import { eq, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -6,6 +6,7 @@ import { verifyIntegrationApiKey } from "@/data/whatsapp-connection";
 import { db } from "@/db";
 import { patientsTable } from "@/db/schema";
 import { situacaoDoCartao } from "@/helpers/card-status";
+import { cpfDoCadastroIgual } from "@/helpers/cpf-do-cadastro";
 import {
   mesmoTelefone,
   type NucleoTelefone,
@@ -172,7 +173,9 @@ export async function POST(request: NextRequest) {
       await db
         .select(CAMPOS)
         .from(patientsTable)
-        .where(eq(patientsTable.cpfNumber, cpf))
+        // Sem pontuação dos dois lados: 329 cadastros guardam o CPF como
+        // "000.000.000-00" (`cpfDoCadastroIgual`).
+        .where(cpfDoCadastroIgual(patientsTable.cpfNumber, cpf))
         .limit(5)
     ).filter(foiAtivado);
 
