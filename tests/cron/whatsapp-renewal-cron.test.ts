@@ -64,7 +64,9 @@ describe("cron de lembretes — D-7", () => {
     expect(fake.requests).toHaveLength(1);
     const { body } = fake.requests[0];
     expect(body.to).toBe(TEST_PHONE);
-    expect(body.externalId).toMatch(/^RENEWAL_D_7:p1:\d{4}-\d{2}-\d{2}$/);
+    expect(body.externalId).toMatch(
+      /^RENEWAL_D_7:p1:\d{4}-\d{2}-\d{2}:8791234567$/,
+    );
     expect(body.category).toBe("Vencimento em 7 dias");
     expect(body.template.name).toBe("lembrete_vencimento_7_dias");
     expect(dbCallsOf("insert", "values")[0].args[0]).toMatchObject({

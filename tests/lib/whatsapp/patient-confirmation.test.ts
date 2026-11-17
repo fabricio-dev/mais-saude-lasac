@@ -30,6 +30,9 @@ vi.mock(
 );
 
 const PATIENT_PHONE = "87991234567";
+// O externalId leva o núcleo do telefone do paciente (DDD + 8 finais), mesmo
+// em dev, quando a mensagem vai para o número de teste.
+const PATIENT_PHONE_CORE = "8791234567";
 
 const confirm = (type: ConfirmationType) =>
   sendPatientConfirmation({
@@ -53,7 +56,9 @@ describe("sendPatientConfirmation", () => {
       expect(fake.requests).toHaveLength(1);
       const { body } = fake.requests[0];
       expect(body.to).toBe(TEST_PHONE);
-      expect(body.externalId).toBe(`${type}:p1:2027-10-16`);
+      expect(body.externalId).toBe(
+        `${type}:p1:2027-10-16:${PATIENT_PHONE_CORE}`,
+      );
       expect(body.template.name).toBe(
         DEFAULT_MESSAGE_TEMPLATES[type].templateName,
       );
@@ -84,7 +89,7 @@ describe("sendPatientConfirmation", () => {
     expect(fake.requests).toHaveLength(2);
     expect(fake.requests[0].body.header).toBeUndefined();
     expect(fake.requests[1].body.externalId).toBe(
-      "lista_de_parceiros:p1:2027-10-16",
+      `lista_de_parceiros:p1:2027-10-16:${PATIENT_PHONE_CORE}`,
     );
     for (const request of fake.requests) {
       expect(request.body.to).toBe(TEST_PHONE);
