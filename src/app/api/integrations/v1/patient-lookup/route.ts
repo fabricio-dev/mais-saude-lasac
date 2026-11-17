@@ -1,10 +1,12 @@
-import { eq, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { verifyIntegrationApiKey } from "@/data/whatsapp-connection";
 import { db } from "@/db";
 import { patientsTable } from "@/db/schema";
+import { situacaoDoCartao } from "@/helpers/card-status";
+import { cpfDoCadastroIgual } from "@/helpers/cpf-do-cadastro";
 import {
   mesmoTelefone,
   type NucleoTelefone,
@@ -116,14 +118,10 @@ const foiAtivado = (candidato: Candidato) => candidato.activeAt !== null;
  * aqui fazia todo cartão vencido sair como "inativo" — e sem data, o que no
  * WhatsApp vira "não encontrei um cartão", para quem tem o cartão na mão. A
  * validade é a resposta que o paciente precisa: está valendo ou venceu em tal
- * dia.
+ * dia. E vale o dia inteiro (`situacaoDoCartao`).
  */
 function resposta(paciente: Candidato) {
-  const status = !paciente.expirationDate
-    ? null
-    : paciente.expirationDate.getTime() >= Date.now()
-      ? "ativo"
-      : "vencido";
+  const status = situacaoDoCartao(paciente.validUntil);
 
   return {
     // Primeiro nome: o texto final é uma frase de WhatsApp, e nome completo no
@@ -175,7 +173,9 @@ export async function POST(request: NextRequest) {
       await db
         .select(CAMPOS)
         .from(patientsTable)
-        .where(eq(patientsTable.cpfNumber, cpf))
+        // Sem pontuação dos dois lados: 329 cadastros guardam o CPF como
+        // "000.000.000-00" (`cpfDoCadastroIgual`).
+        .where(cpfDoCadastroIgual(patientsTable.cpfNumber, cpf))
         .limit(5)
     ).filter(foiAtivado);
 
