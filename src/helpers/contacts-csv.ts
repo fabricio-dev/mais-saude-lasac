@@ -40,15 +40,17 @@ export function formatPhoneForSpreadsheet(phoneNumber: string): string {
  */
 function csvField(value: string): string {
   const safeValue = /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
-  return /[,"\r\n]/.test(safeValue)
+  return /[;"\r\n]/.test(safeValue)
     ? `"${safeValue.replace(/"/g, '""')}"`
     : safeValue;
 }
 
 /**
- * CSV de contatos (telefone, nome) que abre direto no Excel: UTF-8 com BOM
- * (acentos certos), "," como separador — o do Excel usado na clínica — e
- * quebra de linha CRLF.
+ * CSV de contatos (telefone; nome) que abre direto no Excel em pt-BR: UTF-8
+ * com BOM (acentos certos), ";" como separador e quebra de linha CRLF.
+ *
+ * O separador é o da lista do sistema, que no Excel em pt-BR é ";" — com ","
+ * tudo cai numa coluna só (testado no Excel da clínica em 17/11/2026).
  */
 export function buildContactsCsv(rows: ContactRow[]): string {
   const lines = [
@@ -57,7 +59,7 @@ export function buildContactsCsv(rows: ContactRow[]): string {
       formatPhoneForSpreadsheet(row.phoneNumber),
       row.name.trim(),
     ]),
-  ].map((fields) => fields.map(csvField).join(","));
+  ].map((fields) => fields.map(csvField).join(";"));
 
   return `\uFEFF${lines.join("\r\n")}\r\n`;
 }

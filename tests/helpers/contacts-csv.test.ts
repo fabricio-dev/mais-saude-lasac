@@ -29,26 +29,26 @@ describe("formatPhoneForSpreadsheet", () => {
 });
 
 describe("buildContactsCsv", () => {
-  it("começa com BOM, usa vírgula e CRLF, telefone antes do nome", () => {
+  it("começa com BOM, usa ; e CRLF, telefone antes do nome", () => {
     const csv = buildContactsCsv([
       { name: "José da Silva", phoneNumber: "87991372728" },
       { name: "Maria", phoneNumber: "8791372728" },
     ]);
 
     expect(csv).toBe(
-      "\uFEFFtelefone,nome\r\n" +
-        "(87) 99137-2728,José da Silva\r\n" +
-        "(87) 9137-2728,Maria\r\n",
+      "\uFEFFtelefone;nome\r\n" +
+        "(87) 99137-2728;José da Silva\r\n" +
+        "(87) 9137-2728;Maria\r\n",
     );
   });
 
   it("põe aspas no campo com separador, aspas ou quebra de linha", () => {
     const csv = buildContactsCsv([
-      { name: 'Ana, "Aninha"\nSouza', phoneNumber: "87991372728" },
+      { name: 'Ana; "Aninha"\nSouza', phoneNumber: "87991372728" },
     ]);
 
     expect(csv.split("\r\n")[1]).toBe(
-      '(87) 99137-2728,"Ana, ""Aninha""\nSouza"',
+      '(87) 99137-2728;"Ana; ""Aninha""\nSouza"',
     );
   });
 
@@ -57,11 +57,11 @@ describe("buildContactsCsv", () => {
       { name: "=HYPERLINK(1)", phoneNumber: "87991372728" },
     ]);
 
-    expect(csv.split("\r\n")[1]).toBe("(87) 99137-2728,'=HYPERLINK(1)");
+    expect(csv.split("\r\n")[1]).toBe("(87) 99137-2728;'=HYPERLINK(1)");
   });
 
   it("só o cabeçalho quando não há contatos", () => {
-    expect(buildContactsCsv([])).toBe("\uFEFFtelefone,nome\r\n");
+    expect(buildContactsCsv([])).toBe("\uFEFFtelefone;nome\r\n");
   });
 });
 
