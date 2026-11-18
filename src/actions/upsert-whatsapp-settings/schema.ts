@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { boundedArray } from "@/helpers/bounded-array";
+
 export const upsertWhatsAppSettingsSchema = z.object({
   enabled: z.boolean(),
   reminderD7Enabled: z.boolean(),
@@ -27,9 +29,13 @@ export const upsertWhatsAppSettingsSchema = z.object({
       message: "Use DDD + número, como no cadastro",
     }),
   sendHour: z.number().int().min(0).max(23),
-  sendDays: z
-    .array(z.number().int().min(0).max(6))
-    .min(1, { message: "Escolha pelo menos um dia" }),
+  // Dias da semana (0 a 6): mais de 7 só vem de requisição forjada
+  sendDays: boundedArray(
+    z
+      .array(z.number().int().min(0).max(6))
+      .min(1, { message: "Escolha pelo menos um dia" }),
+    7,
+  ),
 });
 
 export type UpsertWhatsAppSettingsInput = z.infer<
