@@ -1,23 +1,6 @@
-import dayjs from "dayjs";
-import timezone from "dayjs/plugin/timezone";
-import utc from "dayjs/plugin/utc";
-import {
-  and,
-  between,
-  desc,
-  eq,
-  gte,
-  inArray,
-  isNotNull,
-  lte,
-  type SQL,
-} from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-
-// Configurar plugins do dayjs
-dayjs.extend(utc);
-dayjs.extend(timezone);
 
 import { Button } from "@/components/ui/button";
 import {
@@ -32,10 +15,11 @@ import {
 import { getPatientsPage, parsePageParam } from "@/data/get-patients-page";
 import { db } from "@/db";
 import { patientsTable, usersToClinicsTable } from "@/db/schema";
-import { buildPatientSearchCondition } from "@/helpers/patient-search";
+import { buildAdminPatientsCondition } from "@/helpers/admin-patients-condition";
 import { requireRole } from "@/lib/require-role";
 
 import AddPatientButton from "./_components/add-patient-button";
+import ExportExpiredContactsButton from "./_components/export-expired-contacts-button";
 import FiltersBar from "./_components/filters-bar";
 import PatientsTable from "./_components/patients-table";
 import SearchPatients from "./_components/search-patients";
@@ -70,57 +54,12 @@ const PatientsPage = async ({ searchParams }: PatientsPageProps) => {
     redirect("/clinics");
   }
 
-  // Construir as condições de busca
-  const searchTerm = search?.trim();
-
-  // Condição base: filtrar pacientes por clínicas do usuário admin
-  const baseCondition = inArray(patientsTable.clinicId, clinicIds);
-
-  let whereCondition: SQL<unknown> = baseCondition;
-
-  // Aplicar filtro de vencidos se necessário
-  if (isShowingExpired) {
-    whereCondition = and(
-      baseCondition,
-      isNotNull(patientsTable.expirationDate),
-      lte(patientsTable.expirationDate, new Date()),
-    )!;
-  }
-
-  // Aplicar filtro por período de data de vencimento
-  // Interpreta as datas como horário de São Paulo e converte para UTC
-  // O DatePicker já envia as datas com horas (formato: YYYY-MM-DD HH:mm:ss)
-  if (dateFrom && dateTo) {
-    const fromDate = dayjs.tz(dateFrom, "America/Sao_Paulo").utc().toDate();
-    const toDate = dayjs.tz(dateTo, "America/Sao_Paulo").utc().toDate();
-
-    whereCondition = and(
-      whereCondition,
-      isNotNull(patientsTable.expirationDate),
-      between(patientsTable.expirationDate, fromDate, toDate),
-    )!;
-  } else if (dateFrom) {
-    const fromDate = dayjs.tz(dateFrom, "America/Sao_Paulo").utc().toDate();
-    whereCondition = and(
-      whereCondition,
-      isNotNull(patientsTable.expirationDate),
-      gte(patientsTable.expirationDate, fromDate),
-    )!;
-  } else if (dateTo) {
-    const toDate = dayjs.tz(dateTo, "America/Sao_Paulo").utc().toDate();
-    whereCondition = and(
-      whereCondition,
-      isNotNull(patientsTable.expirationDate),
-      lte(patientsTable.expirationDate, toDate),
-    )!;
-  }
-
-  // Aplicar filtro de busca por texto
-  if (searchTerm) {
-    const searchConditions = buildPatientSearchCondition(searchTerm);
-
-    whereCondition = and(whereCondition, searchConditions)!;
-  }
+  const whereCondition = buildAdminPatientsCondition(clinicIds, {
+    isShowingExpired,
+    search,
+    dateFrom,
+    dateTo,
+  });
 
   // Buscar só a página atual dos pacientes das clínicas do usuário admin
   const { patients, totalCount, totalPages, currentPage } =
@@ -153,6 +92,12 @@ const PatientsPage = async ({ searchParams }: PatientsPageProps) => {
               <Suspense fallback={<div>Carregando...</div>}>
                 <FiltersBar />
               </Suspense>
+              {isShowingExpired && (
+                <ExportExpiredContactsButton
+                  filters={{ search, dateFrom, dateTo }}
+                  disabled={totalCount === 0}
+                />
+              )}
               <AddPatientButton />
             </div>
           )}
